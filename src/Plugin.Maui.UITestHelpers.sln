@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 25.0.1704.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Plugin.Maui.Feature", "Plugin.Maui.Feature\Plugin.Maui.Feature.csproj", "{2012F564-B8C7-4CEB-8495-1BCB1B0EB638}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Plugin.Maui.UITestHelpers", "Plugin.Maui.UITestHelpers.Core\Plugin.Maui.UITestHelpers.Core.csproj", "{2012F564-B8C7-4CEB-8495-1BCB1B0EB638}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Plugin.Maui.UITestHelpers.Appium", "Plugin.Maui.UITestHelpers.Appium\Plugin.Maui.UITestHelpers.Appium.csproj", "{68DD107E-DF21-4ADD-87A6-132E614EE362}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{2012F564-B8C7-4CEB-8495-1BCB1B0EB638}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2012F564-B8C7-4CEB-8495-1BCB1B0EB638}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2012F564-B8C7-4CEB-8495-1BCB1B0EB638}.Release|Any CPU.Build.0 = Release|Any CPU
+		{68DD107E-DF21-4ADD-87A6-132E614EE362}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{68DD107E-DF21-4ADD-87A6-132E614EE362}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{68DD107E-DF21-4ADD-87A6-132E614EE362}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{68DD107E-DF21-4ADD-87A6-132E614EE362}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+
+    <!-- NuGet -->
+    <Authors>author</Authors>
+    <Copyright>Copyright © author and contributors</Copyright>
+    <IsPackable>True</IsPackable>
+    <PackageProjectUrl>https://github.com/jfversluis/Plugin.Maui.UITestHelpers</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/jfversluis/Plugin.Maui.UITestHelpers</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>dotnet-maui;maui;plugin;ui-test;appium;uitest</PackageTags>
+    <IncludeSymbols>True</IncludeSymbols>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <Title>.NET MAUI UI Test Helpers Appium Plugin</Title>
+    <Description>Plugin.Maui.UITestHelpers.Appium provides a set of helpers to support UI testing your .NET MAUI app and migration from Xamarin.UITest to Appium.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+    <DebugType>portable</DebugType>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Appium.WebDriver" Version="5.0.0-beta02" />
+    <PackageReference Include="System.Drawing.Common" Version="4.7.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Plugin.Maui.UITestHelpers.Core\Plugin.Maui.UITestHelpers.Core.csproj" />
+  </ItemGroup>
+
+	<!-- Package additions -->
+	<ItemGroup>
+		<None Include="..\..\nuget.png" PackagePath="icon.png" Pack="true" />
+		<None Include="..\..\README.md" Pack="true" PackagePath="\"/>
+	</ItemGroup>
+
+</Project>
