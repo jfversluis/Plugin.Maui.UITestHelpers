@@ -1,0 +1,28 @@
+name: Build, Pack & Push
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 8.0.x
+        source-url: https://jfversluis.pkgs.visualstudio.com/_packaging/Test/nuget/v3/index.json
+      env:
+        NUGET_AUTH_TOKEN: ${{ secrets.PUBLISH_PAT }}
+        
+    - name: Restore dependencies
+      run: dotnet restore
+    - name: Build
+      run: dotnet build --no-restore
+    - name: Pack
+      run: dotnet pack -o output -p:PackageVersion=1.0.0-alpha1
+    - name: Push
+      run: dotnet nuget push "output/*.nupkg" --api-key AzureArtifacts
