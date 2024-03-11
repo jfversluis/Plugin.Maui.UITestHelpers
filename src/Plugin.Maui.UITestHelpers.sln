@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Plugin.Maui.UITestHelpers",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Plugin.Maui.UITestHelpers.Appium", "Plugin.Maui.UITestHelpers.Appium\Plugin.Maui.UITestHelpers.Appium.csproj", "{68DD107E-DF21-4ADD-87A6-132E614EE362}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Plugin.Maui.UITestHelpers.NUnit", "Plugin.Maui.UITestHelpers.NUnit\Plugin.Maui.UITestHelpers.NUnit.csproj", "{76698C99-75AE-4F24-B1C7-333DC22FB416}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{68DD107E-DF21-4ADD-87A6-132E614EE362}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{68DD107E-DF21-4ADD-87A6-132E614EE362}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{68DD107E-DF21-4ADD-87A6-132E614EE362}.Release|Any CPU.Build.0 = Release|Any CPU
+		{76698C99-75AE-4F24-B1C7-333DC22FB416}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{76698C99-75AE-4F24-B1C7-333DC22FB416}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{76698C99-75AE-4F24-B1C7-333DC22FB416}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{76698C99-75AE-4F24-B1C7-333DC22FB416}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
