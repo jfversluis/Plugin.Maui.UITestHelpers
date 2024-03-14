@@ -1,6 +1,6 @@
 # Plugin.Maui.UITestHelpers
 
-A set of helpers extracted from the .NET MAUI codebase that can help with writing UI tests and/or transition Xamarin.UITest tests to Appium.
+A set of helpers extracted from the .NET MAUI codebase ([here](https://github.com/dotnet/maui/tree/main/src/TestUtils/src), the folders prefixed UITest) that can help with writing UI tests and/or transition Xamarin.UITest tests to Appium.
 
 > [!WARNING]  
 > At this time this project is not officially supported and experimental.
