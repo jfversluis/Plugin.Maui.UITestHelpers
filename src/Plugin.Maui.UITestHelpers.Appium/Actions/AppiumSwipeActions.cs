@@ -1,5 +1,7 @@
 ﻿using OpenQA.Selenium.Appium;
+using OpenQA.Selenium.Appium.Interactions;
 using OpenQA.Selenium.Appium.MultiTouch;
+using OpenQA.Selenium.Interactions;
 using Plugin.Maui.UITestHelpers.Core;
 
 namespace Plugin.Maui.UITestHelpers.Appium
@@ -90,12 +92,13 @@ namespace Plugin.Maui.UITestHelpers.Appium
 			int endX = (int)(position.X + (size.Width * swipePercentage));
 			int endY = startY;
 
-			new TouchAction(driver)
-				.Press(startX, startY)
-				.Wait(swipeSpeed)
-				.MoveTo(endX, endY)
-				.Release()
-				.Perform();
+			var touchDevice = new OpenQA.Selenium.Appium.Interactions.PointerInputDevice(PointerKind.Touch);
+			var swipeSequence = new ActionSequence(touchDevice, 0);
+			swipeSequence.AddAction(touchDevice.CreatePointerMove(CoordinateOrigin.Viewport, startX, startY, TimeSpan.Zero));
+			swipeSequence.AddAction(touchDevice.CreatePointerDown(PointerButton.TouchContact));
+			swipeSequence.AddAction(touchDevice.CreatePointerMove(CoordinateOrigin.Viewport, endX, endY, TimeSpan.FromMilliseconds(swipeSpeed)));
+			swipeSequence.AddAction(touchDevice.CreatePointerUp(PointerButton.TouchContact));
+			driver.PerformActions([swipeSequence]);
 		}
 
 		static void SwipeToLeft(AppiumDriver driver, AppiumElement? element, double swipePercentage, int swipeSpeed, bool withInertia = true)
@@ -109,12 +112,13 @@ namespace Plugin.Maui.UITestHelpers.Appium
 			int endX = (int)(position.X + (size.Width * 0.05));
 			int endY = startY;
 
-			new TouchAction(driver)
-				.Press(startX, startY)
-				.Wait(swipeSpeed)
-				.MoveTo(endX, endY)
-				.Release()
-				.Perform();
+			var touchDevice = new OpenQA.Selenium.Appium.Interactions.PointerInputDevice(PointerKind.Touch);
+			var swipeSequence = new ActionSequence(touchDevice, 0);
+			swipeSequence.AddAction(touchDevice.CreatePointerMove(CoordinateOrigin.Viewport, startX, startY, TimeSpan.Zero));
+			swipeSequence.AddAction(touchDevice.CreatePointerDown(PointerButton.TouchContact));
+			swipeSequence.AddAction(touchDevice.CreatePointerMove(CoordinateOrigin.Viewport, endX, endY, TimeSpan.FromMilliseconds(swipeSpeed)));
+			swipeSequence.AddAction(touchDevice.CreatePointerUp(PointerButton.TouchContact));
+			driver.PerformActions([swipeSequence]);
 		}
 	}
 }
