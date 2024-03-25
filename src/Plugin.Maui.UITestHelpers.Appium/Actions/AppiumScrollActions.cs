@@ -1,5 +1,7 @@
 ﻿using OpenQA.Selenium.Appium;
+using OpenQA.Selenium.Appium.Interactions;
 using OpenQA.Selenium.Appium.MultiTouch;
+using OpenQA.Selenium.Interactions;
 using Plugin.Maui.UITestHelpers.Core;
 
 namespace Plugin.Maui.UITestHelpers.Appium
@@ -13,6 +15,8 @@ namespace Plugin.Maui.UITestHelpers.Appium
 
 	public class AppiumScrollActions : ICommandExecutionGroup
 	{
+		const int ScrollTouchDownTime = 100;
+		const int ProgrammaticallyScrollTime = 0;
 		const string ScrollLeftCommand = "scrollLeft";
 		const string ScrollDownCommand = "scrollDown";
 		const string ScrollRightCommand = "scrollRight";
@@ -138,8 +142,8 @@ namespace Plugin.Maui.UITestHelpers.Appium
 
 		static void ScrollToLeft(AppiumDriver driver, AppiumElement element, ScrollStrategy strategy, double swipePercentage, int swipeSpeed, bool withInertia = true)
 		{
-			var position = element.Location;
-			var size = element.Size;
+			var position = element is not null ? element.Location : System.Drawing.Point.Empty;
+			var size = element is not null ? element.Size : driver.Manage().Window.Size;
 
 			int startX = (int)(position.X + (size.Width * 0.05));
 			int startY = position.Y + size.Height / 2;
@@ -147,18 +151,20 @@ namespace Plugin.Maui.UITestHelpers.Appium
 			int endX = (int)(position.X + (size.Width * swipePercentage));
 			int endY = startY;
 
-			new TouchAction(driver)
-				.Press(startX, startY)
-				.Wait(strategy != ScrollStrategy.Programmatically ? swipeSpeed : 0)
-				.MoveTo(endX, endY)
-				.Release()
-				.Perform();
+			var touchDevice = new OpenQA.Selenium.Appium.Interactions.PointerInputDevice(PointerKind.Touch);
+			var scrollSequence = new ActionSequence(touchDevice, 0);
+			scrollSequence.AddAction(touchDevice.CreatePointerMove(CoordinateOrigin.Viewport, startX, startY, TimeSpan.Zero));
+			scrollSequence.AddAction(touchDevice.CreatePointerDown(PointerButton.TouchContact));
+			scrollSequence.AddAction(touchDevice.CreatePause(TimeSpan.FromMilliseconds(ScrollTouchDownTime)));
+			scrollSequence.AddAction(touchDevice.CreatePointerMove(CoordinateOrigin.Viewport, endX, endY, TimeSpan.FromMilliseconds(strategy != ScrollStrategy.Programmatically ? swipeSpeed : ProgrammaticallyScrollTime)));
+			scrollSequence.AddAction(touchDevice.CreatePointerUp(PointerButton.TouchContact));
+			driver.PerformActions([scrollSequence]);
 		}
 
 		static void ScrollToDown(AppiumDriver driver, AppiumElement element, ScrollStrategy strategy, double swipePercentage, int swipeSpeed, bool withInertia = true)
 		{
-			var position = element.Location;
-			var size = element.Size;
+			var position = element is not null ? element.Location : System.Drawing.Point.Empty;
+			var size = element is not null ? element.Size : driver.Manage().Window.Size;
 
 			int startX = position.X + size.Width / 2;
 			int startY = (int)(position.Y + (size.Height * swipePercentage));
@@ -166,18 +172,20 @@ namespace Plugin.Maui.UITestHelpers.Appium
 			int endX = startX;
 			int endY = (int)(position.Y + (size.Height * 0.05));
 
-			new TouchAction(driver)
-				.Press(startX, startY)
-				.Wait(strategy != ScrollStrategy.Programmatically ? swipeSpeed : 0)
-				.MoveTo(endX, endY)
-				.Release()
-				.Perform();
+			var touchDevice = new OpenQA.Selenium.Appium.Interactions.PointerInputDevice(PointerKind.Touch);
+			var scrollSequence = new ActionSequence(touchDevice, 0);
+			scrollSequence.AddAction(touchDevice.CreatePointerMove(CoordinateOrigin.Viewport, startX, startY, TimeSpan.Zero));
+			scrollSequence.AddAction(touchDevice.CreatePointerDown(PointerButton.TouchContact));
+			scrollSequence.AddAction(touchDevice.CreatePause(TimeSpan.FromMilliseconds(ScrollTouchDownTime)));
+			scrollSequence.AddAction(touchDevice.CreatePointerMove(CoordinateOrigin.Viewport, endX, endY, TimeSpan.FromMilliseconds(strategy != ScrollStrategy.Programmatically ? swipeSpeed : ProgrammaticallyScrollTime)));
+			scrollSequence.AddAction(touchDevice.CreatePointerUp(PointerButton.TouchContact));
+			driver.PerformActions([scrollSequence]);
 		}
 
 		static void ScrollToRight(AppiumDriver driver, AppiumElement element, ScrollStrategy strategy, double swipePercentage, int swipeSpeed, bool withInertia = true)
 		{
-			var position = element.Location;
-			var size = element.Size;
+			var position = element is not null ? element.Location : System.Drawing.Point.Empty;
+			var size = element is not null ? element.Size : driver.Manage().Window.Size;
 
 			int startX = (int)(position.X + (size.Width * swipePercentage));
 			int startY = position.Y + size.Height / 2;
@@ -185,18 +193,20 @@ namespace Plugin.Maui.UITestHelpers.Appium
 			int endX = (int)(position.X + (size.Width * 0.05));
 			int endY = startY;
 
-			new TouchAction(driver)
-				.Press(startX, startY)
-				.Wait(strategy != ScrollStrategy.Programmatically ? swipeSpeed : 0)
-				.MoveTo(endX, endY)
-				.Release()
-				.Perform();
+			var touchDevice = new OpenQA.Selenium.Appium.Interactions.PointerInputDevice(PointerKind.Touch);
+			var scrollSequence = new ActionSequence(touchDevice, 0);
+			scrollSequence.AddAction(touchDevice.CreatePointerMove(CoordinateOrigin.Viewport, startX, startY, TimeSpan.Zero));
+			scrollSequence.AddAction(touchDevice.CreatePointerDown(PointerButton.TouchContact));
+			scrollSequence.AddAction(touchDevice.CreatePause(TimeSpan.FromMilliseconds(ScrollTouchDownTime)));
+			scrollSequence.AddAction(touchDevice.CreatePointerMove(CoordinateOrigin.Viewport, endX, endY, TimeSpan.FromMilliseconds(strategy != ScrollStrategy.Programmatically ? swipeSpeed : ProgrammaticallyScrollTime)));
+			scrollSequence.AddAction(touchDevice.CreatePointerUp(PointerButton.TouchContact));
+			driver.PerformActions([scrollSequence]);
 		}
 
 		static void ScrollToUp(AppiumDriver driver, AppiumElement element, ScrollStrategy strategy, double swipePercentage, int swipeSpeed, bool withInertia = true)
 		{
-			var position = element.Location;
-			var size = element.Size;
+			var position = element is not null ? element.Location : System.Drawing.Point.Empty;
+			var size = element is not null ? element.Size : driver.Manage().Window.Size;
 
 			int startX = position.X + size.Width / 2;
 			int startY = (int)(position.Y + (size.Height * 0.05));
@@ -204,12 +214,14 @@ namespace Plugin.Maui.UITestHelpers.Appium
 			int endX = startX;
 			int endY = (int)(position.Y + (size.Height * swipePercentage));
 
-			new TouchAction(driver)
-				.Press(startX, startY)
-				.Wait(strategy != ScrollStrategy.Programmatically ? swipeSpeed : 0)
-				.MoveTo(endX, endY)
-				.Release()
-				.Perform();
+			var touchDevice = new OpenQA.Selenium.Appium.Interactions.PointerInputDevice(PointerKind.Touch);
+			var scrollSequence = new ActionSequence(touchDevice, 0);
+			scrollSequence.AddAction(touchDevice.CreatePointerMove(CoordinateOrigin.Viewport, startX, startY, TimeSpan.Zero));
+			scrollSequence.AddAction(touchDevice.CreatePointerDown(PointerButton.TouchContact));
+			scrollSequence.AddAction(touchDevice.CreatePause(TimeSpan.FromMilliseconds(ScrollTouchDownTime)));
+			scrollSequence.AddAction(touchDevice.CreatePointerMove(CoordinateOrigin.Viewport, endX, endY, TimeSpan.FromMilliseconds(strategy != ScrollStrategy.Programmatically ? swipeSpeed : ProgrammaticallyScrollTime)));
+			scrollSequence.AddAction(touchDevice.CreatePointerUp(PointerButton.TouchContact));
+			driver.PerformActions([scrollSequence]);
 		}
 	}
 }
