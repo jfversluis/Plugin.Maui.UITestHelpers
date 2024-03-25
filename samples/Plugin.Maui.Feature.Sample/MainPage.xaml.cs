@@ -4,7 +4,7 @@ namespace Plugin.Maui.Feature.Sample;
 
 public partial class MainPage : ContentPage
 {
-	public MainPage(IFeature feature)
+	public MainPage()
 	{
 		InitializeComponent();
 	}
