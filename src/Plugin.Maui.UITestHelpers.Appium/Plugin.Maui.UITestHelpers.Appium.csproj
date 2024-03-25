@@ -6,8 +6,8 @@
     <Nullable>enable</Nullable>
 
     <!-- NuGet -->
-    <Authors>author</Authors>
-    <Copyright>Copyright © author and contributors</Copyright>
+    <Authors>jfversluis</Authors>
+    <Copyright>Copyright © jfversluis and contributors</Copyright>
     <IsPackable>True</IsPackable>
     <PackageProjectUrl>https://github.com/jfversluis/Plugin.Maui.UITestHelpers</PackageProjectUrl>
     <RepositoryUrl>https://github.com/jfversluis/Plugin.Maui.UITestHelpers</RepositoryUrl>
@@ -18,7 +18,7 @@
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <Title>.NET MAUI UI Test Helpers Appium Plugin</Title>
-    <Description>Plugin.Maui.UITestHelpers.Appium provides a set of helpers to support UI testing your .NET MAUI app and migration from Xamarin.UITest to Appium.</Description>
+    <Description>Plugin.Maui.UITestHelpers.Appium provides a set of helpers to support UI testing your .NET MAUI app with Appium and migration from Xamarin.UITest to Appium.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
     <DebugType>portable</DebugType>
@@ -35,10 +35,10 @@
     <ProjectReference Include="..\Plugin.Maui.UITestHelpers.Core\Plugin.Maui.UITestHelpers.Core.csproj" />
   </ItemGroup>
 
-	<!-- Package additions -->
-	<ItemGroup>
-		<None Include="..\..\nuget.png" PackagePath="icon.png" Pack="true" />
-		<None Include="..\..\README.md" Pack="true" PackagePath="\"/>
-	</ItemGroup>
+  <!-- Package additions -->
+  <ItemGroup>
+    <None Include="..\..\nuget.png" PackagePath="icon.png" Pack="true" />
+    <None Include="..\..\README.md" Pack="true" PackagePath="\"/>
+  </ItemGroup>
 
 </Project>

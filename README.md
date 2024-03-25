@@ -1,6 +1,9 @@
+![](https://raw.githubusercontent.com/jfversluis/Plugin.Maui.UITestHelpers/main/nuget.png)
 # Plugin.Maui.UITestHelpers
 
-A set of helpers extracted from the .NET MAUI codebase ([here](https://github.com/dotnet/maui/tree/main/src/TestUtils/src), the folders prefixed UITest) that can help with writing UI tests and/or transition Xamarin.UITest tests to Appium.
+`Plugin.Maui.UITestHelpers` provides a set of helpers to support UI testing your .NET MAUI app with Appium and migration from Xamarin.UITest to Appium. It consists of three packages, see below for more information.
+
+The set of helpers are extracted from the .NET MAUI codebase ([here](https://github.com/dotnet/maui/tree/main/src/TestUtils/src), the folders prefixed UITest) this code can help with writing UI tests with Appium and/or transition your existing Xamarin.UITest tests to Appium.
 
 > [!WARNING]  
 > At this time this project is not officially supported and experimental.
@@ -11,31 +14,21 @@ A set of helpers extracted from the .NET MAUI codebase ([here](https://github.co
 
 ## Install Plugin
 
-Right now this is available on my private Azure Artifacts feed which you can find [here](https://jfversluis.pkgs.visualstudio.com/MauiUITestHelpers/_packaging/UITestHelpers/nuget/v3/index.json).
+This project consists of three packages. please find the details below. All packages are available on NuGet.
 
-<!--![](nuget.png)
-# Plugin.Maui.UITestHelpers
+| Package Name | Description | NuGet Package |
+|----------|------------|---------------|
+| Plugin.Maui.UITestHelpers.Core   | Shared, core types that are used across the different projects | ![NuGet Version](https://img.shields.io/nuget/vpre/Plugin.Maui.UITestHelpers.Core) |
+| Plugin.Maui.UITestHelpers.Appium | This package contains code specific to UI testing with Appium. It's filled with helpers that will make writing UI tests easier, as well as methods that (mostly) mimic Xamarin.UITest to make transitioning your current UI tests easier | ![NuGet Version](https://img.shields.io/nuget/vpre/Plugin.Maui.UITestHelpers.Appium) |
+| Plugin.Maui.UITestHelpers.NUnit | This package contains helpers that will make it easier to write UI tests based on NUnit | ![NuGet Version](https://img.shields.io/nuget/vpre/Plugin.Maui.UITestHelpers.NUnit) |
 
-`Plugin.Maui.UITestHelpers` provides a set of helpers to support UI testing your .NET MAUI app and migration from Xamarin.UITest to Appium.
-
-## Install Plugin
-
-[![NuGet](https://img.shields.io/nuget/v/Plugin.Maui.UITestHelpers.svg?label=NuGet)](https://www.nuget.org/packages/Plugin.Maui.UITestHelpers/)
-
-Available on [NuGet](http://www.nuget.org/packages/Plugin.Maui.UITestHelpers).
-
-Install with the dotnet CLI: `dotnet add package Plugin.Maui.UITestHelpers`, or through the NuGet Package Manager in Visual Studio.
+Install with the dotnet CLI, for example: `dotnet add package Plugin.Maui.UITestHelpers.Appium`, or through the NuGet Package Manager in Visual Studio.
 
 ### Supported Platforms
 
-| Platform | Minimum Version Supported |
-|----------|---------------------------|
-| iOS      | 11+                       |
-| macOS    | 10.15+                    |
-| Android  | 5.0 (API 21)              |
-| Windows  | 11 and 10 version 1809+   |
+All platforms that are supported by the cross section of the support of Appium and .NET MAUI.
 
-## API Usage
+<!--## API Usage
 
 TBD -->
 
