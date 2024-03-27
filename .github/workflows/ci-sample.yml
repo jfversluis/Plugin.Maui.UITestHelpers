@@ -70,3 +70,7 @@ jobs:
     - name: Test iOS App
       run: |
         xharness apple install --app=samples/Plugin.Maui.UITestHelpers.Sample/bin/Debug/net8.0-ios/iossimulator-x64/Plugin.Maui.UITestHelpers.Sample.app --output-directory=out --target=ios-simulator-64_17.2 --device="iPhone 15 Pro"
+
+    - name: Run UI Tests iOS
+      run: |
+        dotnet test samples/UITests.iOS/UITests.iOS.csproj
