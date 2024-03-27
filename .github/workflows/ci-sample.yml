@@ -16,7 +16,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Build
-      run: dotnet build samples\Plugin.Maui.UITestHelpers.Sample.sln -c Release
+      run: dotnet build samples/Plugin.Maui.UITestHelpers.Sample.sln -c Release
 
     - name: Install xharness
       run: |
