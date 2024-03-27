@@ -17,3 +17,10 @@ jobs:
     - uses: actions/checkout@v4
     - name: Build
       run: dotnet build samples\Plugin.Maui.UITestHelpers.Sample.sln -c Release
+
+    - name: Install xharness
+      run: |
+        dotnet tool install Microsoft.DotNet.XHarness.CLI                                               `
+        --global                                                                                        `
+        --add-source https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet-eng/nuget/v3/index.json `
+        --version "9.0.0-prerelease*"
