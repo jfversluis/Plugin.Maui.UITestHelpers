@@ -49,7 +49,7 @@ jobs:
 
     - name: Install Android App
       run: |
-        xharness android install --app=samples/Plugin.Maui.UITestHelpers.Sample/bin/Debug/net8.0-android/com.companyname.uitesthelperssample-Signed.apk --package-name=com.companyname.uitesthelperssample --output-directory=out
+        xharness android install --app=samples/Plugin.Maui.UITestHelpers.Sample/bin/Release/net8.0-android/com.companyname.uitesthelperssample-Signed.apk --package-name=com.companyname.uitesthelperssample --output-directory=out
 
     - name: Run UI Tests Android
       run: |
