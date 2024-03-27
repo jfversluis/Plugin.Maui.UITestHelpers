@@ -8,12 +8,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UITests.Android", "UITests.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UITests.Shared", "UITests.Shared\UITests.Shared.csproj", "{DFD0E4D0-3519-4B55-8B31-CC7AF8106AAE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Plugin.Maui.UITestHelpers.Appium", "..\src\Plugin.Maui.UITestHelpers.Appium\Plugin.Maui.UITestHelpers.Appium.csproj", "{F959E9D2-6744-4508-A8A5-E94AA9BD2716}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Plugin.Maui.UITestHelpers.NUnit", "..\src\Plugin.Maui.UITestHelpers.NUnit\Plugin.Maui.UITestHelpers.NUnit.csproj", "{42DDF9AC-BE09-4083-8663-2D25B5314520}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Plugin.Maui.UITestHelpers.Core", "..\src\Plugin.Maui.UITestHelpers.Core\Plugin.Maui.UITestHelpers.Core.csproj", "{4BE6EBB4-AB2C-43C6-9608-13FF3DBFAF71}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -34,18 +28,6 @@ Global
 		{DFD0E4D0-3519-4B55-8B31-CC7AF8106AAE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DFD0E4D0-3519-4B55-8B31-CC7AF8106AAE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DFD0E4D0-3519-4B55-8B31-CC7AF8106AAE}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F959E9D2-6744-4508-A8A5-E94AA9BD2716}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F959E9D2-6744-4508-A8A5-E94AA9BD2716}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F959E9D2-6744-4508-A8A5-E94AA9BD2716}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F959E9D2-6744-4508-A8A5-E94AA9BD2716}.Release|Any CPU.Build.0 = Release|Any CPU
-		{42DDF9AC-BE09-4083-8663-2D25B5314520}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{42DDF9AC-BE09-4083-8663-2D25B5314520}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{42DDF9AC-BE09-4083-8663-2D25B5314520}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{42DDF9AC-BE09-4083-8663-2D25B5314520}.Release|Any CPU.Build.0 = Release|Any CPU
-		{4BE6EBB4-AB2C-43C6-9608-13FF3DBFAF71}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4BE6EBB4-AB2C-43C6-9608-13FF3DBFAF71}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4BE6EBB4-AB2C-43C6-9608-13FF3DBFAF71}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{4BE6EBB4-AB2C-43C6-9608-13FF3DBFAF71}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

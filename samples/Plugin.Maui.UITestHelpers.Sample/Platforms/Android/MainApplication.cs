@@ -1,7 +1,7 @@
 ﻿using Android.App;
 using Android.Runtime;
 
-namespace Plugin.Maui.Feature.Sample;
+namespace Plugin.Maui.UITestHelpers.Sample;
 
 [Application]
 public class MainApplication : MauiApplication

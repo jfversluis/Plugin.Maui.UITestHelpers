@@ -1,6 +1,6 @@
 ﻿using Foundation;
 
-namespace Plugin.Maui.Feature.Sample;
+namespace Plugin.Maui.UITestHelpers.Sample;
 
 [Register("AppDelegate")]
 public class AppDelegate : MauiUIApplicationDelegate

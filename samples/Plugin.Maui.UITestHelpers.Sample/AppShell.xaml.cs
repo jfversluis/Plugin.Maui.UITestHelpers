@@ -1,4 +1,4 @@
-﻿namespace Plugin.Maui.Feature.Sample;
+﻿namespace Plugin.Maui.UITestHelpers.Sample;
 
 public partial class AppShell : Shell
 {
