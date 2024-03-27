@@ -19,7 +19,7 @@ jobs:
       run: dotnet workload restore --project samples/Plugin.Maui.UITestHelpers.Sample/Plugin.Maui.UITestHelpers.Sample.csproj
 
     - name: Publish APK
-      run: dotnet publish samples/Plugin.Maui.UITestHelpers.Sample.csproj -f net8.0-android
+      run: dotnet publish samples/Plugin.Maui.UITestHelpers.Sample/Plugin.Maui.UITestHelpers.Sample.csproj -f net8.0-android
 
     - name: Install xharness
       run: |
