@@ -15,6 +15,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - name: Restore Workload
+      run: dotnet workload restore
+
     - name: Build
       run: dotnet build samples/Plugin.Maui.UITestHelpers.Sample.sln -c Release
 
