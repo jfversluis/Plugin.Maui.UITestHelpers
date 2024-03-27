@@ -51,6 +51,11 @@ jobs:
       run: |
         xharness android install --app=samples/Plugin.Maui.UITestHelpers.Sample/bin/Release/net8.0-android/com.companyname.uitesthelperssample-Signed.apk --package-name=com.companyname.uitesthelperssample --output-directory=out
 
+    - name: Install Appium
+      run: |
+        npm install -g appium
+        appium driver install uiautomator2
+
     - name: Run UI Tests Android
       run: |
         dotnet test samples/UITests.Android/UITests.Android.csproj
