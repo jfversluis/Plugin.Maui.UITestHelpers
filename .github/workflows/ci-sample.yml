@@ -34,12 +34,18 @@ jobs:
 
         ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --install 'system-images;android-31;default;x86_64'
 
-        echo "no" | ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/avdmanager create avd --name android_emulator_avd --package 'system-images;android-31;default;x86_64' --force
+        echo "no" | ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/avdmanager create avd --name android_emulator_avd --package 'system-images;android-33;default;x86_64' --force
 
         ${ANDROID_HOME}/tools/emulator -avd android_emulator_avd -gpu guest -memory 2048 -no-snapshot -no-audio -no-boot-anim -no-window -partition-size 4096
 
-        ${ANDROID_SDK_ROOT}/platform-tools/adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed | tr -d '\r') ]]; do sleep 1; done; input keyevent 82'
-
+        #${ANDROID_SDK_ROOT}/platform-tools/adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed | tr -d '\r') ]]; do sleep 1; done; input keyevent 82'
+        # The device is now booting, or close to be booted
+        # We just wait until the sys.boot_completed property is set to 1.
+        while [ "`adb shell getprop sys.boot_completed | tr -d '\r' `" != "1" ] ;
+        do
+          echo "Still waiting for boot.."
+          sleep 1;
+        done
     - name: Publish APK
       run: dotnet publish samples\Plugin.Maui.UITestHelpers.Sample.csproj -f net8.0-android
 
