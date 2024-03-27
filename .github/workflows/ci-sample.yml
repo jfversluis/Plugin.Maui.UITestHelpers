@@ -18,8 +18,8 @@ jobs:
     - name: Restore Workload
       run: dotnet workload restore --project samples/Plugin.Maui.UITestHelpers.Sample/Plugin.Maui.UITestHelpers.Sample.csproj
 
-    - name: Build
-      run: dotnet build samples/Plugin.Maui.UITestHelpers.Sample.sln -c Release
+    #- name: Build
+      #run: dotnet build samples/Plugin.Maui.UITestHelpers.Sample.sln -c Release
 
     - name: Install xharness
       run: |
