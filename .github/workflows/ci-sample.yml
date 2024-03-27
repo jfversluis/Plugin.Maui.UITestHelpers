@@ -18,8 +18,8 @@ jobs:
     - name: Restore Workload
       run: dotnet workload restore --project samples/Plugin.Maui.UITestHelpers.Sample/Plugin.Maui.UITestHelpers.Sample.csproj
 
-    #- name: Build
-      #run: dotnet build samples/Plugin.Maui.UITestHelpers.Sample.sln -c Release
+    - name: Publish APK
+      run: dotnet publish samples/Plugin.Maui.UITestHelpers.Sample.csproj -f net8.0-android
 
     - name: Install xharness
       run: |
@@ -44,10 +44,8 @@ jobs:
         while [ "`adb shell getprop sys.boot_completed | tr -d '\r' `" != "1" ] ;
         do
           echo "Still waiting for boot.."
-          sleep 1;
+          sleep 10;
         done
-    - name: Publish APK
-      run: dotnet publish samples\Plugin.Maui.UITestHelpers.Sample.csproj -f net8.0-android
 
     - name: Install Android App
       run: |
