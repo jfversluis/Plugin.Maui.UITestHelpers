@@ -24,8 +24,8 @@ public abstract class BaseTest : UITestBase
 
         if (_testDevice == TestDevice.iOS)
         {
-            config. SetProperty("DeviceName", "iPhone 15 Pro");
-            config.SetProperty("PlatformVersion", "17.2");
+            config.SetProperty("DeviceName", "UITestSim");
+            config.SetProperty("PlatformVersion", "17.4");
         }
 
         return config;

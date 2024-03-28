@@ -66,10 +66,12 @@ jobs:
 
     - name: Build iOS App
       run: dotnet build samples/Plugin.Maui.UITestHelpers.Sample/Plugin.Maui.UITestHelpers.Sample.csproj -f net8.0-ios
+
+    - name: Create iOS Simulator
+      run: xcrun simctl create UITestSim com.apple.CoreSimulator.SimDeviceType.iPhone-15 com.apple.CoreSimulator.SimRuntime.iOS-17-4
     
-    - name: Test iOS App
-      run: |
-        xharness apple install --app=samples/Plugin.Maui.UITestHelpers.Sample/bin/Debug/net8.0-ios/iossimulator-x64/Plugin.Maui.UITestHelpers.Sample.app --output-directory=out --target=ios-simulator-64_17.2 --device="iPhone 15 Pro"
+    - name: Install iOS App
+      run: xharness apple install --app=samples/Plugin.Maui.UITestHelpers.Sample/bin/Debug/net8.0-ios/iossimulator-x64/Plugin.Maui.UITestHelpers.Sample.app --output-directory=out --device="UITestSim"
 
     - name: Run UI Tests iOS
       run: |
