@@ -1,0 +1,56 @@
+name: Build Sample App for CI
+
+on:
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+      - "**.md"
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  BUILD_CONFIGURATION: Debug # Release builds don't run on the Simulator
+  CSPROJ_TO_BUILD: samples/Plugin.Maui.UITestHelpers.Sample/Plugin.Maui.UITestHelpers.Sample.csproj
+  APP_TO_TEST: samples/Plugin.Maui.UITestHelpers.Sample/bin/Debug/net8.0-ios/iossimulator-x64/Plugin.Maui.UITestHelpers.Sample.app
+  CSPROJ_TO_TEST: samples/UITests.iOS/UITests.iOS.csproj
+  APP_ID: com.companyname.uitesthelperssample
+  TARGET_FRAMEWORK: net8.0-ios
+  ANDROID_EMULATOR_IMAGE: system-images;android-33;default;x86_64
+
+jobs:
+  build-sample-ci:
+
+    runs-on: macos-13
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Restore Workload
+      run: dotnet workload restore --project ${{ env.CSPROJ_TO_BUILD }}
+
+   - name: Build iOS App
+      run: dotnet build ${{ env.CSPROJ_TO_BUILD }} -f ${{ env.TARGET_FRAMEWORK }} -c ${{ env.BUILD_CONFIGURATION }}
+
+    - name: Install xharness
+      run: |
+        dotnet tool install Microsoft.DotNet.XHarness.CLI                                                   \
+            --global                                                                                        \
+            --add-source https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet-eng/nuget/v3/index.json \
+            --version "9.0.0-prerelease*"
+
+    - name: Install Appium
+      run: |
+        npm install -g appium
+        appium driver install xcuitest
+    
+    - name: Select Xcode version
+      run: sudo xcode-select -s '/Applications/Xcode_15.2.app/Contents/Developer'
+
+    - name: Create iOS Simulator
+      run: xcrun simctl create UITestSim com.apple.CoreSimulator.SimDeviceType.iPhone-15 com.apple.CoreSimulator.SimRuntime.iOS-17-2 # This creates a iPhone 15 Simulator with iOS 17.2
+    
+    - name: Install iOS App
+      run: xharness apple install --app=${{ env.APP_TO_TEST }} --output-directory=out --device="UITestSim" # Note that the device value here must match what is in the test project
+
+    - name: Run UI Tests iOS
+      run: dotnet test ${{ env.CSPROJ_TO_TEST }}

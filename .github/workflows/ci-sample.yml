@@ -8,6 +8,10 @@ on:
   pull_request:
     branches: [ "main" ]
 
+env:
+  BUILD_CONFIGURATION: Release
+  CSPROJ_TO_BUILD: samples/Plugin.Maui.UITestHelpers.Sample/Plugin.Maui.UITestHelpers.Sample.csproj
+
 jobs:
   build-sample-ci:
 
@@ -15,64 +19,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+
     - name: Restore Workload
-      run: dotnet workload restore --project samples/Plugin.Maui.UITestHelpers.Sample/Plugin.Maui.UITestHelpers.Sample.csproj
+      run: dotnet workload restore --project ${{ env.CSPROJ_TO_BUILD }}
 
-    - name: Publish APK
-      run: dotnet publish samples/Plugin.Maui.UITestHelpers.Sample/Plugin.Maui.UITestHelpers.Sample.csproj -f net8.0-android
-
-    - name: Install xharness
-      run: |
-        dotnet tool install Microsoft.DotNet.XHarness.CLI                                                   \
-            --global                                                                                        \
-            --add-source https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet-eng/nuget/v3/index.json \
-            --version "9.0.0-prerelease*"
-
-    - name: Boot Android emulator
-      run: |
-        set -e -x
-
-        ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --install 'system-images;android-33;default;x86_64'
-
-        echo "no" | ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/avdmanager create avd --name android_emulator_avd --package 'system-images;android-33;default;x86_64' --force
-
-        ${ANDROID_HOME}/tools/emulator -avd android_emulator_avd -gpu guest -memory 2048 -no-snapshot -no-audio -no-boot-anim -no-window -partition-size 4096 &
-
-        #${ANDROID_SDK_ROOT}/platform-tools/adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed | tr -d '\r') ]]; do sleep 1; done; input keyevent 82'
-        # The device is now booting, or close to be booted
-        # We just wait until the sys.boot_completed property is set to 1.
-        while [ "`adb shell getprop sys.boot_completed | tr -d '\r' `" != "1" ] ;
-        do
-          echo "Still waiting for boot.."
-          sleep 10;
-        done
-
-    - name: Install Android App
-      run: |
-        xharness android install --app=samples/Plugin.Maui.UITestHelpers.Sample/bin/Release/net8.0-android/com.companyname.uitesthelperssample-Signed.apk --package-name=com.companyname.uitesthelperssample --output-directory=out
-
-    - name: Install Appium
-      run: |
-        npm install -g appium
-        appium driver install uiautomator2
-        appium driver install xcuitest
-
-    - name: Run UI Tests Android
-      run: |
-        dotnet test samples/UITests.Android/UITests.Android.csproj
-    
-    - name: Select Xcode version
-      run: sudo xcode-select -s '/Applications/Xcode_15.2.app/Contents/Developer'
-
-    - name: Build iOS App
-      run: dotnet build samples/Plugin.Maui.UITestHelpers.Sample/Plugin.Maui.UITestHelpers.Sample.csproj -f net8.0-ios
-
-    - name: Create iOS Simulator
-      run: xcrun simctl create UITestSim com.apple.CoreSimulator.SimDeviceType.iPhone-15 com.apple.CoreSimulator.SimRuntime.iOS-17-4
-    
-    - name: Install iOS App
-      run: xharness apple install --app=samples/Plugin.Maui.UITestHelpers.Sample/bin/Debug/net8.0-ios/iossimulator-x64/Plugin.Maui.UITestHelpers.Sample.app --output-directory=out --device="UITestSim"
-
-    - name: Run UI Tests iOS
-      run: |
-        dotnet test samples/UITests.iOS/UITests.iOS.csproj
+    - name: Build Sample App
+      run: dotnet build ${{ env.CSPROJ_TO_BUILD }} -c ${{ env.BUILD_CONFIGURATION }}

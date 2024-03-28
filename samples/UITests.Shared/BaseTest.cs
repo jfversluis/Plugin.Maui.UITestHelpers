@@ -24,8 +24,10 @@ public abstract class BaseTest : UITestBase
 
         if (_testDevice == TestDevice.iOS)
         {
+            // Note: this must match to the Simulator created in the GitHub Action
+            // Both the device name and iOS version must be here in order for Appium to find it correctly
             config.SetProperty("DeviceName", "UITestSim");
-            config.SetProperty("PlatformVersion", "17.4");
+            config.SetProperty("PlatformVersion", "17.2");
         }
 
         return config;
