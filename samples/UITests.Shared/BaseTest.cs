@@ -28,8 +28,6 @@ public abstract class BaseTest : UITestBase
             if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("SIMID"))
                 && !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("SIMNAME")))
             {
-                config.SetProperty("PlatformName", "iOS");
-                config.SetProperty("PlatformVersion", "17.2");
                 config.SetProperty("DeviceName", Environment.GetEnvironmentVariable("SIMNAME"));
                 config.SetProperty("udid", Environment.GetEnvironmentVariable("SIMID"));
             }
