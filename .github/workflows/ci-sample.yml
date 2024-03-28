@@ -15,7 +15,7 @@ env:
 jobs:
   build-sample-ci:
 
-    runs-on: macos-13
+    runs-on: windows-latest
 
     steps:
     - uses: actions/checkout@v4

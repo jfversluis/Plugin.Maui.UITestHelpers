@@ -53,7 +53,7 @@ jobs:
     
     - name: Install iOS App
       # Note that the value for the device parameter must match what is in the test project
-      run: xharness apple install --app=${{ env.APP_TO_TEST }} --output-directory=out --device="UITestSim"
+      run: xharness apple install --app=${{ env.APP_TO_TEST }} --output-directory=out --device="UITestSim" --target=ios-simulator
 
     - name: Run UI Tests iOS
       run: dotnet test ${{ env.CSPROJ_TO_TEST }}
