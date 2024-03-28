@@ -20,8 +20,5 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Restore Workload
-      run: dotnet workload restore --project ${{ env.CSPROJ_TO_BUILD }}
-
     - name: Build Sample App
       run: dotnet build ${{ env.CSPROJ_TO_BUILD }} -c ${{ env.BUILD_CONFIGURATION }}
