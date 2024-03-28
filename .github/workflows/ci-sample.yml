@@ -8,6 +8,10 @@ on:
   pull_request:
     branches: [ "main" ]
 
+env:
+  BUILD_CONFIGURATION: Release
+  CSPROJ_TO_BUILD: samples/Plugin.Maui.UITestHelpers.Sample/Plugin.Maui.UITestHelpers.Sample.csproj
+
 jobs:
   build-sample-ci:
 
@@ -15,5 +19,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Build
-      run: dotnet build samples\Plugin.Maui.UITestHelpers.Sample.sln -c Release
+
+    - name: Build Sample App
+      run: dotnet build ${{ env.CSPROJ_TO_BUILD }} -c ${{ env.BUILD_CONFIGURATION }}

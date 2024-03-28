@@ -24,8 +24,18 @@ public abstract class BaseTest : UITestBase
 
         if (_testDevice == TestDevice.iOS)
         {
-            config. SetProperty("DeviceName", "iPhone 15 Pro");
-            config.SetProperty("PlatformVersion", "17.2");
+            // Note: this is passed down from the GitHub Action. If nothing is set, fall back to a default value below
+            if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("SIMID"))
+                && !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("SIMNAME")))
+            {
+                config.SetProperty("DeviceName", Environment.GetEnvironmentVariable("SIMNAME"));
+                config.SetProperty("udid", Environment.GetEnvironmentVariable("SIMID"));
+            }
+            else
+            {
+                config.SetProperty("DeviceName", "iPhone 15 Pro");
+                config.SetProperty("PlatformVersion", "17.2");
+            }
         }
 
         return config;
