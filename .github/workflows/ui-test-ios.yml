@@ -48,13 +48,12 @@ jobs:
         npm install -g appium
         appium driver install xcuitest
 
-    - name: Create & Boot iOS Simulator
+    - name: Create iOS Simulator
       # This creates a iPhone 15 Pro Simulator with iOS 17.2
       run: | 
         simudid=$(xcrun simctl create ${{ env.TEST_SIM_NAME }} com.apple.CoreSimulator.SimDeviceType.iPhone-15-Pro com.apple.CoreSimulator.SimRuntime.iOS-17-2)
         echo "SIM_UDID=$(echo $simudid)" >> $GITHUB_ENV
         echo "Created Simulator UDID: $simudid"
-        xcrun simctl boot $simudid
     
     - name: Install iOS App
       run: xharness apple install --app=${{ env.APP_TO_TEST }} --output-directory=out --device="${{ env.SIM_UDID }}" --target=ios-simulator
