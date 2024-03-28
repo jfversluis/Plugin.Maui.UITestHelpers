@@ -52,11 +52,11 @@ jobs:
       # This creates a iPhone 15 Pro Simulator with iOS 17.2
       run: | 
         simudid=$(xcrun simctl create ${{ env.TEST_SIM_NAME }} com.apple.CoreSimulator.SimDeviceType.iPhone-15-Pro com.apple.CoreSimulator.SimRuntime.iOS-17-2)
-        echo $simudid
+        echo "SIM_UDID=$(echo $simudid)" >> $GITHUB_ENV 
     
     - name: Install iOS App
-      run: xharness apple install --app=${{ env.APP_TO_TEST }} --output-directory=out --device="$simudid" --target=ios-simulator
+      run: xharness apple install --app=${{ env.APP_TO_TEST }} --output-directory=out --device="${{ env.SIM_UDID }}" --target=ios-simulator
 
     - name: Run UI Tests iOS
       # We're passing on the values we used to create the Simulator with to the test project to find the correct one
-      run: dotnet test ${{ env.CSPROJ_TO_TEST }} --environment SIMNAME="${{ env.TEST_SIM_NAME }}" --environment SIMID="$simudid"
+      run: dotnet test ${{ env.CSPROJ_TO_TEST }} --environment SIMNAME="${{ env.TEST_SIM_NAME }}" --environment SIMID="${{ env.SIM_UDID }}"
