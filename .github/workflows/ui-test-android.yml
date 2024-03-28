@@ -1,4 +1,4 @@
-name: Build Sample App for CI
+name: Run UI Tests Android
 
 on:
   push:
