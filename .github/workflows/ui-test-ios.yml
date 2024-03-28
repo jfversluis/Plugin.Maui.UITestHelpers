@@ -17,6 +17,7 @@ env:
   APP_ID: com.companyname.uitesthelperssample
   TARGET_FRAMEWORK: net8.0-ios
   XCODE_VERSION: 15.2
+  TEST_SIM_NAME: UITestSim
 
 jobs:
   ui-test-ios:
@@ -48,12 +49,14 @@ jobs:
         appium driver install xcuitest
 
     - name: Create iOS Simulator
-      # This creates a iPhone 15 Simulator with iOS 17.2
-      run: xcrun simctl create UITestSim com.apple.CoreSimulator.SimDeviceType.iPhone-15 com.apple.CoreSimulator.SimRuntime.iOS-17-2
+      # This creates a iPhone 15 Pro Simulator with iOS 17.2
+      run: | 
+        simudid=$(xcrun simctl create ${{ env.TEST_SIM_NAME }} com.apple.CoreSimulator.SimDeviceType.iPhone-15-Pro com.apple.CoreSimulator.SimRuntime.iOS-17-2)
+        echo $simudid
     
     - name: Install iOS App
-      # Note that the value for the device parameter must match what is in the test project
-      run: xharness apple install --app=${{ env.APP_TO_TEST }} --output-directory=out --device="UITestSim" --target=ios-simulator
+      run: xharness apple install --app=${{ env.APP_TO_TEST }} --output-directory=out --device="$simudid" --target=ios-simulator
 
     - name: Run UI Tests iOS
-      run: dotnet test ${{ env.CSPROJ_TO_TEST }}
+      # We're passing on the values we used to create the Simulator with to the test project to find the correct one
+      run: dotnet test ${{ env.CSPROJ_TO_TEST }} --environment SIMNAME="${{ env.TEST_SIM_NAME }}" --environment SIMID="$simudid"
