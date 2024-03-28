@@ -18,7 +18,7 @@ env:
   ANDROID_EMULATOR_IMAGE: system-images;android-33;default;x86_64
 
 jobs:
-  build-sample-ci:
+  ui-test-android:
 
     runs-on: macos-13
 

@@ -15,10 +15,9 @@ env:
   CSPROJ_TO_TEST: samples/UITests.iOS/UITests.iOS.csproj
   APP_ID: com.companyname.uitesthelperssample
   TARGET_FRAMEWORK: net8.0-ios
-  ANDROID_EMULATOR_IMAGE: system-images;android-33;default;x86_64
 
 jobs:
-  build-sample-ci:
+  ui-test-ios:
 
     runs-on: macos-13
 
