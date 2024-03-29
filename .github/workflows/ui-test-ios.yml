@@ -22,7 +22,7 @@ env:
 jobs:
   ui-test-ios:
 
-    runs-on: macos-13
+    runs-on: self-hosted
 
     steps:
     - uses: actions/checkout@v4
