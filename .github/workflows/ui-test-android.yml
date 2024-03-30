@@ -16,6 +16,7 @@ env:
   APP_ID: com.companyname.uitesthelperssample
   TARGET_FRAMEWORK: net8.0-android
   ANDROID_EMULATOR_IMAGE: system-images;android-33;default;x86_64
+  ARTIFACTS_PATH: ${{ github.workspace }}/output
 
 jobs:
   ui-test-android:
@@ -55,7 +56,7 @@ jobs:
         done
 
     - name: Install Android App
-      run: xharness android install --app=${{ env.APP_TO_TEST }} --package-name=${{ env.APP_ID }} --output-directory=${{ github.workspace }}/xharness-logs
+      run: xharness android install --app=${{ env.APP_TO_TEST }} --package-name=${{ env.APP_ID }} --output-directory=${{ env.ARTIFACTS_PATH }}/xharness-logs
 
     - name: Install Appium
       run: |
@@ -63,11 +64,11 @@ jobs:
         appium driver install uiautomator2
 
     - name: Run UI Tests Android
-      run: dotnet test ${{ env.CSPROJ_TO_TEST }}
+      run: dotnet test ${{ env.CSPROJ_TO_TEST }} --environment APPIUM_LOG_FILE=${{ env.ARTIFACTS_PATH }}/appium-logs/appium.log
 
     - name: Publish Artifacts
       uses: actions/upload-artifact@v4
       if: always()
       with:
         name: logs
-        path: ${{ github.workspace }}/**/*.*
+        path: ${{ env.ARTIFACTS_PATH }}/**/*.*

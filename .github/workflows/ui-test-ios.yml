@@ -18,6 +18,7 @@ env:
   TARGET_FRAMEWORK: net8.0-ios
   XCODE_VERSION: 15.2
   TEST_SIM_NAME: UITestSim
+  ARTIFACTS_PATH: ${{ github.workspace }}/output
 
 jobs:
   ui-test-ios:
@@ -56,15 +57,15 @@ jobs:
         echo "Created Simulator UDID: $simudid"
     
     - name: Install iOS App
-      run: xharness apple install --app=${{ env.APP_TO_TEST }} --output-directory=${{ github.workspace }}/xharness-logs --device="${{ env.SIM_UDID }}" --target=ios-simulator
+      run: xharness apple install --app=${{ env.APP_TO_TEST }} --output-directory=${{ env.ARTIFACTS_PATH }}/xharness-logs --device="${{ env.SIM_UDID }}" --target=ios-simulator
 
     - name: Run UI Tests iOS
       # We're passing on the values we used to create the Simulator with to the test project to find the correct one
-      run: dotnet test ${{ env.CSPROJ_TO_TEST }} --environment SIMNAME="${{ env.TEST_SIM_NAME }}" --environment SIMID="${{ env.SIM_UDID }}" --environment APPIUM_LOG_FILE=${{ env.RUNNER_TEMP }}/appium/appium.log
+      run: dotnet test ${{ env.CSPROJ_TO_TEST }} --environment SIMNAME="${{ env.TEST_SIM_NAME }}" --environment SIMID="${{ env.SIM_UDID }}" --environment APPIUM_LOG_FILE=${{ env.ARTIFACTS_PATH }}/appium-logs/appium.log
 
     - name: Publish Artifacts
       uses: actions/upload-artifact@v4
       if: always()
       with:
         name: logs
-        path: ${{ github.workspace }}/**/*.*
+        path: ${{ env.ARTIFACTS_PATH }}/**/*.*
