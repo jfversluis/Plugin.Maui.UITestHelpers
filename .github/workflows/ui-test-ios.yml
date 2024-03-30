@@ -62,6 +62,7 @@ jobs:
     # Open Simulator app
     - name: Open Simulator app
       run: |
+        sudo rm -rf ~/Library/Developer/CoreSimulator/Caches
         open -Fna Simulator
         xcrun simctl boot ${{ env.SIM_UDID }}
 
