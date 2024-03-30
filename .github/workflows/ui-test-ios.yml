@@ -51,7 +51,7 @@ jobs:
 
     - name: Run Appium Server
       run: |
-        appium server --port=4723 --address=localhost --base-path="/wd/hub" --keep-alive-timeout 1200 &
+        appium server --port=4723 --address=localhost --base-path="/wd/hub" --keep-alive-timeout 1200 --default-capabilities "{ \"newCommandTimeout\": \"9999999\" }" &
 
     - name: Create iOS Simulator
       # This creates a iPhone 15 Pro Simulator with iOS 17.2
