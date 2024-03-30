@@ -62,6 +62,7 @@ jobs:
     # Open Simulator app
     - name: Open Simulator app
       run: |
+        sudo rm -rf ~/Library/Developer/CoreSimulator/Caches
         xcrun simctl list devices ${{ env.SIM_UDID }}
         echo "------"
         xcrun simctl shutdown all
