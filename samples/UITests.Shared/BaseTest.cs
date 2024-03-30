@@ -29,7 +29,6 @@ public abstract class BaseTest : UITestBase
                 && !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("SIMNAME")))
             {
                 config.SetProperty("DeviceName", Environment.GetEnvironmentVariable("SIMNAME"));
-                config.SetProperty("wdaLaunchTimeout", 999999);
                 config.SetProperty("udid", Environment.GetEnvironmentVariable("SIMID"));
             }
             else
