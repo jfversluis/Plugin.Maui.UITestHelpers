@@ -55,7 +55,7 @@ jobs:
         done
 
     - name: Install Android App
-      run: xharness android install --app=${{ env.APP_TO_TEST }} --package-name=${{ env.APP_ID }} --output-directory=${{ env.GITHUB_WORKSPACE }}/xharness-logs
+      run: xharness android install --app=${{ env.APP_TO_TEST }} --package-name=${{ env.APP_ID }} --output-directory=${{ github.workspace }}/xharness-logs
 
     - name: Install Appium
       run: |
@@ -70,4 +70,4 @@ jobs:
       if: always()
       with:
         name: logs
-        path: ${{ env.GITHUB_WORKSPACE }}/**/*.*
+        path: ${{ github.workspace }}/**/*.*
