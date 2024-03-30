@@ -62,7 +62,7 @@ jobs:
     - name: Open Simulator app
       run: |
         open -Fn "$(xcode-select -p)/Applications/Simulator.app"
-        xcrun simctl bootstatus ${{ env.SIM_UDID }}
+        xcrun simctl bootstatus ${{ env.SIM_UDID }} -b
 
     - name: Run UI Tests iOS
       # We're passing on the values we used to create the Simulator with to the test project to find the correct one
