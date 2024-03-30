@@ -12,7 +12,7 @@ env:
   # Release builds don't run on the Simulator
   BUILD_CONFIGURATION: Debug
   CSPROJ_TO_BUILD: samples/Plugin.Maui.UITestHelpers.Sample/Plugin.Maui.UITestHelpers.Sample.csproj
-  APP_TO_TEST: samples/Plugin.Maui.UITestHelpers.Sample/bin/Debug/net8.0-ios/iossimulator-arm64/Plugin.Maui.UITestHelpers.Sample.app
+  APP_TO_TEST: samples/Plugin.Maui.UITestHelpers.Sample/bin/Debug/net8.0-ios/iossimulator-x64/Plugin.Maui.UITestHelpers.Sample.app
   CSPROJ_TO_TEST: samples/UITests.iOS/UITests.iOS.csproj
   APP_ID: com.companyname.uitesthelperssample
   TARGET_FRAMEWORK: net8.0-ios
@@ -22,7 +22,7 @@ env:
 jobs:
   ui-test-ios:
 
-    runs-on: macos-14
+    runs-on: macos-13
 
     steps:
     - uses: actions/checkout@v4
@@ -60,7 +60,7 @@ jobs:
 
     - name: Run UI Tests iOS
       # We're passing on the values we used to create the Simulator with to the test project to find the correct one
-      run: dotnet test ${{ env.CSPROJ_TO_TEST }} --environment SIMNAME="${{ env.TEST_SIM_NAME }}" --environment SIMID="${{ env.SIM_UDID }}" --environment APPIUM_LOG_FILE=output/
+      run: dotnet test ${{ env.CSPROJ_TO_TEST }} --environment SIMNAME="${{ env.TEST_SIM_NAME }}" --environment SIMID="${{ env.SIM_UDID }}" --environment APPIUM_LOG_FILE=output/log.txt
 
     - name: Publish Artifacts
       uses: actions/upload-artifact@v4
