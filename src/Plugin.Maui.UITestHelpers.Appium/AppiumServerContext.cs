@@ -32,8 +32,8 @@ namespace Plugin.Maui.UITestHelpers.Appium
 
 			while (true)
 			{
-				//try
-				//{
+				try
+				{
 					// TODO: Create these IApp instances should not be hardcoded types
 					IApp app = testDevice switch
 					{
@@ -47,19 +47,19 @@ namespace Plugin.Maui.UITestHelpers.Appium
 					var newContext = new AppiumUIClientContext(app, config);
 					_contexts.Add(newContext);
 					return newContext;
-				//}
-				// catch (WebDriverException)
-				// {
-				// 	// Default command timeout is 60 seconds when executing the NewSessionCommand
-				// 	if (retries++ < 10)
-				// 	{
-				// 		Debug.WriteLine($">>>>> Retrying to create the driver, attempt #{retries}");
-				// 	}
-				// 	else
-				// 	{
-				// 		throw;
-				// 	}
-				// }
+				}
+				catch (WebDriverException)
+				{
+					// Default command timeout is 60 seconds when executing the NewSessionCommand
+					if (retries++ < 100)
+					{
+						Debug.WriteLine($">>>>> Retrying to create the driver, attempt #{retries}");
+					}
+					else
+					{
+						throw;
+					}
+				}
 			}
 		}
 
