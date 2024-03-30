@@ -59,9 +59,9 @@ jobs:
     - name: Install iOS App
       run: xharness apple install --app=${{ env.APP_TO_TEST }} --output-directory=${{ env.ARTIFACTS_PATH }}/xharness-logs --device="${{ env.SIM_UDID }}" --target=ios-simulator
 
-    # Shutdown all Simulators, needed to make it work in GitHub Actions ¯\_(ツ)_/¯
-    - name: Shutdown All iOS Simulators
-      run: sudo xcrun simctl shutdown all
+    # Open Simulator app
+    - name: Open Simulator app
+      run: open -Fna Simulator
 
     - name: Run UI Tests iOS
       # We're passing on the values we used to create the Simulator with to the test project to find the correct one
