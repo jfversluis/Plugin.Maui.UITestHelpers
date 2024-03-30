@@ -55,7 +55,7 @@ jobs:
         done
 
     - name: Install Android App
-      run: xharness android install --app=${{ env.APP_TO_TEST }} --package-name=${{ env.APP_ID }} --output-directory=out
+      run: xharness android install --app=${{ env.APP_TO_TEST }} --package-name=${{ env.APP_ID }} --output-directory=${{ env.RUNNER_TEMP }}/xharness-logs
 
     - name: Install Appium
       run: |
@@ -64,3 +64,10 @@ jobs:
 
     - name: Run UI Tests Android
       run: dotnet test ${{ env.CSPROJ_TO_TEST }}
+
+    - name: Publish Artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: logs
+        path: ${{ env.RUNNER_TEMP }}/**/*.*
