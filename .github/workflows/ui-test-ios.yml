@@ -64,7 +64,8 @@ jobs:
       run: |
         open -Fna Simulator
         xcrun simctl boot ${{ env.SIM_UDID }}
-        xcrun simctl install booted ${{ env.APP_TO_TEST }}
+        xcrun simctl install ${{ env.TEST_SIM_NAME }} ${{ env.APP_TO_TEST }}
+        xcrun simctl list
 
     - name: Run UI Tests iOS
       # We're passing on the values we used to create the Simulator with to the test project to find the correct one
