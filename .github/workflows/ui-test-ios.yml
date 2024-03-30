@@ -56,7 +56,7 @@ jobs:
         echo "Created Simulator UDID: $simudid"
     
     - name: Install iOS App
-      run: xharness apple install --app=${{ env.APP_TO_TEST }} --output-directory=${{ env.RUNNER_TEMP }}/xharness-logs --device="${{ env.SIM_UDID }}" --target=ios-simulator
+      run: xharness apple install --app=${{ env.APP_TO_TEST }} --output-directory=${{ env.GITHUB_WORKSPACE }}/xharness-logs --device="${{ env.SIM_UDID }}" --target=ios-simulator
 
     - name: Run UI Tests iOS
       # We're passing on the values we used to create the Simulator with to the test project to find the correct one
@@ -67,4 +67,4 @@ jobs:
       if: always()
       with:
         name: logs
-        path: ${{ env.RUNNER_TEMP }}/**/*.*
+        path: ${{ env.GITHUB_WORKSPACE }}/**/*.*
