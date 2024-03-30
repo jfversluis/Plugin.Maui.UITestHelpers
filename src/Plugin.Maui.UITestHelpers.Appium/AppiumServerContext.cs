@@ -71,7 +71,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
 
 				var arguments = new OpenQA.Selenium.Appium.Service.Options.OptionCollector();
 				arguments.AddArguments(new KeyValuePair<string, string>("--base-path", "/wd/hub"));
-				arguments.AddArguments(new KeyValuePair<string, string>("--default-capabilities", "\"{ \"newCommandTimeout\": \"9999999\" }\""));
+				arguments.AddArguments(new KeyValuePair<string, string>("--default-capabilities", """"{ \"newCommandTimeout\": \"5000000\" }\""""));
 
 				var logFile = Environment.GetEnvironmentVariable("APPIUM_LOG_FILE") ?? "appium.log";
 
