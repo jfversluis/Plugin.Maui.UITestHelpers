@@ -62,15 +62,15 @@ jobs:
     # Open Simulator app
     - name: Open Simulator app
       run: |
-        xcrun simctl list ${{ env.SIM_UDID }}
+        xcrun simctl list devices ${{ env.SIM_UDID }}
         echo "------"
         xcrun simctl shutdown all
-        xcrun simctl list ${{ env.SIM_UDID }}
+        xcrun simctl list devices ${{ env.SIM_UDID }}
         echo "------"
         open -Fna Simulator
         xcrun simctl boot ${{ env.SIM_UDID }}
         xcrun simctl install ${{ env.TEST_SIM_NAME }} ${{ env.APP_TO_TEST }}
-        xcrun simctl list ${{ env.SIM_UDID }}
+        xcrun simctl list devices ${{ env.SIM_UDID }}
 
     - name: Run UI Tests iOS
       # We're passing on the values we used to create the Simulator with to the test project to find the correct one
