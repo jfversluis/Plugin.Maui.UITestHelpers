@@ -12,7 +12,7 @@ env:
   # Release builds don't run on the Simulator
   BUILD_CONFIGURATION: Debug
   CSPROJ_TO_BUILD: samples/Plugin.Maui.UITestHelpers.Sample/Plugin.Maui.UITestHelpers.Sample.csproj
-  APP_TO_TEST: samples/Plugin.Maui.UITestHelpers.Sample/bin/Debug/net8.0-ios/iossimulator-arm64/Plugin.Maui.UITestHelpers.Sample.app
+  APP_TO_TEST: samples/Plugin.Maui.UITestHelpers.Sample/bin/Debug/net8.0-ios/iossimulator-x64/Plugin.Maui.UITestHelpers.Sample.app
   CSPROJ_TO_TEST: samples/UITests.iOS/UITests.iOS.csproj
   APP_ID: com.companyname.uitesthelperssample
   TARGET_FRAMEWORK: net8.0-ios
@@ -23,7 +23,7 @@ env:
 jobs:
   ui-test-ios:
 
-    runs-on: macos-14
+    runs-on: macos-13
 
     steps:
     - uses: actions/checkout@v4
@@ -31,27 +31,18 @@ jobs:
     - name: Select Xcode version
       run: sudo xcode-select -s '/Applications/Xcode_${{ env.XCODE_VERSION }}.app/Contents/Developer'
 
-    - name: Prepare & Preboot iOS Simulator
-      run: |
-        simudid=$(xcrun simctl create ${{ env.TEST_SIM_NAME }} com.apple.CoreSimulator.SimDeviceType.iPhone-15-Pro com.apple.CoreSimulator.SimRuntime.iOS-17-2)
-        echo "SIM_UDID=$(echo $simudid)" >> $GITHUB_ENV
-        echo "Created Simulator UDID: $simudid"
-
-        open -Fn "$(xcode-select -p)/Applications/Simulator.app"
-        xcrun simctl bootstatus $simudid -b &
-
     - name: Restore Workload
       run: dotnet workload restore --project ${{ env.CSPROJ_TO_BUILD }}
 
     - name: Build iOS App
       run: dotnet build ${{ env.CSPROJ_TO_BUILD }} -f ${{ env.TARGET_FRAMEWORK }} -c ${{ env.BUILD_CONFIGURATION }}
 
-    # - name: Install xharness
-    #   run: |
-    #     dotnet tool install Microsoft.DotNet.XHarness.CLI                                                   \
-    #         --global                                                                                        \
-    #         --add-source https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet-eng/nuget/v3/index.json \
-    #         --version "9.0.0-prerelease*"
+    - name: Install xharness
+      run: |
+        dotnet tool install Microsoft.DotNet.XHarness.CLI                                                   \
+            --global                                                                                        \
+            --add-source https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet-eng/nuget/v3/index.json \
+            --version "9.0.0-prerelease*"
 
     - name: Install Appium
       run: |
@@ -62,12 +53,15 @@ jobs:
     #   run: |
     #     appium server --port=4723 --address=localhost --base-path="/wd/hub" --keep-alive-timeout 1200 --default-capabilities "{ \"newCommandTimeout\": \"9999999\" }" &
 
-    - name: Install iOS App
+    - name: Create iOS Simulator
+      # This creates a iPhone 15 Pro Simulator with iOS 17.2
       run: | 
-        xcrun simctl install "${{ env.TEST_SIM_NAME }}" "${{ env.APP_TO_TEST }}"
-
-    # - name: Install iOS App
-    #   run: xharness apple install --app=${{ env.APP_TO_TEST }} --output-directory=${{ env.ARTIFACTS_PATH }}/xharness-logs --device="${{ env.SIM_UDID }}" --target=ios-simulator
+        simudid=$(xcrun simctl create ${{ env.TEST_SIM_NAME }} com.apple.CoreSimulator.SimDeviceType.iPhone-15-Pro com.apple.CoreSimulator.SimRuntime.iOS-17-2)
+        echo "SIM_UDID=$(echo $simudid)" >> $GITHUB_ENV
+        echo "Created Simulator UDID: $simudid"
+    
+    - name: Install iOS App
+      run: xharness apple install --app=${{ env.APP_TO_TEST }} --output-directory=${{ env.ARTIFACTS_PATH }}/xharness-logs --device="${{ env.SIM_UDID }}" --target=ios-simulator
 
     # - name: Open Simulator app
     #   run: |
