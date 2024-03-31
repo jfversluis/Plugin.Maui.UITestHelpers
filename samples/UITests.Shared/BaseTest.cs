@@ -31,6 +31,7 @@ public abstract class BaseTest : UITestBase
             {
                 config.SetProperty("DeviceName", Environment.GetEnvironmentVariable("SIMNAME"));
                 config.SetProperty("udid", Environment.GetEnvironmentVariable("SIMID"));
+                config.SetProperty("PlatformVersion", "17.2");
             }
             else
             {
