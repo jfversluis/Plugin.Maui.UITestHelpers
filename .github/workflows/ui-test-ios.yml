@@ -12,7 +12,7 @@ env:
   # Release builds don't run on the Simulator
   BUILD_CONFIGURATION: Debug
   CSPROJ_TO_BUILD: samples/Plugin.Maui.UITestHelpers.Sample/Plugin.Maui.UITestHelpers.Sample.csproj
-  APP_TO_TEST: samples/Plugin.Maui.UITestHelpers.Sample/bin/Debug/net8.0-ios/iossimulator-x64/Plugin.Maui.UITestHelpers.Sample.app
+  APP_TO_TEST: samples/Plugin.Maui.UITestHelpers.Sample/bin/Debug/net8.0-ios/iossimulator-arm64/Plugin.Maui.UITestHelpers.Sample.app
   CSPROJ_TO_TEST: samples/UITests.iOS/UITests.iOS.csproj
   APP_ID: com.companyname.uitesthelperssample
   TARGET_FRAMEWORK: net8.0-ios
@@ -23,7 +23,7 @@ env:
 jobs:
   ui-test-ios:
 
-    runs-on: macos-13
+    runs-on: macos-14
 
     steps:
     - uses: actions/checkout@v4
