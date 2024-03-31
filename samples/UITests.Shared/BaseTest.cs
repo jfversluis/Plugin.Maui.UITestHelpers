@@ -21,6 +21,7 @@ public abstract class BaseTest : UITestBase
 
         // Note: an app with this ID has to be deployed to the emulator/device you want to run it on
         config.SetProperty("AppId", "com.companyname.uitesthelperssample");
+        config.SetProperty("noReset", "true");
 
         if (_testDevice == TestDevice.iOS)
         {
@@ -30,7 +31,6 @@ public abstract class BaseTest : UITestBase
             {
                 config.SetProperty("DeviceName", Environment.GetEnvironmentVariable("SIMNAME"));
                 config.SetProperty("udid", Environment.GetEnvironmentVariable("SIMID"));
-                config.SetProperty("PlatformVersion", "17.2");
             }
             else
             {
