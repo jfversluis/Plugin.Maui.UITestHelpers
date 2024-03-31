@@ -38,7 +38,7 @@ jobs:
         echo "Created Simulator UDID: $simudid"
 
         open -Fn "$(xcode-select -p)/Applications/Simulator.app"
-        xcrun simctl bootstatus ${{ env.SIM_UDID }} -b
+        xcrun simctl bootstatus $simudid -b
 
     - name: Restore Workload
       run: dotnet workload restore --project ${{ env.CSPROJ_TO_BUILD }}
