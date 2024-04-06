@@ -53,7 +53,6 @@ jobs:
     #     do
     #       echo "Still waiting for boot.."
     #       sleep 10;
-    #     done
 
     # Install command also finds a suitable emulator and boots it
     - name: Install Android App
