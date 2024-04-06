@@ -31,9 +31,9 @@ public abstract class BaseTest : UITestBase
         if (_testDevice == TestDevice.iOS)
         {
             // Note: this is passed down from the GitHub Action. If nothing is set, fall back to a default value below
-            if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("SIMNAME")))
+            if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("SIMID")))
             {
-                config.SetProperty("DeviceName", Environment.GetEnvironmentVariable("SIMNAME"));
+                config.SetProperty("Udid", Environment.GetEnvironmentVariable("SIMID"));
             }
             else
             {
