@@ -64,7 +64,7 @@ jobs:
         appium driver install uiautomator2
 
     - name: Run UI Tests Android
-      run: dotnet test ${{ env.CSPROJ_TO_TEST }} --environment APPIUM_LOG_FILE=${{ env.ARTIFACTS_PATH }}/appium-logs/appium.log
+      run: dotnet test ${{ env.CSPROJ_TO_TEST }} --environment APPIUM_LOG_FILE=${{ env.ARTIFACTS_PATH }}/appium-logs/appium.log --environment APPID="${{ env.APP_ID }}"
 
     - name: Publish Artifacts
       uses: actions/upload-artifact@v4

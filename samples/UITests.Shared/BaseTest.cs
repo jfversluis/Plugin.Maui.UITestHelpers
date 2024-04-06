@@ -21,17 +21,19 @@ public abstract class BaseTest : UITestBase
 
         // Note: an app with this ID has to be deployed to the emulator/device you want to run it on
         config.SetProperty("AppId", "com.companyname.uitesthelperssample");
-        config.SetProperty("noReset", "true");
+
+        // If the app ID is provided through an environment variable, like through CI, use that instead
+        if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("APPID")))
+        {
+            config.SetProperty("AppId", Environment.GetEnvironmentVariable("APPID"));
+        }
 
         if (_testDevice == TestDevice.iOS)
         {
             // Note: this is passed down from the GitHub Action. If nothing is set, fall back to a default value below
-            if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("SIMID"))
-                && !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("SIMNAME")))
+            if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("SIMNAME")))
             {
                 config.SetProperty("DeviceName", Environment.GetEnvironmentVariable("SIMNAME"));
-                config.SetProperty("udid", Environment.GetEnvironmentVariable("SIMID"));
-                config.SetProperty("PlatformVersion", "16.4");
             }
             else
             {
