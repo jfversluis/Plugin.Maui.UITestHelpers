@@ -15,13 +15,13 @@ env:
   CSPROJ_TO_TEST: samples/UITests.Android/UITests.Android.csproj
   APP_ID: com.companyname.uitesthelperssample
   TARGET_FRAMEWORK: net8.0-android
-  ANDROID_EMULATOR_IMAGE: system-images;android-33;default;x86_64
+  ANDROID_EMULATOR_IMAGE: system-images;android-34;default;arm64-v8a
   ARTIFACTS_PATH: ${{ github.workspace }}/output
 
 jobs:
   ui-test-android:
 
-    runs-on: macos-13
+    runs-on: macos-14
 
     steps:
     - uses: actions/checkout@v4
@@ -39,22 +39,20 @@ jobs:
             --add-source https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet-eng/nuget/v3/index.json \
             --version "9.0.0-prerelease*"
 
-    # - name: Boot Android emulator
-    #   run: |
-    #     ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --install '${{ env.ANDROID_EMULATOR_IMAGE }}'
+    - name: Boot Android emulator
+      run: |
+        ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --install '${{ env.ANDROID_EMULATOR_IMAGE }}'
 
-    #     echo "no" | ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/avdmanager create avd --name android_emulator_avd --package '${{ env.ANDROID_EMULATOR_IMAGE }}' --force
+        echo "no" | ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/avdmanager create avd --name android_emulator_avd --package '${{ env.ANDROID_EMULATOR_IMAGE }}' --force
 
-    #     ${ANDROID_HOME}/tools/emulator -avd android_emulator_avd -gpu guest -memory 2048 -no-snapshot -no-audio -no-boot-anim -no-window -partition-size 4096 &
+        # The device is now booting, or close to be booted
+        # We just wait until the sys.boot_completed property is set to 1.
+        while [ "`adb shell getprop sys.boot_completed | tr -d '\r' `" != "1" ] ;
+        do
+          echo "Still waiting for boot.."
+          sleep 10;
+        done
 
-    #     # The device is now booting, or close to be booted
-    #     # We just wait until the sys.boot_completed property is set to 1.
-    #     while [ "`adb shell getprop sys.boot_completed | tr -d '\r' `" != "1" ] ;
-    #     do
-    #       echo "Still waiting for boot.."
-    #       sleep 10;
-
-    # Install command also finds a suitable emulator and boots it
     - name: Install Android App
       run: xharness android install --app=${{ env.APP_TO_TEST }} --package-name=${{ env.APP_ID }} --output-directory=${{ env.ARTIFACTS_PATH }}/xharness-logs
 
