@@ -8,6 +8,8 @@ namespace UITests.Shared;
 [TestFixture(TestDevice.Android)]
 #elif IOS
 [TestFixture(TestDevice.iOS)]
+#elif MACOS
+[TestFixture(TestDevice.Mac)]
 #endif
 public abstract class BaseTest : UITestBase
 {
