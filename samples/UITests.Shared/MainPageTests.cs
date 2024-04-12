@@ -19,9 +19,12 @@ public class MainPageTests : BaseTest
 	[Test]
 	public void ClickCounterTest()
 	{
+		const string elementId = "CounterBtn";
+
 		// Arrange
 		// Find elements with the value of the AutomationId property
-		var element = App.FindElement("CounterBtn");
+		var element = App.FindElement(elementId);
+		App.WaitForElement(elementId);
 
 		// Act
 		element.Click();
