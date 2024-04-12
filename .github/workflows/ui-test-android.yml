@@ -75,4 +75,4 @@ jobs:
         name: logs-and-screenshots
         path: |
           ${{ env.ARTIFACTS_PATH }}/**/*.*
-          ${{ SCREENCAPTURE_FOLDER }}/*.png
+          ${{ env.SCREENCAPTURE_FOLDER }}/*.png
