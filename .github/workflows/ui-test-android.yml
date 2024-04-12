@@ -17,6 +17,7 @@ env:
   TARGET_FRAMEWORK: net8.0-android
   TEST_EMULATOR_NAME: UITestEmu
   ANDROID_EMULATOR_IMAGE: system-images;android-34;default;x86_64
+  SCREENCAPTURE_FOLDER: samples/UITests.Android/bin/Release/net8.0
   ARTIFACTS_PATH: ${{ github.workspace }}/output
 
 jobs:
@@ -71,5 +72,7 @@ jobs:
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: logs
-        path: ${{ env.ARTIFACTS_PATH }}/**/*.*
+        name: logs-and-screenshots
+        path: |
+          ${{ env.ARTIFACTS_PATH }}/**/*.*
+          ${{ SCREENCAPTURE_FOLDER }}/*.png

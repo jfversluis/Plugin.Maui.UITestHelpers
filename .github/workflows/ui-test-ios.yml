@@ -70,5 +70,7 @@ jobs:
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: logs
-        path: ${{ env.ARTIFACTS_PATH }}/**/*.*
+        name: logs-and-screenshots
+        path: |
+          ${{ env.ARTIFACTS_PATH }}/**/*.*
+          ${{ SCREENCAPTURE_FOLDER }}/*.png
