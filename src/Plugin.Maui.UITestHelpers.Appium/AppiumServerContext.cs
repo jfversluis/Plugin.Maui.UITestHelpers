@@ -28,7 +28,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
 			int retries = 0;
 			int maxRetries = 10;
 
-			if (Environment.GetEnvironmentVariable("CI").ToLower().Equals("true"))
+			if (Environment.GetEnvironmentVariable("CI")?.ToLower().Equals("true") ?? false)
 			{
 				// Things can take long with CI
 				maxRetries = 100;
