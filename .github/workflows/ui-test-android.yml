@@ -16,7 +16,7 @@ env:
   APP_ID: com.companyname.uitesthelperssample
   TARGET_FRAMEWORK: net8.0-android
   TEST_EMULATOR_NAME: UITestEmu
-  ANDROID_EMULATOR_IMAGE: system-images;android-34;default;x86_64
+  ANDROID_EMULATOR_IMAGE: system-images;android-33;default;x86_64
   SCREENCAPTURE_FOLDER: samples/UITests.Android/bin/Release/net8.0
   ARTIFACTS_PATH: ${{ github.workspace }}/output
 
@@ -47,7 +47,7 @@ jobs:
 
         echo "no" | ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/avdmanager create avd --name ${{ env.TEST_EMULATOR_NAME }} --package '${{ env.ANDROID_EMULATOR_IMAGE }}' --force
 
-        ${ANDROID_HOME}/emulator/emulator -avd ${{ env.TEST_EMULATOR_NAME }} -gpu guest -memory 2048 -no-snapshot -no-audio -no-boot-anim -no-window -partition-size 4096 &
+        ${ANDROID_HOME}/tools/emulator -avd ${{ env.TEST_EMULATOR_NAME }} -gpu guest -memory 2048 -no-snapshot -no-audio -no-boot-anim -no-window -partition-size 4096 &
 
         # The device is now booting, or close to be booted
         # We just wait until the sys.boot_completed property is set to 1.
