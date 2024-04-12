@@ -46,7 +46,7 @@ jobs:
 
         echo "no" | ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/avdmanager create avd --name ${{ env.TEST_EMULATOR_NAME }} --package '${{ env.ANDROID_EMULATOR_IMAGE }}' --force
 
-        ${ANDROID_SDK_ROOT}/tools/emulator -avd ${{ env.TEST_EMULATOR_NAME }} -gpu guest -memory 2048 -no-snapshot -no-audio -no-boot-anim -no-window -partition-size 4096 &
+        ${ANDROID_HOME}/emulator/emulator -avd ${{ env.TEST_EMULATOR_NAME }} -gpu guest -memory 2048 -no-snapshot -no-audio -no-boot-anim -no-window -partition-size 4096 &
 
         # The device is now booting, or close to be booted
         # We just wait until the sys.boot_completed property is set to 1.
