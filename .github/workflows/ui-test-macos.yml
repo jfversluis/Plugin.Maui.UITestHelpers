@@ -50,7 +50,7 @@ jobs:
     
     - name: Install App
       # Deploy the app by running it on this Mac
-      run: dotnet build -t:Run -f ${{ env.TARGET_FRAMEWORK }} -c ${{ env.BUILD_CONFIGURATION }}
+      run: dotnet build ${{ env.CSPROJ_TO_BUILD }} -t:Run -f ${{ env.TARGET_FRAMEWORK }} -c ${{ env.BUILD_CONFIGURATION }}
 
     - name: Run UI Tests
       run: |
