@@ -17,6 +17,7 @@ env:
   APP_ID: com.companyname.uitesthelperssample
   TARGET_FRAMEWORK: net8.0-maccatalyst
   XCODE_VERSION: 15.2
+  SCREENCAPTURE_FOLDER: samples/UITests.macOS/bin/Release/net8.0
   ARTIFACTS_PATH: ${{ github.workspace }}/output
 
 jobs:

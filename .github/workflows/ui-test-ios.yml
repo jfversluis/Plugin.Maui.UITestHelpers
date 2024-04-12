@@ -18,6 +18,7 @@ env:
   TARGET_FRAMEWORK: net8.0-ios
   XCODE_VERSION: 15.2
   TEST_SIM_NAME: UITestSim
+  SCREENCAPTURE_FOLDER: samples/UITests.iOS/bin/Release/net8.0
   ARTIFACTS_PATH: ${{ github.workspace }}/output
 
 jobs:
