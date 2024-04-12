@@ -43,7 +43,7 @@ jobs:
       run: |
         ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --install '${{ env.ANDROID_EMULATOR_IMAGE }}'
 
-        echo "no" | ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/avdmanager create avd --name android_emulator_avd --package '${{ env.ANDROID_EMULATOR_IMAGE }}' --force
+        echo no | ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/avdmanager create avd --name android_emulator_avd --package '${{ env.ANDROID_EMULATOR_IMAGE }}' --force
 
         # The device is now booting, or close to be booted
         # We just wait until the sys.boot_completed property is set to 1.
