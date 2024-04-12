@@ -16,13 +16,13 @@ env:
   APP_ID: com.companyname.uitesthelperssample
   TARGET_FRAMEWORK: net8.0-android
   TEST_EMULATOR_NAME: UITestEmu
-  ANDROID_EMULATOR_IMAGE: system-images;android-34;default;arm64-v8a
+  ANDROID_EMULATOR_IMAGE: system-images;android-34;default;x86_64
   ARTIFACTS_PATH: ${{ github.workspace }}/output
 
 jobs:
   ui-test-android:
 
-    runs-on: macos-14
+    runs-on: macos-13
 
     steps:
     - uses: actions/checkout@v4
