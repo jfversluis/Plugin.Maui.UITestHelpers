@@ -3,19 +3,17 @@ using Plugin.Maui.UITestHelpers.Core;
 
 namespace Plugin.Maui.UITestHelpers.Appium
 {
-	public class AppiumCatalystPointerActions : ICommandExecutionGroup
+	public class AppiumCatalystMouseActions : ICommandExecutionGroup
 	{
 		const string DoubleClickCommand = "doubleClick";
-		const string DragAndDropCommand = "dragAndDrop";
 
 		readonly List<string> _commands = new()
 		{
 			DoubleClickCommand,
-			DragAndDropCommand,
 		};
 		readonly AppiumApp _appiumApp;
 
-		public AppiumCatalystPointerActions(AppiumApp appiumApp)
+		public AppiumCatalystMouseActions(AppiumApp appiumApp)
 		{
 			_appiumApp = appiumApp;
 		}
@@ -30,7 +28,6 @@ namespace Plugin.Maui.UITestHelpers.Appium
 			return commandName switch
 			{
 				DoubleClickCommand => DoubleClick(parameters),
-				DragAndDropCommand => DragAndDrop(parameters),
 				_ => CommandResponse.FailedEmptyResponse,
 			};
 		}
@@ -47,26 +44,6 @@ namespace Plugin.Maui.UITestHelpers.Appium
 				});
 			}
 			return CommandResponse.SuccessEmptyResponse;
-		}
-
-		CommandResponse DragAndDrop(IDictionary<string, object> actionParams)
-		{
-			AppiumElement? sourceAppiumElement = GetAppiumElement(actionParams["sourceElement"]);
-			AppiumElement? destinationAppiumElement = GetAppiumElement(actionParams["destinationElement"]);
-
-			if (sourceAppiumElement != null && destinationAppiumElement != null)
-			{
-				_appiumApp.Driver.ExecuteScript("macos: clickAndDragAndHold", new Dictionary<string, object>
-				{
-					{ "holdDuration", .1 }, // Length of time to hold before releasing
-                    { "duration", 1 }, // Length of time to hold after click before start dragging
-                    { "velocity", 2500 }, // How fast to drag
-                    { "sourceElementId", sourceAppiumElement.Id },
-					{ "destinationElementId", destinationAppiumElement.Id },
-				});
-				return CommandResponse.SuccessEmptyResponse;
-			}
-			return CommandResponse.FailedEmptyResponse;
 		}
 
 		static AppiumElement? GetAppiumElement(object element)
