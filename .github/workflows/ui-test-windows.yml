@@ -32,10 +32,17 @@ jobs:
       run: |
         npm install -g appium
         appium driver install --source=npm appium-windows-driver
-    
-    - name: Install App
+
+    - name: Create Self-Signed Certificate
+      run: |
+        New-SelfSignedCertificate -Type Custom -Subject "CN=TestBot" -KeyUsage DigitalSignature -FriendlyName "OurMauiTestAppCert" -CertStoreLocation "Cert:\CurrentUser\My" -TextExtension @("2.5.29.37={text}1.3.6.1.5.5.7.3.3", "2.5.29.19={text}")
+        $thumbprint = Get-ChildItem "Cert:\CurrentUser\My" | Where-Object Subject -Like '*TestBot*' | Select -ExpandProperty 'ThumbPrint'
+        echo "CERT_THUMBPRINT=$thumbprint" >> $env:GITHUB_ENV
+      
+    - name: Publish & Deploy App
       # Deploy the app by running it on this machine
-      run: dotnet build ${{ env.CSPROJ_TO_BUILD }} -t:Run -f ${{ env.TARGET_FRAMEWORK }} -c ${{ env.BUILD_CONFIGURATION }}
+      run: |
+        dotnet publish ${{ env.CSPROJ_TO_BUILD }} -f ${{ env.TARGET_FRAMEWORK }} -p:PackageCertificateThumbprint=$env:CERT_THUMBPRINT -p:AppxPackageSigningEnabled=True
 
     - name: Run UI Tests
       run: |
