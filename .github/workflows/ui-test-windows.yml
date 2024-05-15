@@ -31,7 +31,7 @@ jobs:
     - name: Install Appium
       run: |
         npm install -g appium
-        appium driver install appium-windows-driver
+        appium driver install --source=npm appium-windows-driver
     
     - name: Install App
       # Deploy the app by running it on this machine
