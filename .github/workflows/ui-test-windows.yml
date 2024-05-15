@@ -33,18 +33,17 @@ jobs:
         npm install -g appium
         appium driver install --source=npm appium-windows-driver
 
-    - name: Create & Install Self-Signed Certificate
+    - name: Create Self-Signed Certificate
       run: |
         New-SelfSignedCertificate -Type Custom -Subject "CN=TestBot" -KeyUsage DigitalSignature -FriendlyName "OurMauiTestAppCert" -CertStoreLocation "Cert:\CurrentUser\My" -TextExtension @("2.5.29.37={text}1.3.6.1.5.5.7.3.3", "2.5.29.19={text}")
         $thumbprint = Get-ChildItem "Cert:\CurrentUser\My" | Where-Object Subject -Like '*TestBot*' | Select -ExpandProperty 'ThumbPrint'
         echo "CERT_THUMBPRINT=$thumbprint" >> $env:GITHUB_ENV
-
-        Import-Certificate -FilePath (Get-ChildItem -Filter "Plugin.Maui.UITestHelpers.Sample*.cer" -Recurse -ErrorAction SilentlyContinue).fullname -CertStoreLocation 'Cert:\LocalMachine\Root'
       
     - name: Publish & Deploy App
       # Deploy the app by running it on this machine
       run: |
         dotnet publish ${{ env.CSPROJ_TO_BUILD }} -f ${{ env.TARGET_FRAMEWORK }} -p:PackageCertificateThumbprint=${{ env.CERT_THUMBPRINT }} -p:AppxPackageSigningEnabled=True
+        Import-Certificate -FilePath (Get-ChildItem -Filter "Plugin.Maui.UITestHelpers.Sample*.cer" -Recurse -ErrorAction SilentlyContinue).fullname -CertStoreLocation 'Cert:\LocalMachine\Root'
         Import-Module -Name Appx -UseWindowsPowerShell
         Add-AppxPackage -Path (Get-ChildItem -Filter "Plugin.Maui.UITestHelpers.Sample*.msix" -Recurse -ErrorAction SilentlyContinue).fullname
 
