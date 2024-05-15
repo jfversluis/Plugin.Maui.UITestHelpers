@@ -13,6 +13,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UITests.iOS", "UITests.iOS\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UITests.macOS", "UITests.macOS\UITests.macOS.csproj", "{74557CDA-CB45-4719-9A7D-DE35B10B7345}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UITests.Windows", "UITests.Windows\UITests.Windows.csproj", "{1A0A722B-2D19-42C6-A306-1417A283B244}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -41,6 +43,10 @@ Global
 		{74557CDA-CB45-4719-9A7D-DE35B10B7345}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{74557CDA-CB45-4719-9A7D-DE35B10B7345}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{74557CDA-CB45-4719-9A7D-DE35B10B7345}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1A0A722B-2D19-42C6-A306-1417A283B244}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1A0A722B-2D19-42C6-A306-1417A283B244}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1A0A722B-2D19-42C6-A306-1417A283B244}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1A0A722B-2D19-42C6-A306-1417A283B244}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

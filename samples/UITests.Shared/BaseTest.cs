@@ -10,6 +10,8 @@ namespace UITests.Shared;
 [TestFixture(TestDevice.iOS)]
 #elif MACOS
 [TestFixture(TestDevice.Mac)]
+#elif WINDOWS
+[TestFixture(TestDevice.Windows)]
 #endif
 public abstract class BaseTest : UITestBase
 {
@@ -22,7 +24,14 @@ public abstract class BaseTest : UITestBase
         var config = new Config();
 
         // Note: an app with this ID has to be deployed to the emulator/device you want to run it on
-        config.SetProperty("AppId", "com.companyname.uitesthelperssample");
+        if (_testDevice == TestDevice.Windows)
+        {
+            config.SetProperty("AppPath", "com.companyname.uitesthelperssample_9zz4h110yvjzm!App");
+        }
+        else
+        {
+            config.SetProperty("AppId", "com.companyname.uitesthelperssample");
+        }
 
         // If the app ID is provided through an environment variable, like through CI, use that instead
         if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("APPID")))
