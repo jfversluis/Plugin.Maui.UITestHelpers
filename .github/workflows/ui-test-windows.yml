@@ -44,8 +44,7 @@ jobs:
       run: |
         dotnet publish ${{ env.CSPROJ_TO_BUILD }} -f ${{ env.TARGET_FRAMEWORK }} -p:PackageCertificateThumbprint=${{ env.CERT_THUMBPRINT }} -p:AppxPackageSigningEnabled=True
         Import-Certificate -FilePath (Get-ChildItem -Filter "Plugin.Maui.UITestHelpers.Sample*.cer" -Recurse -ErrorAction SilentlyContinue).fullname -CertStoreLocation 'Cert:\LocalMachine\Root'
-        Import-Module -Name Appx -UseWindowsPowerShell
-        Add-AppxPackage -Path (Get-ChildItem -Filter "Plugin.Maui.UITestHelpers.Sample*.msix" -Recurse -ErrorAction SilentlyContinue).fullname
+        powershell -File (Get-ChildItem -Filter "Install.ps1" -Recurse -ErrorAction SilentlyContinue).fullname
 
     - name: Run UI Tests
       run: |
