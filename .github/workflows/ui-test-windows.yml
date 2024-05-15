@@ -43,6 +43,7 @@ jobs:
       # Deploy the app by running it on this machine
       run: |
         dotnet publish ${{ env.CSPROJ_TO_BUILD }} -f ${{ env.TARGET_FRAMEWORK }} -p:PackageCertificateThumbprint=${{ env.CERT_THUMBPRINT }} -p:AppxPackageSigningEnabled=True
+        Import-Module -Name Appx -UseWindowsPowerShell
         Add-AppxPackage -Path (Get-ChildItem -Filter "Plugin.Maui.UITestHelpers.Sample*.msix" -Recurse -ErrorAction SilentlyContinue).fullname
 
     - name: Run UI Tests
