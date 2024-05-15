@@ -1,12 +1,17 @@
-﻿Microsoft Visual Studio Solution File, Format Version 12.00
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31611.283
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Plugin.Maui.UITestHelpers.Sample", "Plugin.Maui.UITestHelpers.Sample\Plugin.Maui.UITestHelpers.Sample.csproj", "{490BB138-9606-4FFF-8AAD-841C5B1ED059}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UITests.Android", "UITests.Android\UITests.Android.csproj", "{6557E077-F81A-4D64-B3C4-A07BB1BD31D4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UITests.Android", "UITests.Android\UITests.Android.csproj", "{6557E077-F81A-4D64-B3C4-A07BB1BD31D4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UITests.Shared", "UITests.Shared\UITests.Shared.csproj", "{DFD0E4D0-3519-4B55-8B31-CC7AF8106AAE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UITests.Shared", "UITests.Shared\UITests.Shared.csproj", "{DFD0E4D0-3519-4B55-8B31-CC7AF8106AAE}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UITests.iOS", "UITests.iOS\UITests.iOS.csproj", "{2B36F0AB-6CF2-4EE8-8561-3A436304B744}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UITests.macOS", "UITests.macOS\UITests.macOS.csproj", "{74557CDA-CB45-4719-9A7D-DE35B10B7345}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -28,6 +33,14 @@ Global
 		{DFD0E4D0-3519-4B55-8B31-CC7AF8106AAE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DFD0E4D0-3519-4B55-8B31-CC7AF8106AAE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DFD0E4D0-3519-4B55-8B31-CC7AF8106AAE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2B36F0AB-6CF2-4EE8-8561-3A436304B744}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2B36F0AB-6CF2-4EE8-8561-3A436304B744}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2B36F0AB-6CF2-4EE8-8561-3A436304B744}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2B36F0AB-6CF2-4EE8-8561-3A436304B744}.Release|Any CPU.Build.0 = Release|Any CPU
+		{74557CDA-CB45-4719-9A7D-DE35B10B7345}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{74557CDA-CB45-4719-9A7D-DE35B10B7345}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{74557CDA-CB45-4719-9A7D-DE35B10B7345}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{74557CDA-CB45-4719-9A7D-DE35B10B7345}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
