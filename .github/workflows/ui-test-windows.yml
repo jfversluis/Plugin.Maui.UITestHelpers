@@ -12,7 +12,7 @@ env:
   BUILD_CONFIGURATION: Release
   CSPROJ_TO_BUILD: samples/Plugin.Maui.UITestHelpers.Sample/Plugin.Maui.UITestHelpers.Sample.csproj
   CSPROJ_TO_TEST: samples/UITests.Windows/UITests.Windows.csproj
-  APP_ID: com.companyname.uitesthelperssample_9zz4h110yvjzm!App
+  APP_ID: com.companyname.uitesthelperssample_9zz4h110yvjzm
   TARGET_FRAMEWORK: net8.0-windows10.0.19041.0
   SCREENCAPTURE_FOLDER: samples/UITests.Windows/bin/Release/net8.0
   ARTIFACTS_PATH: ${{ github.workspace }}/output
