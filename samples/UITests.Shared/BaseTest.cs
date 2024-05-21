@@ -23,21 +23,26 @@ public abstract class BaseTest : UITestBase
     {
         var config = new Config();
 
+        var appIdentifierKey = "AppId";
+
         // Note: an app with this ID has to be deployed to the emulator/device you want to run it on
+        var appIdentifier = "com.companyname.uitesthelperssample";
+
         if (_testDevice == TestDevice.Windows)
         {
-            config.SetProperty("AppPath", "com.companyname.uitesthelperssample_9zz4h110yvjzm!App");
-        }
-        else
-        {
-            config.SetProperty("AppId", "com.companyname.uitesthelperssample");
+            appIdentifierKey = "AppPath";
+
+            // Note: a release build has to be done and the path to this .exe file should exist. Tweak this path if necessary
+            appIdentifier = "../../../../Plugin.Maui.UITestHelpers.Sample/bin/Release/net8.0-windows10.0.19041.0/win10-x64/Plugin.Maui.UITestHelpers.Sample.exe";
         }
 
         // If the app ID is provided through an environment variable, like through CI, use that instead
         if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("APPID")))
         {
-            config.SetProperty("AppId", Environment.GetEnvironmentVariable("APPID"));
+            appIdentifier = Environment.GetEnvironmentVariable("APPID");
         }
+
+        config.SetProperty(appIdentifierKey, appIdentifier);
 
         if (_testDevice == TestDevice.iOS)
         {

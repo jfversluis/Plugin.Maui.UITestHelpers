@@ -11,8 +11,8 @@ on:
 env:
   BUILD_CONFIGURATION: Release
   CSPROJ_TO_BUILD: samples/Plugin.Maui.UITestHelpers.Sample/Plugin.Maui.UITestHelpers.Sample.csproj
+  APP_TO_TEST: samples/Plugin.Maui.UITestHelpers.Sample/bin/Release/net8.0-windows10.0.19041.0/win10-x64/Plugin.Maui.UITestHelpers.Sample.exe
   CSPROJ_TO_TEST: samples/UITests.Windows/UITests.Windows.csproj
-  APP_ID: com.companyname.uitesthelperssample_9zz4h110yvjzm
   TARGET_FRAMEWORK: net8.0-windows10.0.19041.0
   SCREENCAPTURE_FOLDER: samples/UITests.Windows/bin/Release/net8.0
   ARTIFACTS_PATH: ${{ github.workspace }}/output
@@ -33,22 +33,9 @@ jobs:
         npm install -g appium
         appium driver install --source=npm appium-windows-driver
 
-    - name: Create Self-Signed Certificate
-      run: |
-        New-SelfSignedCertificate -Type Custom -Subject "CN=TestBot" -KeyUsage DigitalSignature -FriendlyName "OurMauiTestAppCert" -CertStoreLocation "Cert:\CurrentUser\My" -TextExtension @("2.5.29.37={text}1.3.6.1.5.5.7.3.3", "2.5.29.19={text}")
-        $thumbprint = Get-ChildItem "Cert:\CurrentUser\My" | Where-Object Subject -Like '*TestBot*' | Select -ExpandProperty 'ThumbPrint'
-        echo "CERT_THUMBPRINT=$thumbprint" >> $env:GITHUB_ENV
-      
-    - name: Publish & Deploy App
-      # Deploy the app by running it on this machine
-      run: |
-        dotnet publish ${{ env.CSPROJ_TO_BUILD }} -f ${{ env.TARGET_FRAMEWORK }} -p:PackageCertificateThumbprint=${{ env.CERT_THUMBPRINT }} -p:AppxPackageSigningEnabled=True
-        Import-Certificate -FilePath (Get-ChildItem -Filter "Plugin.Maui.UITestHelpers.Sample*.cer" -Recurse -ErrorAction SilentlyContinue).fullname -CertStoreLocation 'Cert:\LocalMachine\Root'
-        powershell -File (Get-ChildItem -Filter "Install.ps1" -Recurse -ErrorAction SilentlyContinue).fullname
-
     - name: Run UI Tests
       run: |
-        dotnet test ${{ env.CSPROJ_TO_TEST }} --environment APPIUM_LOG_FILE=${{ env.ARTIFACTS_PATH }}/appium-logs/appium.log --environment APPID="${{ env.APP_ID }}"
+        dotnet test ${{ env.CSPROJ_TO_TEST }} --environment APPIUM_LOG_FILE=${{ env.ARTIFACTS_PATH }}/appium-logs/appium.log --environment APPID="${{ env.APP_TO_TEST }}"
 
     - name: Publish Artifacts
       uses: actions/upload-artifact@v4
