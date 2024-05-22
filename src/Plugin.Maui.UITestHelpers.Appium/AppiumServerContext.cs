@@ -26,6 +26,13 @@ namespace Plugin.Maui.UITestHelpers.Appium
 			}
 
 			int retries = 0;
+			int maxRetries = 10;
+
+			if (Environment.GetEnvironmentVariable("CI")?.ToLower().Equals("true") ?? false)
+			{
+				// Things can take long with CI
+				maxRetries = 100;
+			}
 
 			var testDevice = config.GetProperty<TestDevice>("TestDevice");
 			var driverUri = new Uri($"http://localhost:{Port}/wd/hub");
@@ -51,7 +58,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
 				catch (WebDriverException)
 				{
 					// Default command timeout is 60 seconds when executing the NewSessionCommand
-					if (retries++ < 10)
+					if (retries++ < maxRetries)
 					{
 						Debug.WriteLine($">>>>> Retrying to create the driver, attempt #{retries}");
 					}
