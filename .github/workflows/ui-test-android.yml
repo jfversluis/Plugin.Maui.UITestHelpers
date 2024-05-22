@@ -34,13 +34,6 @@ jobs:
     - name: Publish APK
       run: dotnet publish ${{ env.CSPROJ_TO_BUILD }} -f ${{ env.TARGET_FRAMEWORK }}
 
-    - name: Install xharness
-      run: |
-        dotnet tool install Microsoft.DotNet.XHarness.CLI                                                   \
-            --global                                                                                        \
-            --add-source https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet-eng/nuget/v3/index.json \
-            --version "9.0.0-prerelease*"
-
     - name: Boot Android emulator
       run: |
         ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --install '${{ env.ANDROID_EMULATOR_IMAGE }}'
@@ -58,7 +51,7 @@ jobs:
         done
 
     - name: Install App
-      run: xharness android install --app=${{ env.APP_TO_TEST }} --package-name=${{ env.APP_ID }} --output-directory=${{ env.ARTIFACTS_PATH }}/xharness-logs
+      run: adb install ${{ env.APP_TO_TEST }}
 
     - name: Install Appium
       run: |
