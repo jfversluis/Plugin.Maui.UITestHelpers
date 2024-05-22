@@ -46,7 +46,7 @@ jobs:
     - name: Create iOS Simulator
       # This creates a iPhone 15 Pro Simulator with iOS 16.4
       run: |
-        xharness apple simulators install ios-simulator_16.4
+        xcodes runtimes install "iOS 16.4"
         simudid=$(xcrun simctl create ${{ env.TEST_SIM_NAME }} com.apple.CoreSimulator.SimDeviceType.iPhone-13 com.apple.CoreSimulator.SimRuntime.iOS-16-4)
         echo "SIM_UDID=$(echo $simudid)" >> $GITHUB_ENV
         echo "Created Simulator UDID: $simudid"
