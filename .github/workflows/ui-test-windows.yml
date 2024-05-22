@@ -14,7 +14,7 @@ env:
   APP_TO_TEST: samples/Plugin.Maui.UITestHelpers.Sample/bin/Release/net8.0-windows10.0.19041.0/win10-x64/Plugin.Maui.UITestHelpers.Sample.exe
   CSPROJ_TO_TEST: samples/UITests.Windows/UITests.Windows.csproj
   TARGET_FRAMEWORK: net8.0-windows10.0.19041.0
-  SCREENCAPTURE_FOLDER: samples/UITests.Windows/bin/Release/net8.0
+  SCREENCAPTURE_FOLDER: samples/UITests.Windows/bin/Debug/net8.0
   ARTIFACTS_PATH: ${{ github.workspace }}/output
 
 jobs:

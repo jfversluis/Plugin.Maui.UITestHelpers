@@ -17,7 +17,7 @@ env:
   TARGET_FRAMEWORK: net8.0-android
   TEST_EMULATOR_NAME: UITestEmu
   ANDROID_EMULATOR_IMAGE: system-images;android-33;default;x86_64
-  SCREENCAPTURE_FOLDER: samples/UITests.Android/bin/Release/net8.0
+  SCREENCAPTURE_FOLDER: samples/UITests.Android/bin/Debug/net8.0
   ARTIFACTS_PATH: ${{ github.workspace }}/output
 
 jobs:
