@@ -52,7 +52,9 @@ jobs:
         echo "Created Simulator UDID: $simudid"
     
     - name: Install App
-      run: xcrun simctl install "${{ env.SIM_UDID }}" "${{ env.APP_TO_TEST }}"
+      run: |
+        xcrun simctl boot "${{ env.SIM_UDID }}"
+        xcrun simctl install "${{ env.SIM_UDID }}" "${{ env.APP_TO_TEST }}"
 
     - name: Run UI Tests
       # We're passing on the values we used to create the Simulator with to the test project to find the correct one
