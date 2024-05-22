@@ -35,7 +35,10 @@ jobs:
 
     - name: Run UI Tests
       run: |
-        dotnet test ${{ env.CSPROJ_TO_TEST }} --environment APPIUM_LOG_FILE=${{ env.ARTIFACTS_PATH }}/appium-logs/appium.log --environment APPID="${{ env.APP_TO_TEST }}"
+        # Set environment variable separately because of https://github.com/dotnet/sdk/issues/40848
+        $absolutePath = ("${{ env.APP_TO_TEST }}" | Resolve-Path).Path
+        $env:APPID = absolutePath
+        dotnet test ${{ env.CSPROJ_TO_TEST }} --environment APPIUM_LOG_FILE=${{ env.ARTIFACTS_PATH }}/appium-logs/appium.log --environment APPID="$absolutePath"
 
     - name: Publish Artifacts
       uses: actions/upload-artifact@v4

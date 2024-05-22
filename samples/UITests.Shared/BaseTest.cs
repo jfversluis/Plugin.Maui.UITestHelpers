@@ -1,5 +1,6 @@
 using NUnit.Framework;
 using Plugin.Maui.UITestHelpers.Core;
+using System.Diagnostics;
 using UITest.Appium.NUnit;
 
 namespace UITests.Shared;
@@ -33,7 +34,8 @@ public abstract class BaseTest : UITestBase
             appIdentifierKey = "AppPath";
 
             // Note: a release build has to be done and the path to this .exe file should exist. Tweak this path if necessary
-            appIdentifier = "../../../../Plugin.Maui.UITestHelpers.Sample/bin/Release/net8.0-windows10.0.19041.0/win10-x64/Plugin.Maui.UITestHelpers.Sample.exe";
+            var absolutePath = Path.GetFullPath("..\\..\\..\\..\\Plugin.Maui.UITestHelpers.Sample\\bin\\Release\\net8.0-windows10.0.19041.0\\win10-x64\\Plugin.Maui.UITestHelpers.Sample.exe");
+            appIdentifier = absolutePath;
         }
 
         // If the app ID is provided through an environment variable, like through CI, use that instead
