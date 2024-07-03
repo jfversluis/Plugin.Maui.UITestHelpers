@@ -15,7 +15,9 @@ namespace Plugin.Maui.UITestHelpers.Appium
 		const string IdQuery = IdToken + "={0}";
 		const string NameQuery = NameToken + "={0}";
 		const string AccessibilityQuery = AccessibilityToken + "={0}";
+		const string XPathToken = "xpath";
 		const string ClassQuery = ClassToken + "={0}";
+		const string XPathQuery = XPathToken + "={0}";
 		readonly string _queryStr;
 
 		public AppiumQuery(string queryStr)
@@ -48,6 +50,11 @@ namespace Plugin.Maui.UITestHelpers.Appium
 			return new AppiumQuery(this, string.Format(NameQuery, nameQuery));
 		}
 
+		IQuery IQuery.ByXPath(string xpath)
+		{
+			return new AppiumQuery(this, string.Format(XPathQuery, Uri.EscapeDataString(xpath)));
+		}
+
 		public static AppiumQuery ById(string id)
 		{
 			return new AppiumQuery(string.Format(IdQuery, id));
@@ -56,6 +63,11 @@ namespace Plugin.Maui.UITestHelpers.Appium
 		public static AppiumQuery ByName(string nameQuery)
 		{
 			return new AppiumQuery(string.Format(NameQuery, nameQuery));
+		}
+
+		public static AppiumQuery ByXPath(string xpath)
+		{
+			return new AppiumQuery(string.Format(XPathQuery, Uri.EscapeDataString(xpath)));
 		}
 
 		public static AppiumQuery ByAccessibilityId(string id)
@@ -184,6 +196,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
 				NameToken => MobileBy.Name(value),
 				AccessibilityToken => MobileBy.AccessibilityId(value),
 				IdToken => MobileBy.Id(value),
+				XPathToken => MobileBy.XPath(Uri.UnescapeDataString(value)),
 				_ => throw new ArgumentException("Unknown query type"),
 			};
 		}

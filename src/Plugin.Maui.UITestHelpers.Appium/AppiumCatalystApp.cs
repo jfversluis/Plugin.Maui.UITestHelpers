@@ -12,6 +12,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
 		{
 			_commandExecutor.AddCommandGroup(new AppiumCatalystMouseActions(this));
 			_commandExecutor.AddCommandGroup(new AppiumCatalystTouchActions(this));
+			_commandExecutor.AddCommandGroup(new AppiumCatalystAlertActions(this));
 		}
 
 		public override ApplicationState AppState

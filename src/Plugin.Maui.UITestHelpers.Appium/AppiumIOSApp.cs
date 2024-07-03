@@ -14,6 +14,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
 			_commandExecutor.AddCommandGroup(new AppiumIOSMouseActions(this));
 			_commandExecutor.AddCommandGroup(new AppiumIOSTouchActions(this));
 			_commandExecutor.AddCommandGroup(new AppiumIOSVirtualKeyboardActions(this));
+			_commandExecutor.AddCommandGroup(new AppiumIOSAlertActions(this));
 		}
 
 		public override ApplicationState AppState
