@@ -1,4 +1,5 @@
 ﻿using OpenQA.Selenium.Appium.Android;
+using OpenQA.Selenium.Appium.Windows;
 using Plugin.Maui.UITestHelpers.Core;
 
 namespace Plugin.Maui.UITestHelpers.Appium
