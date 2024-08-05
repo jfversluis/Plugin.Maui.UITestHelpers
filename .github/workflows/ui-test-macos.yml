@@ -36,13 +36,6 @@ jobs:
     - name: Build App
       run: dotnet build ${{ env.CSPROJ_TO_BUILD }} -f ${{ env.TARGET_FRAMEWORK }} -c ${{ env.BUILD_CONFIGURATION }}
 
-    - name: Install xharness
-      run: |
-        dotnet tool install Microsoft.DotNet.XHarness.CLI                                                   \
-            --global                                                                                        \
-            --add-source https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet-eng/nuget/v3/index.json \
-            --version "9.0.0-prerelease*"
-
     - name: Install Appium
       run: |
         npm install -g appium
