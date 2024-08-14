@@ -28,6 +28,9 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Restore Tools
+      run: dotnet tool restore
+
     - name: Restore Workload
       run: dotnet workload restore --project ${{ env.CSPROJ_TO_BUILD }}
 
@@ -36,22 +39,13 @@ jobs:
 
     - name: Boot Android emulator
       run: |
-        ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --install '${{ env.ANDROID_EMULATOR_IMAGE }}'
-
-        echo "no" | ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/avdmanager create avd --name ${{ env.TEST_EMULATOR_NAME }} --package '${{ env.ANDROID_EMULATOR_IMAGE }}' --force
-
-        ${ANDROID_HOME}/tools/emulator -avd ${{ env.TEST_EMULATOR_NAME }} -gpu guest -memory 2048 -no-snapshot -no-audio -no-boot-anim -no-window -partition-size 4096 &
-
-        # The device is now booting, or close to be booted
-        # We just wait until the sys.boot_completed property is set to 1.
-        while [ "`adb shell getprop sys.boot_completed | tr -d '\r' `" != "1" ] ;
-        do
-          echo "Still waiting for boot.."
-          sleep 10;
-        done
+        dotnet android sdk install --package '${{ env.ANDROID_EMULATOR_IMAGE }}'
+        dotnet android avd create --name ${{ env.TEST_EMULATOR_NAME }} --sdk '${{ env.ANDROID_EMULATOR_IMAGE }}' --force
+        dotnet android avd start --name ${{ env.TEST_EMULATOR_NAME }} --wait-boot --gpu guest --no-snapshot --no-audio --no-boot-anim --no-window
+        dotnet android device list
 
     - name: Install App
-      run: adb install ${{ env.APP_TO_TEST }}
+      run: dotnet android device install --package ${{ env.APP_TO_TEST }}
 
     - name: Install Appium
       run: |
