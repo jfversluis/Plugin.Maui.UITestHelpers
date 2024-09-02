@@ -44,10 +44,10 @@ jobs:
         appium driver install xcuitest
 
     - name: Create iOS Simulator
-      # This creates a iPhone 15 Pro Simulator with iOS 16.4
+      # This creates a iPhone 15 Pro Simulator with iOS 17.6
       run: |
-        xcodes runtimes install "iOS 16.4"
-        simudid=$(xcrun simctl create ${{ env.TEST_SIM_NAME }} com.apple.CoreSimulator.SimDeviceType.iPhone-13 com.apple.CoreSimulator.SimRuntime.iOS-16-4)
+        xcodes runtimes install "iOS 17.6"
+        simudid=$(xcrun simctl create ${{ env.TEST_SIM_NAME }} com.apple.CoreSimulator.SimDeviceType.iPhone-15-Pro com.apple.CoreSimulator.SimRuntime.iOS-17-6)
         echo "SIM_UDID=$(echo $simudid)" >> $GITHUB_ENV
         echo "Created Simulator UDID: $simudid"
     
