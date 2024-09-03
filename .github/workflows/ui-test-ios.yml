@@ -16,7 +16,7 @@ env:
   CSPROJ_TO_TEST: samples/UITests.iOS/UITests.iOS.csproj
   APP_ID: com.companyname.uitesthelperssample
   TARGET_FRAMEWORK: net8.0-ios
-  XCODE_VERSION: 15.2
+  XCODE_VERSION: 15.4
   TEST_SIM_NAME: UITestSim
   SCREENCAPTURE_FOLDER: samples/UITests.iOS/bin/Debug/net8.0
   ARTIFACTS_PATH: ${{ github.workspace }}/output
@@ -44,10 +44,11 @@ jobs:
         appium driver install xcuitest
 
     - name: Create iOS Simulator
-      # This creates a iPhone 15 Pro Simulator with iOS 16.4
+      # This creates a iPhone 15 Pro Simulator with iOS 17.5
       run: |
-        xcodes runtimes install "iOS 16.4"
-        simudid=$(xcrun simctl create ${{ env.TEST_SIM_NAME }} com.apple.CoreSimulator.SimDeviceType.iPhone-13 com.apple.CoreSimulator.SimRuntime.iOS-16-4)
+        #xcodes runtimes install "iOS 17.5"
+        #simudid=$(xcrun simctl create ${{ env.TEST_SIM_NAME }} com.apple.CoreSimulator.SimDeviceType.iPhone-15-Pro com.apple.CoreSimulator.SimRuntime.iOS-17-5)
+        simudid=$(xcrun simctl create ${{ env.TEST_SIM_NAME }} com.apple.CoreSimulator.SimDeviceType.iPhone-15-Pro)
         echo "SIM_UDID=$(echo $simudid)" >> $GITHUB_ENV
         echo "Created Simulator UDID: $simudid"
     
