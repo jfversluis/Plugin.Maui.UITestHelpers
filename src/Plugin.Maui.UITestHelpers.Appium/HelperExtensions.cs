@@ -381,6 +381,22 @@ namespace Plugin.Maui.UITestHelpers.Appium
             Wait(query, i => i is null, timeoutMessage, timeout, retryFrequency);
         }
 
+        public static IUIElement WaitForFirstElement(this IApp app, string marked, string timeoutMessage = "Timed out waiting for element...", TimeSpan? timeout = null, TimeSpan? retryFrequency = null, TimeSpan? postTimeout = null)
+        {
+            IReadOnlyCollection<IUIElement> elements = app.FindElements(marked);
+
+            if (elements is not null && elements.Count > 0)
+            {
+                IUIElement firstElement() => elements.First();
+
+                var result = Wait(firstElement, i => i != null, timeoutMessage, timeout, retryFrequency);
+
+                return result;
+            }
+
+            return WaitForElement(app, marked, timeoutMessage, timeout, retryFrequency, postTimeout);
+        }
+
         public static bool WaitForTextToBePresentInElement(this IApp app, string automationId, string text)
         {
             TimeSpan timeout = DefaultTimeout;
