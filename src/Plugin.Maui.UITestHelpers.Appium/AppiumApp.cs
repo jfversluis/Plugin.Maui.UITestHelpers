@@ -17,6 +17,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
 			_config = config ?? throw new ArgumentNullException(nameof(config));
 
 			_commandExecutor = new AppiumCommandExecutor();
+			_commandExecutor.AddCommandGroup(new AppiumDeviceActions(this));
 			_commandExecutor.AddCommandGroup(new AppiumMouseActions(this));
 			_commandExecutor.AddCommandGroup(new AppiumTouchActions(this));
 			_commandExecutor.AddCommandGroup(new AppiumTextActions());
