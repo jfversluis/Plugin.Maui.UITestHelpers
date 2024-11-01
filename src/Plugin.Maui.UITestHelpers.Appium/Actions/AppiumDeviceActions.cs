@@ -9,18 +9,20 @@ namespace Plugin.Maui.UITestHelpers.Appium
     {
         const string LockCommand = "lock";
         const string UnlockCommand = "unlock";
+        const string IsLockedCommand = "isLocked";
         const string StartRecordingScreenCommand = "startRecordingScreen";
         const string StopRecordingScreenCommand = "stopRecordingScreen";
 
         readonly AppiumApp _appiumApp;
 
         readonly List<string> _commands = new()
-         {
-             LockCommand,
-             UnlockCommand,
-             StartRecordingScreenCommand,
-             StopRecordingScreenCommand,
-         };
+        {
+            LockCommand,
+            UnlockCommand,
+            IsLockedCommand,
+            StartRecordingScreenCommand,
+            StopRecordingScreenCommand,
+        };
 
         public AppiumDeviceActions(AppiumApp appiumApp)
         {
@@ -38,6 +40,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
             {
                 LockCommand => Lock(parameters),
                 UnlockCommand => Unlock(parameters),
+                IsLockedCommand => IsLocked(parameters),
                 StartRecordingScreenCommand => StartRecordingScreen(parameters),
                 StopRecordingScreenCommand => StopRecordingScreen(parameters),
                 _ => CommandResponse.FailedEmptyResponse,
@@ -75,6 +78,20 @@ namespace Plugin.Maui.UITestHelpers.Appium
                 iOSDriver.Unlock();
 
                 return CommandResponse.SuccessEmptyResponse;
+            }
+
+            return CommandResponse.FailedEmptyResponse;
+        }
+
+        CommandResponse IsLocked(IDictionary<string, object> parameters)
+        {
+            if (_appiumApp.Driver is AndroidDriver androidDriver)
+            {
+                return new CommandResponse(androidDriver.IsLocked(), CommandResponseResult.Success);
+            }
+            if (_appiumApp.Driver is IOSDriver iOSDriver)
+            {
+                return new CommandResponse(iOSDriver.IsLocked(), CommandResponseResult.Success);
             }
 
             return CommandResponse.FailedEmptyResponse;
