@@ -86,12 +86,19 @@ namespace Plugin.Maui.UITestHelpers.Appium
 			return q.FindElement(this);
 		}
 
-		public virtual IReadOnlyCollection<IUIElement> FindElements(string id)
+#nullable disable
+        public virtual IUIElement FindElementByText(string text)
+        {
+            return AppiumQuery.ByXPath("//*[@text='" + text + "']").FindElement(this);
+        }
+#nullable enable
+
+        public virtual IReadOnlyCollection<IUIElement> FindElements(string id)
 		{
 			return Query.ById(id);
 		}
 
-		public virtual IReadOnlyCollection<IUIElement> FindElements(IQuery query)
+        public virtual IReadOnlyCollection<IUIElement> FindElements(IQuery query)
 		{
 			AppiumQuery? appiumQuery = query as AppiumQuery;
 			if (appiumQuery is not null)
@@ -104,7 +111,12 @@ namespace Plugin.Maui.UITestHelpers.Appium
 			return q.FindElements(this);
 		}
 
-		protected static void SetGeneralAppiumOptions(IConfig config, AppiumOptions appiumOptions)
+        public virtual IReadOnlyCollection<IUIElement> FindElementsByText(string text)
+        {
+            return AppiumQuery.ByXPath("//*[@text='" + text + "']").FindElements(this);
+        }
+
+        protected static void SetGeneralAppiumOptions(IConfig config, AppiumOptions appiumOptions)
 		{
 			appiumOptions.AddAdditionalAppiumOption("reportDirectory", config.GetProperty<string>("ReportDirectory"));
 			appiumOptions.AddAdditionalAppiumOption("reportFormat", config.GetProperty<string>("ReportFormat"));

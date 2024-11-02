@@ -331,10 +331,31 @@ namespace Plugin.Maui.UITestHelpers.Appium
         public static void DoubleTap(this IApp app, string element)
         {
             var elementToDoubleTap = FindElement(app, element);
-            app.CommandExecutor.Execute("doubleTap", new Dictionary<string, object>
+           
+            app.DoubleTap(elementToDoubleTap);
+        }
+
+        /// <summary>
+        /// Performs two quick tap / touch gestures on the matched element by 'query'.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="query"></param>
+        public static void DoubleTap(this IApp app, IQuery query)
+        {
+            var elementToDoubleTap = app.FindElement(query);
+
+            app.DoubleTap(elementToDoubleTap);
+        }
+
+        internal static void DoubleTap(this IApp app, IUIElement? element)
+        {
+            if (element is not null)
             {
-                { "element", elementToDoubleTap },
-            });
+                app.CommandExecutor.Execute("doubleTap", new Dictionary<string, object>
+                 {
+                     { "element", element },
+                 });
+            }
         }
 
         /// <summary>
@@ -374,10 +395,33 @@ namespace Plugin.Maui.UITestHelpers.Appium
         public static void TouchAndHold(this IApp app, string element)
         {
             var elementToTouchAndHold = FindElement(app, element);
-            app.CommandExecutor.Execute("touchAndHold", new Dictionary<string, object>
+         
+            app.TouchAndHold(elementToTouchAndHold);
+        }
+
+        /// <summary>
+        /// Performs a continuous touch gesture on an element matched by 'query'.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="query">Represents the query that identify an element by parameters such as type, text it contains or identifier.</param>
+        public static void TouchAndHold(this IApp app, IQuery query)
+        {
+            var elementToTouchAndHold = app.FindElement(query);
+
+            app.TouchAndHold(elementToTouchAndHold);
+        }
+
+        internal static void TouchAndHold(this IApp app, IUIElement? element)
+        {
+            if (element is not null)
             {
-                { "element", elementToTouchAndHold },
-            });
+                app.CommandExecutor.Execute("touchAndHold", new Dictionary<string, object>
+                 {
+                     { "element", element },
+                 });
+            }
+
+
         }
 
         /// <summary>
@@ -391,11 +435,33 @@ namespace Plugin.Maui.UITestHelpers.Appium
             var dragSourceElement = FindElement(app, dragSource);
             var targetSourceElement = FindElement(app, dragTarget);
 
-            app.CommandExecutor.Execute("dragAndDrop", new Dictionary<string, object>
+            app.DragAndDrop(dragSourceElement, targetSourceElement);
+        }
+
+        /// <summary>
+        /// Performs a long touch on an item, followed by dragging the item to a second item and dropping it.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="dragSource">Represents the query that identify a source element by parameters such as type, text it contains or identifier.</param>
+        /// <param name="dragTarget">Represents the query that identify a target element by parameters such as type, text it contains or identifier.</param>
+        public static void DragAndDrop(this IApp app, IQuery dragSource, IQuery dragTarget)
+        {
+            var dragSourceElement = app.FindElement(dragSource);
+            var targetSourceElement = app.FindElement(dragTarget);
+
+            app.DragAndDrop(dragSourceElement, targetSourceElement);
+        }
+
+        internal static void DragAndDrop(this IApp app, IUIElement? dragSourceElement, IUIElement? targetSourceElement)
+        {
+            if (dragSourceElement is not null && targetSourceElement is not null)
             {
-                { "sourceElement", dragSourceElement },
-                { "destinationElement", targetSourceElement }
-            });
+                app.CommandExecutor.Execute("dragAndDrop", new Dictionary<string, object>
+                 {
+                     { "sourceElement", dragSourceElement },
+                     { "destinationElement", targetSourceElement }
+                 });
+            }
         }
 
         /// <summary>
@@ -660,13 +726,36 @@ namespace Plugin.Maui.UITestHelpers.Appium
         {
             var elementToSwipe = FindElement(app, marked);
 
-            app.CommandExecutor.Execute("swipeLeftToRight", new Dictionary<string, object>
+            app.SwipeLeftToRight(elementToSwipe, swipePercentage, swipeSpeed, withInertia);
+        }
+
+        /// <summary>
+        /// Performs a left to right swipe gesture on an element matched by 'query'.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="query">Represents the query that identify an element by parameters such as type, text it contains or identifier.</param>
+        /// <param name="swipePercentage">How far across the element to swipe (from 0.0 to 1.0).</param>
+        /// <param name="swipeSpeed">The speed of the gesture.</param>
+        /// <param name="withInertia">Whether swipes should cause inertia.</param>
+        public static void SwipeLeftToRight(this IApp app, IQuery query, double swipePercentage = 0.67, int swipeSpeed = 500, bool withInertia = true)
+        {
+            var elementToSwipe = app.FindElement(query);
+
+            app.SwipeLeftToRight(elementToSwipe, swipePercentage, swipeSpeed, withInertia);
+        }
+
+        internal static void SwipeLeftToRight(this IApp app, IUIElement? element, double swipePercentage = 0.67, int swipeSpeed = 500, bool withInertia = true)
+        {
+            if (element is not null)
             {
-                { "element", elementToSwipe},
-                { "swipePercentage", swipePercentage },
-                { "swipeSpeed", swipeSpeed },
-                { "withInertia", withInertia }
-            });
+                app.CommandExecutor.Execute("swipeLeftToRight", new Dictionary<string, object>
+                 {
+                     { "element", element },
+                     { "swipePercentage", swipePercentage },
+                     { "swipeSpeed", swipeSpeed },
+                     { "withInertia", withInertia }
+                 });
+            }
         }
 
         /// <summary>
@@ -699,13 +788,37 @@ namespace Plugin.Maui.UITestHelpers.Appium
         {
             var elementToSwipe = FindElement(app, marked);
 
-            app.CommandExecutor.Execute("swipeRightToLeft", new Dictionary<string, object>
+            app.SwipeRightToLeft(elementToSwipe, swipePercentage, swipeSpeed, withInertia);
+        }
+
+        /// <summary>
+        /// Performs a right to left swipe gesture on an element matched by 'query'.
+        /// If multiple elements are matched, the first one will be used.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="query">Represents the query that identify an element by parameters such as type, text it contains or identifier.</param>
+        /// <param name="swipePercentage">How far across the element to swipe (from 0.0 to 1.0).</param>
+        /// <param name="swipeSpeed">The speed of the gesture.</param>
+        /// <param name="withInertia">Whether swipes should cause inertia.</param>
+        public static void SwipeRightToLeft(this IApp app, IQuery query, double swipePercentage = 0.67, int swipeSpeed = 500, bool withInertia = true)
+        {
+            var elementToSwipe = app.FindElement(query);
+
+            app.SwipeRightToLeft(elementToSwipe, swipePercentage, swipeSpeed, withInertia);
+        }
+
+        internal static void SwipeRightToLeft(this IApp app, IUIElement? element, double swipePercentage = 0.67, int swipeSpeed = 500, bool withInertia = true)
+        {
+            if (element is not null)
             {
-                { "element", elementToSwipe},
-                { "swipePercentage", swipePercentage },
-                { "swipeSpeed", swipeSpeed },
-                { "withInertia", withInertia }
-            });
+                app.CommandExecutor.Execute("swipeRightToLeft", new Dictionary<string, object>
+                 {
+                     { "element", element },
+                     { "swipePercentage", swipePercentage },
+                     { "swipeSpeed", swipeSpeed },
+                     { "withInertia", withInertia }
+                 });
+            }
         }
 
         /// <summary>
@@ -791,14 +904,38 @@ namespace Plugin.Maui.UITestHelpers.Appium
         {
             var elementToScroll = FindElement(app, marked);
 
-            app.CommandExecutor.Execute("scrollLeft", new Dictionary<string, object>
+            app.ScrollLeft(elementToScroll, strategy, swipePercentage, swipeSpeed, withInertia);
+        }
+
+        /// <summary>
+ 		/// Scrolls left on the first element matching query.
+ 		/// </summary>
+ 		/// <param name="app">Represents the main gateway to interact with an app.</param>
+ 		/// <param name="query">Represents the query that identify an element by parameters such as type, text it contains or identifier.</param>
+ 		/// <param name="strategy">Strategy for scrolling element.</param>
+ 		/// <param name="swipePercentage">How far across the element to swipe (from 0.0 to 1.0).</param>
+ 		/// <param name="swipeSpeed">The speed of the gesture.</param>
+ 		/// <param name="withInertia">Whether swipes should cause inertia.</param>
+ 		public static void ScrollLeft(this IApp app, IQuery query, ScrollStrategy strategy = ScrollStrategy.Auto, double swipePercentage = 0.67, int swipeSpeed = 500, bool withInertia = true)
+        {
+            var elementToScroll = app.FindElement(query);
+
+            app.ScrollLeft(elementToScroll, strategy, swipePercentage, swipeSpeed, withInertia);
+        }
+
+        internal static void ScrollLeft(this IApp app, IUIElement? element, ScrollStrategy strategy = ScrollStrategy.Auto, double swipePercentage = 0.67, int swipeSpeed = 500, bool withInertia = true)
+        {
+            if (element is not null)
             {
-                { "element", elementToScroll },
-                { "strategy", strategy },
-                { "swipePercentage", swipePercentage },
-                { "swipeSpeed", swipeSpeed },
-                { "withInertia", withInertia }
-            });
+                app.CommandExecutor.Execute("scrollLeft", new Dictionary<string, object>
+                 {
+                     { "element", element },
+                     { "strategy", strategy },
+                     { "swipePercentage", swipePercentage },
+                     { "swipeSpeed", swipeSpeed },
+                     { "withInertia", withInertia }
+                 });
+            }
         }
 
         /// <summary>
@@ -814,14 +951,38 @@ namespace Plugin.Maui.UITestHelpers.Appium
         {
             var elementToScroll = FindElement(app, marked);
 
-            app.CommandExecutor.Execute("scrollDown", new Dictionary<string, object>
+            app.ScrollDown(elementToScroll, strategy, swipePercentage, swipeSpeed, withInertia);
+        }
+
+        /// <summary>
+ 		/// Scrolls down on the first element matching query.
+ 		/// </summary>
+ 		/// <param name="app">Represents the main gateway to interact with an app.</param>
+ 		/// <param name="marked">Marked selector to match.</param>
+ 		/// <param name="strategy">Strategy for scrolling element.</param>
+ 		/// <param name="swipePercentage">How far across the element to swipe (from 0.0 to 1.0).</param>
+ 		/// <param name="swipeSpeed">The speed of the gesture.</param>
+ 		/// <param name="withInertia">Whether swipes should cause inertia.</param>
+ 		public static void ScrollDown(this IApp app, IQuery query, ScrollStrategy strategy = ScrollStrategy.Auto, double swipePercentage = 0.67, int swipeSpeed = 500, bool withInertia = true)
+        {
+            var elementToScroll = app.FindElement(query);
+
+            app.ScrollDown(elementToScroll, strategy, swipePercentage, swipeSpeed, withInertia);
+        }
+
+        internal static void ScrollDown(this IApp app, IUIElement? element, ScrollStrategy strategy = ScrollStrategy.Auto, double swipePercentage = 0.67, int swipeSpeed = 500, bool withInertia = true)
+        {
+            if (element is not null)
             {
-                { "element", elementToScroll },
-                { "strategy", strategy },
-                { "swipePercentage", swipePercentage },
-                { "swipeSpeed", swipeSpeed },
-                { "withInertia", withInertia }
-            });
+                app.CommandExecutor.Execute("scrollDown", new Dictionary<string, object>
+                 {
+                     { "element", element },
+                     { "strategy", strategy },
+                     { "swipePercentage", swipePercentage },
+                     { "swipeSpeed", swipeSpeed },
+                     { "withInertia", withInertia }
+                 });
+            }
         }
 
         /// <summary>
@@ -837,14 +998,38 @@ namespace Plugin.Maui.UITestHelpers.Appium
         {
             var elementToScroll = FindElement(app, marked);
 
-            app.CommandExecutor.Execute("scrollRight", new Dictionary<string, object>
+            app.ScrollRight(elementToScroll, strategy, swipePercentage, swipeSpeed, withInertia);
+        }
+
+        /// <summary>
+ 		/// Scrolls right on the first element matching query.
+ 		/// </summary>
+ 		/// <param name="app">Represents the main gateway to interact with an app.</param>
+ 		/// <param name="query">Represents the query that identify an element by parameters such as type, text it contains or identifier.</param>
+ 		/// <param name="strategy">Strategy for scrolling element.</param>
+ 		/// <param name="swipePercentage">How far across the element to swipe (from 0.0 to 1.0).</param>
+ 		/// <param name="swipeSpeed">The speed of the gesture.</param>
+ 		/// <param name="withInertia">Whether swipes should cause inertia.</param>
+ 		public static void ScrollRight(this IApp app, IQuery query, ScrollStrategy strategy = ScrollStrategy.Auto, double swipePercentage = 0.67, int swipeSpeed = 500, bool withInertia = true)
+        {
+            var elementToScroll = app.FindElement(query);
+
+            app.ScrollRight(elementToScroll, strategy, swipePercentage, swipeSpeed, withInertia);
+        }
+
+        internal static void ScrollRight(this IApp app, IUIElement? element, ScrollStrategy strategy = ScrollStrategy.Auto, double swipePercentage = 0.67, int swipeSpeed = 500, bool withInertia = true)
+        {
+            if (element is not null)
             {
-                { "element", elementToScroll },
-                { "strategy", strategy },
-                { "swipePercentage", swipePercentage },
-                { "swipeSpeed", swipeSpeed },
-                { "withInertia", withInertia }
-            });
+                app.CommandExecutor.Execute("scrollRight", new Dictionary<string, object>
+                 {
+                     { "element", element },
+                     { "strategy", strategy },
+                     { "swipePercentage", swipePercentage },
+                     { "swipeSpeed", swipeSpeed },
+                     { "withInertia", withInertia }
+                 });
+            }
         }
 
         /// <summary>
@@ -860,14 +1045,38 @@ namespace Plugin.Maui.UITestHelpers.Appium
         {
             var elementToScroll = FindElement(app, marked);
 
-            app.CommandExecutor.Execute("scrollUp", new Dictionary<string, object>
+            app.ScrollUp(elementToScroll, strategy, swipePercentage, swipeSpeed, withInertia);
+        }
+
+        /// <summary>
+        /// Scrolls up on the first element matching query.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="query">Represents the query that identify an element by parameters such as type, text it contains or identifier.</param>
+        /// <param name="strategy">Strategy for scrolling element.</param>
+        /// <param name="swipePercentage">How far across the element to swipe (from 0.0 to 1.0).</param>
+        /// <param name="swipeSpeed">The speed of the gesture.</param>
+        /// <param name="withInertia">Whether swipes should cause inertia.</param>
+        public static void ScrollUp(this IApp app, IQuery query, ScrollStrategy strategy = ScrollStrategy.Auto, double swipePercentage = 0.67, int swipeSpeed = 500, bool withInertia = true)
+        {
+            var elementToScroll = app.FindElement(query);
+
+            app.ScrollUp(elementToScroll, strategy, swipePercentage, swipeSpeed, withInertia);
+        }
+
+        internal static void ScrollUp(this IApp app, IUIElement? element, ScrollStrategy strategy = ScrollStrategy.Auto, double swipePercentage = 0.67, int swipeSpeed = 500, bool withInertia = true)
+        {
+            if (element is not null)
             {
-                { "element", elementToScroll },
-                { "strategy", strategy },
-                { "swipePercentage", swipePercentage },
-                { "swipeSpeed", swipeSpeed },
-                { "withInertia", withInertia }
-            });
+                app.CommandExecutor.Execute("scrollUp", new Dictionary<string, object>
+                 {
+                     { "element", element },
+                     { "strategy", strategy },
+                     { "swipePercentage", swipePercentage },
+                     { "swipeSpeed", swipeSpeed },
+                     { "withInertia", withInertia }
+                 });
+            }
         }
 
         /// <summary>
@@ -1002,13 +1211,36 @@ namespace Plugin.Maui.UITestHelpers.Appium
         {
             var element = FindElement(app, marked);
 
-            app.CommandExecutor.Execute("setSliderValue", new Dictionary<string, object>
+            app.SetSliderValue(element, value, minimum, maximum);
+        }
+
+        /// <summary>
+ 		/// Sets the value of a slider element that matches query.
+ 		/// </summary>
+ 		/// <param name="app">Represents the main gateway to interact with an app.</param>
+ 		/// <param name="query">Represents the query that identify an element by parameters such as type, text it contains or identifier.</param>
+ 		/// <param name="value">The value to set the Slider to.</param>
+ 		/// <param name="minimum">Te minimum selectable value for the Slider.</param>
+ 		/// <param name="maximum">Te maximum selectable value for the Slider.</param>
+ 		public static void SetSliderValue(this IApp app, IQuery query, double value, double minimum = 0d, double maximum = 1d)
+        {
+            var element = app.FindElement(query);
+
+            app.SetSliderValue(element, value, minimum, maximum);
+        }
+
+        internal static void SetSliderValue(this IApp app, IUIElement? element, double value, double minimum = 0d, double maximum = 1d)
+        {
+            if (element is not null)
             {
-                { "element", element },
-                { "value", value },
-                { "minimum", minimum },
-                { "maximum", maximum },
-            });
+                app.CommandExecutor.Execute("setSliderValue", new Dictionary<string, object>
+                 {
+                     { "element", element },
+                     { "value", value },
+                     { "minimum", minimum },
+                     { "maximum", maximum },
+                 });
+            }
         }
 
         /// <summary>
