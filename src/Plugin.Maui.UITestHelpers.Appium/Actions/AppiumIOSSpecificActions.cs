@@ -45,3 +45,4 @@ namespace Plugin.Maui.UITestHelpers.Appium
             return CommandResponse.FailedEmptyResponse;
         }
     }
+}
