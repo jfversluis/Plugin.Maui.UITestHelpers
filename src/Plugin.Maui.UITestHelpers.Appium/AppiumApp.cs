@@ -17,11 +17,13 @@ namespace Plugin.Maui.UITestHelpers.Appium
 			_config = config ?? throw new ArgumentNullException(nameof(config));
 
 			_commandExecutor = new AppiumCommandExecutor();
+			_commandExecutor.AddCommandGroup(new AppiumDeviceActions(this));
 			_commandExecutor.AddCommandGroup(new AppiumMouseActions(this));
 			_commandExecutor.AddCommandGroup(new AppiumTouchActions(this));
 			_commandExecutor.AddCommandGroup(new AppiumTextActions());
 			_commandExecutor.AddCommandGroup(new AppiumGeneralActions());
 			_commandExecutor.AddCommandGroup(new AppiumVirtualKeyboardActions(this));
+			_commandExecutor.AddCommandGroup(new AppiumPinchToZoomActions(this));
 			_commandExecutor.AddCommandGroup(new AppiumSliderActions(this));
 			_commandExecutor.AddCommandGroup(new AppiumSwipeActions(this));
 			_commandExecutor.AddCommandGroup(new AppiumScrollActions(this));
@@ -84,12 +86,19 @@ namespace Plugin.Maui.UITestHelpers.Appium
 			return q.FindElement(this);
 		}
 
-		public virtual IReadOnlyCollection<IUIElement> FindElements(string id)
+#nullable disable
+        public virtual IUIElement FindElementByText(string text)
+        {
+            return AppiumQuery.ByXPath("//*[@text='" + text + "']").FindElement(this);
+        }
+#nullable enable
+
+        public virtual IReadOnlyCollection<IUIElement> FindElements(string id)
 		{
 			return Query.ById(id);
 		}
 
-		public virtual IReadOnlyCollection<IUIElement> FindElements(IQuery query)
+        public virtual IReadOnlyCollection<IUIElement> FindElements(IQuery query)
 		{
 			AppiumQuery? appiumQuery = query as AppiumQuery;
 			if (appiumQuery is not null)
@@ -102,7 +111,12 @@ namespace Plugin.Maui.UITestHelpers.Appium
 			return q.FindElements(this);
 		}
 
-		protected static void SetGeneralAppiumOptions(IConfig config, AppiumOptions appiumOptions)
+        public virtual IReadOnlyCollection<IUIElement> FindElementsByText(string text)
+        {
+            return AppiumQuery.ByXPath("//*[@text='" + text + "']").FindElements(this);
+        }
+
+        protected static void SetGeneralAppiumOptions(IConfig config, AppiumOptions appiumOptions)
 		{
 			appiumOptions.AddAdditionalAppiumOption("reportDirectory", config.GetProperty<string>("ReportDirectory"));
 			appiumOptions.AddAdditionalAppiumOption("reportFormat", config.GetProperty<string>("ReportFormat"));
