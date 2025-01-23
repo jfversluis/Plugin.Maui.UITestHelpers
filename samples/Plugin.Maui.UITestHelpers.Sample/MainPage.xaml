@@ -6,7 +6,7 @@
     <ScrollView>
         <VerticalStackLayout
             Padding="30,0"
-            Spacing="25">
+            Spacing="20">
             <Image
                 Source="dotnet_bot.png"
                 HeightRequest="185"
@@ -31,6 +31,17 @@
                 SemanticProperties.Hint="Counts the number of times you click"
                 Clicked="OnCounterClicked"
                 HorizontalOptions="Fill" />
+
+            <HorizontalStackLayout>
+                <CheckBox AutomationId="CB1" IsChecked="True"/>
+                <CheckBox AutomationId="CB2"/>
+            </HorizontalStackLayout>
+
+            <HorizontalStackLayout>
+                <RadioButton Content="Cat" AutomationId="RB1" IsChecked="True"/>
+                <RadioButton Content="Dog" AutomationId="RB2" />
+            </HorizontalStackLayout>
+
         </VerticalStackLayout>
     </ScrollView>
 

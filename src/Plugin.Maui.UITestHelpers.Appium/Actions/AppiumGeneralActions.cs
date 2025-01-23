@@ -10,6 +10,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
         const string GetSelectedCommand = "getSelected";
         const string GetDisplayedCommand = "getDisplayed";
         const string GetEnabledCommand = "getEnabled";
+        const string GetCheckedCommand = "getChecked";
 
         readonly List<string> _commands = new()
         {
@@ -18,6 +19,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
             GetSelectedCommand,
             GetDisplayedCommand,
             GetEnabledCommand,
+            GetCheckedCommand
         };
 
         public bool IsCommandSupported(string commandName)
@@ -34,6 +36,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
                 GetSelectedCommand => GetSelected(parameters),
                 GetDisplayedCommand => GetDisplayed(parameters),
                 GetEnabledCommand => GetEnabled(parameters),
+                GetCheckedCommand => GetChecked(parameters),
                 _ => CommandResponse.FailedEmptyResponse,
             };
         }
@@ -112,6 +115,29 @@ namespace Plugin.Maui.UITestHelpers.Appium
             else if (element is AppiumDriverElement driverElement)
             {
                 return new CommandResponse(driverElement.AppiumElement.Enabled, CommandResponseResult.Success);
+            }
+
+            return CommandResponse.FailedEmptyResponse;
+        }
+
+        CommandResponse GetChecked(IDictionary<string, object> parameters)
+        {
+            var element = parameters["element"];
+            TestDevice testDevice = (TestDevice)parameters["testdevice"];
+
+            if (testDevice == TestDevice.Android)
+            {
+                parameters.Add("attributeName", "checked");
+                return GetAttribute(parameters);
+            }
+            else if (testDevice == TestDevice.iOS || testDevice == TestDevice.Mac)
+            {
+                parameters.Add("attributeName", "value");
+                return GetAttribute(parameters);
+            }
+            else if (testDevice == TestDevice.Windows)
+            {
+                return GetSelected(parameters);
             }
 
             return CommandResponse.FailedEmptyResponse;
