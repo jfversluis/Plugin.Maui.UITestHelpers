@@ -11,13 +11,13 @@ on:
 env:
   BUILD_CONFIGURATION: Release
   CSPROJ_TO_BUILD: samples/Plugin.Maui.UITestHelpers.Sample/Plugin.Maui.UITestHelpers.Sample.csproj
-  APP_TO_TEST: samples/Plugin.Maui.UITestHelpers.Sample/bin/Release/net8.0-android/com.companyname.uitesthelperssample-Signed.apk
+  APP_TO_TEST: samples/Plugin.Maui.UITestHelpers.Sample/bin/Release/net9.0-android/com.companyname.uitesthelperssample-Signed.apk
   CSPROJ_TO_TEST: samples/UITests.Android/UITests.Android.csproj
   APP_ID: com.companyname.uitesthelperssample
-  TARGET_FRAMEWORK: net8.0-android
+  TARGET_FRAMEWORK: net9.0-android
   TEST_EMULATOR_NAME: UITestEmu
   ANDROID_EMULATOR_IMAGE: system-images;android-33;default;x86_64
-  SCREENCAPTURE_FOLDER: samples/UITests.Android/bin/Debug/net8.0
+  SCREENCAPTURE_FOLDER: samples/UITests.Android/bin/Debug/net9.0
   ARTIFACTS_PATH: ${{ github.workspace }}/output
 
 jobs:
