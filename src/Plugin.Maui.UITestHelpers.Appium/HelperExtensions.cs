@@ -467,15 +467,16 @@ namespace Plugin.Maui.UITestHelpers.Appium
         }
 
         /// <summary>
-        /// Scroll until an element that matches the toElementId is shown on the screen.
+        /// Scrolls within a specified element until a target element is visible or a timeout occurs.
         /// </summary>
         /// <param name="app">Represents the main gateway to interact with an app.</param>
-        /// <param name="elementToFind">Specify what element to scroll within.</param>
-        /// <param name="scrollingElement">Specify what element to scroll inside of.</param>
-        /// <param name="down">Whether scrolls should be down or up.</param>
-        /// <param name="horizontalStartPoint">Specify where to start the scroll from on X axis</param>
-        /// <param name="percentToScroll">Specify what percent to scroll with one gesture</param>
-        /// <param name="timeoutInSeconds">Specify timeout</param>
+        /// <param name="elementToFind">The ID of the element to find.</param>
+        /// <param name="scrollingElement">The ID of the element to scroll within.</param>
+        /// <param name="down">Indicates whether to scroll down (true) or up (false).</param>
+        /// <param name="horizontalStartPoint">Optional horizontal start point for the scroll.</param>
+        /// <param name="percentToScroll">The percentage of the element to scroll with each gesture.</param>
+        /// <param name="timeoutInSeconds">The maximum time to wait for the element to become visible.</param>
+        /// <exception cref="NotFoundException">Thrown if the element is not visible within the timeout period.</exception>
         public static void ScrollUntilVisible(this IApp app, string elementToFind, string scrollingElement, bool down = true, int? horizontalStartPoint = null, double percentToScroll = 0.5, int timeoutInSeconds = 30)
         {
             var timeout = TimeSpan.FromSeconds(timeoutInSeconds);
@@ -493,9 +494,18 @@ namespace Plugin.Maui.UITestHelpers.Appium
             }
 
             stopwatch.Stop();
-            throw new NotFoundException ($"Element with ID '{elementToFind}' not visible within timeout.");
+            throw new NotFoundException($"Element with ID '{elementToFind}' not visible within timeout.");
         }
 
+        /// <summary>
+        /// Scrolls within a specified element by a given percentage.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="scrollingElement">The ID of the element to scroll within.</param>
+        /// <param name="down">Indicates whether to scroll down (true) or up (false).</param>
+        /// <param name="percentToScroll">The percentage of the element to scroll with each gesture.</param>
+        /// <param name="horizontalStartPoint">Optional horizontal start point for the scroll.</param>
+        /// <exception cref="NotFoundException">Thrown if the driver is null.</exception>
         private static void Scroll(IApp app, string scrollingElement, bool down, double percentToScroll, int? horizontalStartPoint = null)
         {
             var driver = (app as AppiumApp)?.Driver;
