@@ -1,0 +1,94 @@
+name: $(BuildDefinitionName)_$(Year:yyyy).$(Month).$(DayOfMonth)$(Rev:.r)
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - src/
+
+pool:
+  vmImage: "macOS-13"
+
+steps:
+  - task: UseDotNet@2
+    displayName: 'Use .NET Core sdk '
+    inputs:
+      packageType: 'sdk'
+      version: '9.0.x'
+
+  - task: Bash@3
+    displayName: Install MAUI
+    inputs:
+      targetType: 'inline'
+      script: |
+        dotnet workload install maui ios android maccatalyst --source https://api.nuget.org/v3/index.json
+
+  - task: DotNetCoreCLI@2
+    displayName: Restore Appium
+    inputs:
+      command: restore
+      projects: '**/Appium.csproj'
+
+  - task: DotNetCoreCLI@2
+    displayName: Restore Core
+    inputs:
+      command: restore
+      projects: '**/Core.csproj'
+
+  - task: DotNetCoreCLI@2
+    displayName: Restore NUnit
+    inputs:
+      command: restore
+      projects: '**/NUnit.csproj'
+      
+  - task: DotNetCoreCLI@2
+    displayName: Build Appium
+    inputs:
+      projects: '**/Appium.csproj'
+      arguments: '--configuration Release'
+
+  - task: DotNetCoreCLI@2
+    displayName: Build Core
+    inputs:
+      projects: '**/Core.csproj'
+      arguments: '--configuration Release'
+ 
+  - task: DotNetCoreCLI@2
+    displayName: Build NUnit
+    inputs:
+      projects: '**/NUnit.csproj'
+      arguments: '--configuration Release'
+      
+  - task: DotNetCoreCLI@2
+    displayName: Pack Appium
+    inputs:
+      command: pack
+      packagesToPack: src/Plugin.Maui.UITestHelpers.Appium.csproj
+      versioningScheme: byBuildNumber
+
+  - task: DotNetCoreCLI@2
+    displayName: Pack Core
+    inputs:
+      command: pack
+      packagesToPack: src/Plugin.Maui.UITestHelpers.Core.csproj
+      versioningScheme: byBuildNumber
+
+  - task: DotNetCoreCLI@2
+    displayName: Pack NUnit
+    inputs:
+      command: pack
+      packagesToPack: src/Plugin.Maui.UITestHelpers.NUnit.csproj
+      versioningScheme: byBuildNumber
+
+  - task: DotNetCoreCLI@2
+    displayName: Push
+    inputs:
+      command: push
+      publishVstsFeed: 'ce39f93f-d4b3-4e28-a14b-5c751e048eb0'
+
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publish Artifact'
+    inputs:
+      PathtoPublish: '$(build.artifactstagingdirectory)'
+    condition: succeededOrFailed() 
