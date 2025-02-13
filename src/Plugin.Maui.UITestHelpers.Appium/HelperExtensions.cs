@@ -1,8 +1,10 @@
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Drawing;
+using OpenQA.Selenium;
 using OpenQA.Selenium.Appium;
 using OpenQA.Selenium.Appium.Interfaces;
+using OpenQA.Selenium.Interactions;
 using Plugin.Maui.UITestHelpers.Core;
 
 namespace Plugin.Maui.UITestHelpers.Appium
@@ -465,18 +467,77 @@ namespace Plugin.Maui.UITestHelpers.Appium
         }
 
         /// <summary>
-        /// Scroll until an element that matches the toElementId is shown on the screen.
+        /// Scrolls within a specified element until a target element is visible or a timeout occurs.
         /// </summary>
         /// <param name="app">Represents the main gateway to interact with an app.</param>
-        /// <param name="toElementId">Specify what element to scroll within.</param>
-        /// <param name="down">Whether scrolls should be down or up.</param>
-        public static void ScrollTo(this IApp app, string toElementId, bool down = true)
+        /// <param name="elementToFind">The ID of the element to find.</param>
+        /// <param name="scrollingElement">The ID of the element to scroll within.</param>
+        /// <param name="down">Indicates whether to scroll down (true) or up (false).</param>
+        /// <param name="horizontalStartPoint">Optional horizontal start point for the scroll.</param>
+        /// <param name="percentToScroll">The percentage of the element to scroll with each gesture.</param>
+        /// <param name="timeoutInSeconds">The maximum time to wait for the element to become visible.</param>
+        /// <exception cref="NotFoundException">Thrown if the element is not visible within the timeout period.</exception>
+        public static void ScrollUntilVisible(this IApp app, string elementToFind, string scrollingElement, bool down = true, int? horizontalStartPoint = null, double percentToScroll = 0.5, int timeoutInSeconds = 30)
         {
-            app.CommandExecutor.Execute("scrollTo", new Dictionary<string, object>
+            var timeout = TimeSpan.FromSeconds(timeoutInSeconds);
+            var stopwatch = Stopwatch.StartNew();
+
+            while (stopwatch.Elapsed < timeout)
             {
-                { "elementId", toElementId},
-                { "down", down }
-            });
+                var element = app.FindElement(elementToFind);
+                if (element != null && element.IsDisplayed())
+                {
+                    return;
+                }
+
+                Scroll(app, scrollingElement, down, percentToScroll, horizontalStartPoint);
+            }
+
+            stopwatch.Stop();
+            throw new NotFoundException($"Element with ID '{elementToFind}' not visible within timeout.");
+        }
+
+        /// <summary>
+        /// Scrolls within a specified element by a given percentage.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="scrollingElement">The ID of the element to scroll within.</param>
+        /// <param name="down">Indicates whether to scroll down (true) or up (false).</param>
+        /// <param name="percentToScroll">The percentage of the element to scroll with each gesture.</param>
+        /// <param name="horizontalStartPoint">Optional horizontal start point for the scroll.</param>
+        /// <exception cref="NotFoundException">Thrown if the driver is null.</exception>
+        private static void Scroll(IApp app, string scrollingElement, bool down, double percentToScroll, int? horizontalStartPoint = null)
+        {
+            var driver = (app as AppiumApp)?.Driver;
+            if (driver == null)
+            {
+                throw new NotFoundException($"Driver was null");
+            }
+
+            // Find the scrollable container element
+            var scrollableElement = driver.FindElement(By.Id(scrollingElement));
+
+            // Get the element's size and location
+            var elementLocation = scrollableElement.Location;
+            var elementSize = scrollableElement.Size;
+
+            // Calculate scroll start and end positions within the element
+            int startX = horizontalStartPoint is not null ? elementLocation.X + horizontalStartPoint.Value : elementLocation.X + (elementSize.Width / 2);
+            int startY = elementLocation.Y + (int)(elementSize.Height * (down ? 0.8 : 0.2)); // Start from 80% down or 20% up inside the element
+            int endY = elementLocation.Y + (int)(elementSize.Height * (down ? (1 - percentToScroll) : percentToScroll));
+
+            // Create W3C actions
+            var actions = new PointerInputDevice(PointerKind.Touch);
+            var sequence = new ActionSequence(actions, 0);
+
+            // Perform touch swipe within the element
+            sequence.AddAction(actions.CreatePointerMove(CoordinateOrigin.Viewport, startX, startY, TimeSpan.Zero));
+            sequence.AddAction(actions.CreatePointerDown(MouseButton.Left));
+            sequence.AddAction(actions.CreatePointerMove(CoordinateOrigin.Viewport, startX, endY, TimeSpan.FromMilliseconds(500)));
+            sequence.AddAction(actions.CreatePointerUp(MouseButton.Left));
+
+            // Execute the scroll action
+            driver.PerformActions([sequence]);
         }
 
         /// <summary>
