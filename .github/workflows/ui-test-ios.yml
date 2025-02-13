@@ -12,13 +12,13 @@ env:
   # Release builds don't run on the Simulator
   BUILD_CONFIGURATION: Debug
   CSPROJ_TO_BUILD: samples/Plugin.Maui.UITestHelpers.Sample/Plugin.Maui.UITestHelpers.Sample.csproj
-  APP_TO_TEST: samples/Plugin.Maui.UITestHelpers.Sample/bin/Debug/net8.0-ios/iossimulator-arm64/Plugin.Maui.UITestHelpers.Sample.app
+  APP_TO_TEST: samples/Plugin.Maui.UITestHelpers.Sample/bin/Debug/net9.0-ios/iossimulator-arm64/Plugin.Maui.UITestHelpers.Sample.app
   CSPROJ_TO_TEST: samples/UITests.iOS/UITests.iOS.csproj
   APP_ID: com.companyname.uitesthelperssample
-  TARGET_FRAMEWORK: net8.0-ios
+  TARGET_FRAMEWORK: net9.0-ios
   XCODE_VERSION: 16.0
   TEST_SIM_NAME: UITestSim
-  SCREENCAPTURE_FOLDER: samples/UITests.iOS/bin/Debug/net8.0
+  SCREENCAPTURE_FOLDER: samples/UITests.iOS/bin/Debug/net9.0
   ARTIFACTS_PATH: ${{ github.workspace }}/output
 
 jobs:
