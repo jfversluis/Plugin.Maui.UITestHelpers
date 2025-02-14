@@ -182,7 +182,10 @@ namespace Plugin.Maui.UITestHelpers.Appium
             if (element is not null)
             {
                 element.SendKeys(text);
-                app.DismissKeyboard();
+                if (app.IsKeyboardShown())
+                {
+                    app.DismissKeyboard();
+                }
             }
         }
 
