@@ -1665,5 +1665,47 @@ namespace Plugin.Maui.UITestHelpers.Appium
         {
             Wait(query, i => i == null, timeoutMessage, timeout, retryFrequency);
         }
+
+        /// <summary>
+        /// Assert an element exists and is visible.
+        /// </summary>
+        public static bool DoesElementExist(this IApp app, string automationId)
+        {
+            var exists = false;
+
+            var elements = app.FindElements(automationId);
+            exists = elements.Count > 0;
+
+            return exists && elements.First().IsDisplayed();
+        }
+
+        /// <summary>
+        /// Assert an element found by text exists and is visible.
+        /// </summary>
+        public static IUIElement? FindVisibleElementByText(this IApp app, string text, int timeoutInSeconds = 3)
+        {
+            string beforeMessage = $"Find visible element by text: '{text}' - {DateTime.Now.ToString("HH:mm:ss")}";
+            Console.WriteLine(beforeMessage);
+
+            var timeout = TimeSpan.FromSeconds(timeoutInSeconds);
+            var stopwatch = Stopwatch.StartNew();
+
+            while (stopwatch.Elapsed < timeout)
+            {
+                var elementIsVisible = app.FindElementByText(text)?.IsDisplayed();
+                if (elementIsVisible is not null && elementIsVisible.Value)
+                {
+                    var element = app.FindElementByText(text);
+                    string afterMessage = $"Found visible element by text: {text} - {DateTime.Now.ToString("HH:mm:ss")}";
+                    Console.WriteLine(afterMessage);
+                    return element;
+                }
+                Thread.Sleep(100);
+            }
+            stopwatch.Stop();
+            string notVisibleMessage = $"Element with text: {text} not visible within timeout - {DateTime.Now.ToString("HH:mm:ss")}";
+            Console.WriteLine(notVisibleMessage);
+            return null;
+        }
     }
 }
