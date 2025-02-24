@@ -1599,6 +1599,16 @@ namespace Plugin.Maui.UITestHelpers.Appium
             return element.AppiumElement.Equals(activeElement);
         }
 
+        /// <summary>
+        /// Return the current page source of the displayed view.
+        /// Useful to inspect the current view hierarchy and its automation ids.
+        /// </summary>
+        public static string? GetNativePageSource(this IApp app)
+        {
+            var tree = (app as AppiumApp)?.Driver.PageSource;
+            return tree;
+        }
+
         static IUIElement Wait(Func<IUIElement?> query,
             Func<IUIElement?, bool> satisfactory,
             string? timeoutMessage = null,
