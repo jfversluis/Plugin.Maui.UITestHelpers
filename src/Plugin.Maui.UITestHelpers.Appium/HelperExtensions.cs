@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Drawing;
+using OpenQA.Selenium;
 using OpenQA.Selenium.Appium;
 using OpenQA.Selenium.Appium.Interfaces;
 using Plugin.Maui.UITestHelpers.Core;
@@ -1597,6 +1598,107 @@ namespace Plugin.Maui.UITestHelpers.Appium
             }
 
             return element.AppiumElement.Equals(activeElement);
+        }
+
+        /// <summary>
+        /// Switch the context to the webview. 
+        /// There may be more than one webview context found, this will switch to the first one found.
+        /// </summary>
+        /// <param name="app"></param>
+        /// <returns></returns>
+        public static bool SwitchContextToWebview(this IApp app)
+        {
+            var driver = (app as AppiumApp)?.Driver;
+            var contexts = driver?.Contexts;
+
+            if (driver == null || contexts == null)
+            {
+                return false;
+            }
+
+            var webviewContextSearchTerm = "WEBVIEW";
+            var wcontexts = contexts.Where(d => d.Contains(webviewContextSearchTerm)).ToList();
+
+            if (wcontexts.Count == 0)
+            {
+                return false;
+            }
+            var webviewContext = wcontexts[0];
+
+            driver.Context = webviewContext;
+            return true;
+        }
+
+        public static bool SwitchContextToNative(this IApp app)
+        {
+            var driver = (app as AppiumApp)?.Driver;
+            var contexts = driver?.Contexts;
+
+            if (driver == null || contexts == null)
+            {
+                return false;
+            }
+
+            var nativeContext = contexts.FirstOrDefault(d => d.Contains("NATIVE_APP"));
+
+            if (nativeContext is null)
+            {
+                return false;
+            }
+
+            driver.Context = nativeContext;
+            return true;
+        }
+
+        public static bool TapWebviewButtonByText(this IApp app, string buttonText)
+        {
+            // Execute JavaScript to find the button and click it based on the text 
+            string script = @"
+                var buttonText = """ + buttonText + @"""; // Pass the string variable to JS
+                var buttons = document.querySelectorAll('button');
+                for (var i = 0; i < buttons.length; i++) {
+                    if (buttons[i].textContent.includes(buttonText)) { 
+                        return buttons[i]; 
+                    }
+                }
+                return null; // If no button is found, return null
+                ";
+            var driver = (app as AppiumApp)?.Driver;
+            var buttonElement = (driver as IJavaScriptExecutor)?.ExecuteScript(script);
+
+            var foundButton = (buttonElement as AppiumElement);
+            if (foundButton is null)
+            {
+                return false;
+            }
+            foundButton?.Click();
+            return true;
+        }
+
+        public static bool ScrollWebview(this IApp app, bool down)
+        {
+            string script = down ? @"
+            window.scrollTo(0, document.body.scrollHeight); 
+            return true;
+            " : @"
+            window.scrollTo(document.body.scrollHeight, 0); 
+            return true;
+            ";
+
+            var driver = (app as AppiumApp)?.Driver;
+            var scrolled = (driver as IJavaScriptExecutor)?.ExecuteScript(script);
+            if (scrolled is not null && scrolled is bool executed)
+            {
+                return executed;
+            }
+            return false;
+        }
+
+        public static string? GetCurrentUri(this IApp app)
+        {
+            var driver = (app as AppiumApp)?.Driver;
+            var uri = driver?.Url;
+            return uri;
         }
 
         static IUIElement Wait(Func<IUIElement?> query,
