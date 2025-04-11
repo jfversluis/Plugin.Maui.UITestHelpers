@@ -83,7 +83,6 @@ namespace Plugin.Maui.UITestHelpers.Appium
 
 			if (!string.IsNullOrWhiteSpace(appId))
 			{
-				options.AddAdditionalAppiumOption(MobileCapabilityType.NoReset, "true");
 				options.AddAdditionalAppiumOption(AndroidMobileCapabilityType.AppPackage, appId);
 				options.AddAdditionalAppiumOption(AndroidMobileCapabilityType.AppActivity, $"{appId}.MainActivity");
 			}
