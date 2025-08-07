@@ -76,18 +76,53 @@ namespace Plugin.Maui.UITestHelpers.Appium
 			config.SetProperty("AutomationName", "UIAutomator2");
 			var appId = config.GetProperty<string>("AppId");
 
-			var options = new AppiumOptions();
+            var ignoreHiddenApiPolicyError = config.GetProperty<bool?>("IgnoreHiddenApiPolicyError");
+
+            var systemPort = config.GetProperty<int?>("SystemPort");
+            var skipServerInstallation = config.GetProperty<bool?>("SkipServerInstallation");
+            var serverLaunchTimeout = config.GetProperty<int?>("UiAutomator2ServerLaunchTimeout");
+            var serverInstallTimeout = config.GetProperty<int?>("UiAutomator2ServerInstallTimeout");
+            var serverReadTimeout = config.GetProperty<int?>("UiAutomator2ServerReadTimeout");
+            var disableWindowAnimation = config.GetProperty<bool?>("DisableWindowAnimation");
+            var skipDeviceInitialization = config.GetProperty<bool?>("SkipDeviceInitialization");
+
+            var options = new AppiumOptions();
 
 			SetGeneralAppiumOptions(config, options);
 
-			if (!string.IsNullOrWhiteSpace(appId))
+            if (!string.IsNullOrWhiteSpace(appId))
 			{
 				options.AddAdditionalAppiumOption(MobileCapabilityType.NoReset, "true");
 				options.AddAdditionalAppiumOption(AndroidMobileCapabilityType.AppPackage, appId);
 				options.AddAdditionalAppiumOption(AndroidMobileCapabilityType.AppActivity, $"{appId}.MainActivity");
-			}
+            }
 
-			return options;
+            if (ignoreHiddenApiPolicyError != null)
+                options.AddAdditionalAppiumOption("ignoreHiddenApiPolicyError", ignoreHiddenApiPolicyError);
+
+            if (systemPort != null)
+                options.AddAdditionalAppiumOption("systemPort", systemPort);
+
+            if (skipServerInstallation != null)
+                options.AddAdditionalAppiumOption("skipServerInstallation", skipServerInstallation);
+
+            if (serverLaunchTimeout != null)
+                options.AddAdditionalAppiumOption("uiAutomator2ServerLaunchTimeout", serverLaunchTimeout);
+
+            if (serverInstallTimeout != null)
+                options.AddAdditionalAppiumOption("uiAutomator2ServerInstallTimeout", serverInstallTimeout);
+
+            if (serverReadTimeout != null)
+                options.AddAdditionalAppiumOption("uiAutomator2ServerReadTimeout", serverReadTimeout);
+
+            if (disableWindowAnimation != null)
+                options.AddAdditionalAppiumOption("disableWindowAnimation", disableWindowAnimation);
+
+            if (skipDeviceInitialization != null)
+                options.AddAdditionalAppiumOption("skipDeviceInitialization", skipDeviceInitialization);
+
+
+            return options;
 		}
 	}
 }
