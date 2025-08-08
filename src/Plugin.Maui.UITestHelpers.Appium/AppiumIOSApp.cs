@@ -41,7 +41,12 @@ namespace Plugin.Maui.UITestHelpers.Appium
 			}
 		}
 
-		private static AppiumOptions GetOptions(IConfig config)
+        public override IUIElement FindElementByText(string text)
+        {
+            return AppiumQuery.ByXPath("//*[@label='" + text + "']").FindElement(this);
+        }
+
+        private static AppiumOptions GetOptions(IConfig config)
 		{
 			config.SetProperty("PlatformName", "iOS");
 			config.SetProperty("AutomationName", "XCUITest");
