@@ -8,6 +8,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
 		const string HideKeyboardCommand = "dismissKeyboard";
 		const string PressVolumeDownCommand = "pressVolumeDown";
 		const string PressVolumeUpCommand = "pressVolumeUp";
+		const string PressEnterCommand = "pressEnter";
 
 		protected readonly AppiumApp _app;
 		readonly List<string> _commands = new()
@@ -16,6 +17,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
 			HideKeyboardCommand,
 			PressVolumeDownCommand,
 			PressVolumeUpCommand,
+			PressEnterCommand,
 		};
 
 		public AppiumVirtualKeyboardActions(AppiumApp app)
@@ -36,6 +38,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
 				HideKeyboardCommand => DismissKeyboard(parameters),
 				PressVolumeDownCommand => PressVolumeDown(parameters),
 				PressVolumeUpCommand => PressVolumeUp(parameters),
+				PressEnterCommand => PressEnter(parameters),
 				_ => CommandResponse.FailedEmptyResponse,
 			};
 		}
@@ -56,6 +59,16 @@ namespace Plugin.Maui.UITestHelpers.Appium
 		}
 
 		protected virtual CommandResponse PressVolumeUp(IDictionary<string, object> parameters)
+		{
+			return CommandResponse.SuccessEmptyResponse;
+		}
+
+		/// <summary>
+		/// Presses the Enter key. Default implementation does nothing.
+		/// </summary>
+		/// <param name="parameters">The parameters for the command.</param>
+		/// <returns>A <see cref="CommandResponse"/> indicating the result of the operation.</returns>
+		protected virtual CommandResponse PressEnter(IDictionary<string, object> parameters)
 		{
 			return CommandResponse.SuccessEmptyResponse;
 		}

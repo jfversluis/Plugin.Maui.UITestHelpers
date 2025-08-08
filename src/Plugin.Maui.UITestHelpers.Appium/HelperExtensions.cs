@@ -1142,7 +1142,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
         {
             if (element is not null)
             {
-                app.CommandExecutor.Execute("scrollDown", new Dictionary<string, object>
+                app.CommandExecutor.Execute("scrollDownTo", new Dictionary<string, object>
                 {
                     { "marked", toMarked },
                     { "element", element },
@@ -1875,7 +1875,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
         /// <param name="app">Represents the main gateway to interact with an app.</param>
         public static void SetLightTheme(this IApp app)
         {
-            if (app is not AppiumAndroidApp && app is not AppiumIOSApp)
+            if (app is AppiumCatalystApp)
             {
                 throw new InvalidOperationException($"SetLightTheme is not supported");
             }
@@ -1889,7 +1889,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
         /// <param name="app">Represents the main gateway to interact with an app.</param>
         public static void SetDarkTheme(this IApp app)
         {
-            if (app is not AppiumAndroidApp && app is not AppiumIOSApp)
+            if (app is AppiumCatalystApp)
             {
                 throw new InvalidOperationException($"SetDarkTheme is not supported");
             }
@@ -2355,6 +2355,182 @@ namespace Plugin.Maui.UITestHelpers.Appium
             TimeSpan? timeout = null, TimeSpan? retryFrequency = null)
         {
             Wait(query, i => i == null, timeoutMessage, timeout, retryFrequency);
+        }
+
+        /// <summary>
+        /// Activates the context menu for the specified element.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="element">The identifier for the element whose context menu is to be activated.</param>
+        public static void ActivateContextMenu(this IApp app, string element)
+        {
+            app.CommandExecutor.Execute("activateContextMenu", new Dictionary<string, object>
+            {
+                { "element", element },
+            });
+        }
+
+        /// <summary>
+        /// Dismisses the context menu.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        public static void DismissContextMenu(this IApp app)
+        {
+            app.CommandExecutor.Execute("dismissContextMenu", new Dictionary<string, object>());
+        }
+
+        /// <summary>
+        /// Waits for the flyout icon to appear in the app.
+        /// </summary>
+        /// <param name="app">The IApp instance representing the application.</param>
+        /// <param name="automationId">The automation ID of the flyout icon (default is an empty string).</param>
+        /// <param name="isShell">Indicates whether the app is using Shell navigation (default is true).</param>
+        public static void WaitForFlyoutIcon(this IApp app, string automationId = "", bool isShell = true)
+        {
+            if (app is AppiumAndroidApp)
+            {
+                app.WaitForElement(AppiumQuery.ByXPath("//android.widget.ImageButton[@content-desc=\"Open navigation drawer\"]"));
+            }
+            else if (app is AppiumIOSApp || app is AppiumCatalystApp || app is AppiumWindowsApp)
+            {
+                if (isShell)
+                {
+                    app.WaitForElement("OK");
+                }
+                if (!isShell)
+                {
+                    if (app is AppiumWindowsApp)
+                    {
+                        app.WaitForElement(AppiumQuery.ByAccessibilityId("TogglePaneButton"));
+                    }
+                    else
+                    {
+                        app.WaitForElement(automationId);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Shows the flyout menu in the app.
+        /// </summary>
+        /// <param name="app">The IApp instance representing the application.</param>
+        /// <param name="automationId">The automation ID of the flyout icon (default is an empty string).</param>
+        /// <param name="usingSwipe">Indicates whether to use swipe gesture to open the flyout (default is false).</param>
+        /// <param name="waitForFlyoutIcon">Indicates whether to wait for the flyout icon before showing the flyout (default is true).</param>
+        /// <param name="isShell">Indicates whether the app is using Shell navigation (default is true).</param>
+        public static void ShowFlyout(this IApp app, string automationId = "", bool usingSwipe = false, bool waitForFlyoutIcon = true, bool isShell = true)
+        {
+            if (waitForFlyoutIcon)
+            {
+                app.WaitForFlyoutIcon(automationId, isShell);
+            }
+
+            if (usingSwipe)
+            {
+                app.DragCoordinates(5, 500, 800, 500);
+            }
+            else
+            {
+                app.TapFlyoutIcon(automationId, isShell, false);
+            }
+        }
+
+        /// <summary>
+        /// Taps the Flyout icon for Shell or FlyoutPage.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="title">Optional title for FlyoutPage (default is empty string).</param>
+        /// <param name="isShell">Indicates whether the Flyout is for Shell (true) or FlyoutPage (false).</param>
+        /// <param name="waitForFlyoutIcon">Indicates whether to wait for the flyout icon before tapping (default is true).</param>
+        private static void TapFlyoutIcon(this IApp app, string title = "", bool isShell = true, bool waitForFlyoutIcon = true)
+        {
+            if (waitForFlyoutIcon)
+            {
+                app.WaitForFlyoutIcon(title, isShell);
+            }
+            if (app is AppiumAndroidApp)
+            {
+                app.Tap(AppiumQuery.ByXPath("//android.widget.ImageButton[@content-desc=\"Open navigation drawer\"]"));
+            }
+            else if (app is AppiumIOSApp || app is AppiumCatalystApp || app is AppiumWindowsApp)
+            {
+                if (isShell)
+                {
+                    app.Tap(AppiumQuery.ByAccessibilityId("OK"));
+                }
+                else
+                {
+                    if (app is AppiumWindowsApp)
+                    {
+                        app.Tap(AppiumQuery.ByAccessibilityId("TogglePaneButton"));
+                    }
+                    else
+                    {
+                        app.Tap(title);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Taps the Flyout icon for Shell pages.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        public static void TapShellFlyoutIcon(this IApp app)
+        {
+            app.TapFlyoutIcon();
+        }
+
+        /// <summary>
+        /// Taps the Flyout icon for FlyoutPage.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="title">Optional title for FlyoutPage (default is empty string).</param>
+        public static void TapFlyoutPageIcon(this IApp app, string title = "")
+        {
+            app.TapFlyoutIcon(title, false);
+        }
+
+        /// <summary>
+        /// Taps an item in the specified flyout menu.
+        /// </summary>
+        /// <param name="app">The IApp instance representing the application.</param>
+        /// <param name="flyoutItem">The text or accessibility identifier of the flyout item to tap.</param>
+        /// <param name="isShellFlyout">True if it's a Shell flyout, false for FlyoutPage flyout.</param>
+        private static void TapInFlyout(this IApp app, string flyoutItem, bool isShellFlyout)
+        {
+            if (isShellFlyout)
+            {
+                app.TapShellFlyoutIcon();
+            }
+            else
+            {
+                app.TapFlyoutPageIcon();
+            }
+
+            app.WaitForElement(flyoutItem);
+            app.Tap(flyoutItem);
+        }
+
+        /// <summary>
+        /// Taps an item in the Shell flyout menu.
+        /// </summary>
+        /// <param name="app">The IApp instance representing the application.</param>
+        /// <param name="flyoutItem">The text or accessibility identifier of the flyout item to tap.</param>
+        public static void TapInShellFlyout(this IApp app, string flyoutItem)
+        {
+            app.TapInFlyout(flyoutItem, true);
+        }
+
+        /// <summary>
+        /// Taps an item in the FlyoutPage flyout menu.
+        /// </summary>
+        /// <param name="app">The IApp instance representing the application.</param>
+        /// <param name="flyoutItem">The text or accessibility identifier of the flyout item to tap.</param>
+        public static void TapInFlyoutPageFlyout(this IApp app, string flyoutItem)
+        {
+            app.TapInFlyout(flyoutItem, false);
         }
     }
 }
