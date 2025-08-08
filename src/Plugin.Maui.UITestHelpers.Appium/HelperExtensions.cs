@@ -155,6 +155,36 @@ namespace Plugin.Maui.UITestHelpers.Appium
         }
 
         /// <summary>
+        /// Determine if an element such as a Checkbox or RadioButton is checked.
+        /// </summary>
+        /// <param name="element">Target Element.</param>
+        /// <param name="testDevice">Target Platform.</param>
+        /// <returns>Whether the element is checked (boolean).</returns>
+        public static bool IsChecked(this IUIElement element, TestDevice testDevice)
+        {
+            var response = element.Command.Execute("getChecked", new Dictionary<string, object>()
+             {
+                 { "element", element },
+                 { "testdevice", testDevice }
+             });
+
+            if (response?.Value != null)
+            {
+                if (testDevice == TestDevice.Android)
+                {
+                    return Convert.ToBoolean(response.Value);
+                }
+                else if (testDevice == TestDevice.Mac || testDevice == TestDevice.iOS)
+                {
+                    return Convert.ToBoolean(Convert.ToByte(response?.Value));
+                }
+                return (bool)response.Value;
+            }
+
+            throw new InvalidOperationException($"Could not get Selected of element");
+        }
+
+        /// <summary>
         /// Determine if a form or form-like element (checkbox, select, etc...) is selected.
         /// </summary>
         /// <param name="element">Target Element.</param>
@@ -223,7 +253,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
         public static void EnterText(this IApp app, string element, string text)
         {
             var appElement = FindElement(app, element);
-           
+
             app.EnterText(appElement, text);
         }
 
@@ -236,7 +266,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
         public static void EnterText(this IApp app, IQuery query, string text)
         {
             var appElement = app.FindElement(query);
-          
+
             app.EnterText(appElement, text);
         }
 
@@ -406,7 +436,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
         public static void DoubleTap(this IApp app, string element)
         {
             var elementToDoubleTap = FindElement(app, element);
-           
+
             app.DoubleTap(elementToDoubleTap);
         }
 
@@ -477,7 +507,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
         public static void TouchAndHold(this IApp app, string element)
         {
             var elementToTouchAndHold = FindElement(app, element);
-         
+
             app.TouchAndHold(elementToTouchAndHold);
         }
 
