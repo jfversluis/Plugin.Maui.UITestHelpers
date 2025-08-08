@@ -15,7 +15,7 @@ env:
   CSPROJ_TO_TEST: samples/UITests.macOS/UITests.macOS.csproj
   APP_ID: com.companyname.uitesthelperssample
   TARGET_FRAMEWORK: net9.0-maccatalyst
-  XCODE_VERSION: 15.2
+  XCODE_VERSION: 16.4
   SCREENCAPTURE_FOLDER: samples/UITests.macOS/bin/Debug/net9.0
   ARTIFACTS_PATH: ${{ github.workspace }}/output
 
