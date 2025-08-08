@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Drawing;
 using OpenQA.Selenium.Appium;
 using OpenQA.Selenium.Appium.Interfaces;
+using OpenQA.Selenium.Interactions;
 using Plugin.Maui.UITestHelpers.Core;
 
 namespace Plugin.Maui.UITestHelpers.Appium
@@ -508,6 +509,55 @@ namespace Plugin.Maui.UITestHelpers.Appium
             {
                 ["element"] = alertElement
             });
+        }
+
+        /// <summary>
+        /// Tap then wait a short period of time for other elements to load.
+        /// /// <param name="delayInMilliseconds">Amount of time to wait in milliseconds.</param>
+        /// </summary>
+        public static void TapWithDelay(this IUIElement element, int delayInMilliseconds = 500)
+        {
+            element.Tap();
+            Task.Delay(delayInMilliseconds).Wait();
+        }
+
+        /// <summary>
+        /// Tap an element by its text.
+        /// </summary>
+        public static void TapByText(this IApp app, string text)
+        {
+            var driver = (app as AppiumApp)?.Driver;
+            if (driver == null)
+            {
+                throw new InvalidOperationException($"Driver was null");
+            }
+
+            // Find the element by XPath
+            var element = (app.FindElementByText(text) as AppiumDriverElement)?.AppiumElement;
+            if (element == null)
+            {
+                throw new EntryPointNotFoundException($"Element with XPath '{text}' not found");
+            }
+
+            // Get the element's size and location
+            var elementLocation = element.Location;
+            var elementSize = element.Size;
+
+            // Calculate the center of the element
+            int centerX = elementLocation.X + (elementSize.Width / 2);
+            int centerY = elementLocation.Y + (elementSize.Height / 2);
+
+            // Create W3C actions
+            var actions = new PointerInputDevice(PointerKind.Touch);
+            var sequence = new ActionSequence(actions, 0);
+
+            // Perform touch tap at the center of the element
+            sequence.AddAction(actions.CreatePointerMove(CoordinateOrigin.Viewport, centerX, centerY, TimeSpan.Zero));
+            sequence.AddAction(actions.CreatePointerDown(MouseButton.Left));
+            sequence.AddAction(actions.CreatePointerUp(MouseButton.Left));
+
+            // Execute the tap action
+            driver.PerformActions(new List<ActionSequence> { sequence });
         }
 
         /// <summary>
