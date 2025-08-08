@@ -28,6 +28,26 @@ Install with the dotnet CLI, for example: `dotnet add package Plugin.Maui.UITest
 
 All platforms that are supported by the cross section of the support of Appium and .NET MAUI.
 
+## Features
+
+### Backdoor Support
+
+This library now includes backdoor support similar to Xamarin.UITest, allowing you to invoke app methods directly from your UI tests without going through the UI. This is useful for setting up test data, changing app state, or retrieving internal information.
+
+```csharp
+// Basic usage
+app.Invoke("SetupTestData");
+
+// With parameters
+app.Invoke("SetUserPreference", "theme", "dark");
+
+// Typed return values
+string currentUser = app.Invoke<string>("GetCurrentUser");
+int itemCount = app.Invoke<int>("GetItemCount");
+```
+
+For detailed usage instructions and app-side implementation, see [BACKDOOR_USAGE.md](BACKDOOR_USAGE.md).
+
 <!--## API Usage
 
 TBD -->
