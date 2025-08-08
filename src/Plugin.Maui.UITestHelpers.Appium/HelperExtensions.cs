@@ -58,6 +58,11 @@ namespace Plugin.Maui.UITestHelpers.Appium
             app.FindElement(query).Click();
         }
 
+        /// <summary>
+        /// Performs a right mouse click on the matched element.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="element">Target Element.</param>
         public static void RightClick(this IApp app, string element)
         {
             var uiElement = FindElement(app, element);
@@ -82,6 +87,11 @@ namespace Plugin.Maui.UITestHelpers.Appium
             });
         }
 
+        /// <summary>
+        /// Gets the text content of an element.
+        /// </summary>
+        /// <param name="element">Target Element.</param>
+        /// <returns>The text content of the element or null if no text is found.</returns>
         public static string? GetText(this IUIElement element)
         {
             var response = element.Command.Execute("getText", new Dictionary<string, object>()
@@ -91,6 +101,12 @@ namespace Plugin.Maui.UITestHelpers.Appium
             return (string?)response.Value;
         }
 
+        /// <summary>
+        /// Attempts to get the text content of an element without throwing an exception.
+        /// </summary>
+        /// <param name="element">Target Element.</param>
+        /// <param name="text">When this method returns, contains the text content of the element if successful; otherwise, null.</param>
+        /// <returns>true if text was retrieved successfully; otherwise, false.</returns>
         public static bool TryGetText(this IUIElement element, [NotNullWhen(true)] out string? text)
         {
             try
@@ -105,6 +121,11 @@ namespace Plugin.Maui.UITestHelpers.Appium
             }
         }
 
+        /// <summary>
+        /// Reads the text content of an element.
+        /// </summary>
+        /// <param name="element">Target Element.</param>
+        /// <returns>The text content of the element or null if no text is found.</returns>
         public static string? ReadText(this IUIElement element)
             => element.GetText();
 
@@ -319,6 +340,11 @@ namespace Plugin.Maui.UITestHelpers.Appium
             });
         }
 
+        /// <summary>
+        /// Sends keystrokes to an element.
+        /// </summary>
+        /// <param name="element">Target Element.</param>
+        /// <param name="text">The text to send to the element.</param>
         public static void SendKeys(this IUIElement element, string text)
         {
             element.Command.Execute("sendKeys", new Dictionary<string, object>()
@@ -328,6 +354,10 @@ namespace Plugin.Maui.UITestHelpers.Appium
             });
         }
 
+        /// <summary>
+        /// Clears the content of an element.
+        /// </summary>
+        /// <param name="element">Target Element.</param>
         public static void Clear(this IUIElement element)
         {
             element.Command.Execute("clear", new Dictionary<string, object>()
