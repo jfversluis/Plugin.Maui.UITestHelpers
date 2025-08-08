@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using OpenQA.Selenium.Appium;
 using OpenQA.Selenium.Appium.Interfaces;
@@ -57,6 +58,30 @@ namespace Plugin.Maui.UITestHelpers.Appium
             app.FindElement(query).Click();
         }
 
+        public static void RightClick(this IApp app, string element)
+        {
+            var uiElement = FindElement(app, element);
+            uiElement.Command.Execute("click", new Dictionary<string, object>()
+            {
+                { "element", uiElement },
+                { "button", "right" }
+            });
+        }
+
+        /// <summary>
+        /// Performs a down/press on the matched element, without a matching release
+        /// </summary>
+        /// <param name="app"></param>
+        /// <param name="element"></param>
+        public static void PressDown(this IApp app, string element)
+        {
+            var uiElement = FindElement(app, element);
+            uiElement.Command.Execute("pressDown", new Dictionary<string, object>()
+            {
+                { "element", uiElement }
+            });
+        }
+
         public static string? GetText(this IUIElement element)
         {
             var response = element.Command.Execute("getText", new Dictionary<string, object>()
@@ -65,6 +90,23 @@ namespace Plugin.Maui.UITestHelpers.Appium
             });
             return (string?)response.Value;
         }
+
+        public static bool TryGetText(this IUIElement element, [NotNullWhen(true)] out string? text)
+        {
+            try
+            {
+                text = GetText(element);
+                return text is not null;
+            }
+            catch
+            {
+                text = null;
+                return false;
+            }
+        }
+
+        public static string? ReadText(this IUIElement element)
+            => element.GetText();
 
         public static T? GetAttribute<T>(this IUIElement element, string attributeName)
         {
@@ -366,11 +408,18 @@ namespace Plugin.Maui.UITestHelpers.Appium
         /// <param name="y">The y coordinate to double tap.</param>
         public static void DoubleTapCoordinates(this IApp app, float x, float y)
         {
-            app.CommandExecutor.Execute("doubleTapCoordinates", new Dictionary<string, object>
+            if (app is AppiumCatalystApp)
             {
-                { "x", x },
-                { "y", y }
-            });
+                app.DoubleClickCoordinates(x, y); // Directly invoke coordinate-based double click for AppiumCatalystApp.
+            }
+            else
+            {
+                app.CommandExecutor.Execute("doubleTapCoordinates", new Dictionary<string, object>
+                {
+                    { "x", x },
+                    { "y", y }
+                });
+            }
         }
 
         /// <summary>
@@ -420,8 +469,21 @@ namespace Plugin.Maui.UITestHelpers.Appium
                      { "element", element },
                  });
             }
+        }
 
-
+        /// <summary>
+        /// Performs a continuous touch gesture on the given coordinates.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="x">The x coordinate to touch.</param>
+        /// <param name="y">The y coordinate to touch.</param>
+        public static void TouchAndHoldCoordinates(this IApp app, float x, float y)
+        {
+            app.CommandExecutor.Execute("touchAndHoldCoordinates", new Dictionary<string, object>
+            {
+                { "x", x },
+                { "y", y }
+            });
         }
 
         /// <summary>
@@ -555,6 +617,24 @@ namespace Plugin.Maui.UITestHelpers.Appium
         }
 
         /// <summary>
+        /// Wait function that will repeatedly query the app until any matching element is found. 
+        /// Throws a TimeoutException if no element is found within the time limit.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="marked">Collection of target Elements.</param>
+        /// <param name="timeoutMessage">The message used in the TimeoutException.</param>
+        /// <param name="timeout">The TimeSpan to wait before failing.</param>
+        /// <param name="retryFrequency">The TimeSpan to wait between each query call to the app.</param>
+        /// <param name="postTimeout">The final TimeSpan to wait after the element has been found.</param>
+        public static IUIElement WaitForAnyElement(this IApp app, string[] marked, string timeoutMessage = "Timed out waiting for element...", TimeSpan? timeout = null, TimeSpan? retryFrequency = null, TimeSpan? postTimeout = null)
+        {
+            IUIElement result() => FindAnyElement(app, marked);
+            var results = WaitForAtLeastOne(result, timeoutMessage, timeout, retryFrequency);
+
+            return results;
+        }
+
+        /// <summary>
         /// Wait function that will repeatly query the app until a matching element is found. 
         /// Throws a TimeoutException if no element is found within the time limit.
         /// </summary>
@@ -650,26 +730,26 @@ namespace Plugin.Maui.UITestHelpers.Appium
             return WaitForElement(app, marked, timeoutMessage, timeout, retryFrequency, postTimeout);
         }
 
-        public static bool WaitForTextToBePresentInElement(this IApp app, string automationId, string text)
+        public static bool WaitForTextToBePresentInElement(this IApp app, string automationId, string text, TimeSpan? timeout = null)
         {
-            TimeSpan timeout = DefaultTimeout;
+            timeout ??= DefaultTimeout;
             TimeSpan retryFrequency = TimeSpan.FromMilliseconds(500);
-            string timeoutMessage = $"Timed out on {nameof(WaitForTextToBePresentInElement)}.";
 
             DateTime start = DateTime.Now;
 
             while (true)
             {
                 var element = app.FindElements(automationId).FirstOrDefault();
-                if (element != null && (element.GetText()?.Contains(text, StringComparison.OrdinalIgnoreCase) ?? false))
+
+                if (element is not null && element.TryGetText(out var s) && s.Contains(text, StringComparison.OrdinalIgnoreCase))
                 {
                     return true;
                 }
 
                 long elapsed = DateTime.Now.Subtract(start).Ticks;
-                if (elapsed >= timeout.Ticks)
+                if (elapsed >= timeout.Value.Ticks)
                 {
-                    Debug.WriteLine($">>>>> {elapsed} ticks elapsed, timeout value is {timeout.Ticks}");
+                    Debug.WriteLine($">>>>> {elapsed} ticks elapsed, timeout value is {timeout.Value.Ticks}");
 
                     return false;
                 }
@@ -694,6 +774,15 @@ namespace Plugin.Maui.UITestHelpers.Appium
         public static void PressVolumeDown(this IApp app)
         {
             app.CommandExecutor.Execute("pressVolumeDown", ImmutableDictionary<string, object>.Empty);
+        }
+
+        /// <summary>
+        /// Presses the enter key in the app.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        public static void PressEnter(this IApp app)
+        {
+            app.CommandExecutor.Execute("pressEnter", ImmutableDictionary<string, object>.Empty);
         }
 
         /// <summary>
@@ -986,6 +1075,56 @@ namespace Plugin.Maui.UITestHelpers.Appium
         }
 
         /// <summary>
+        /// Scroll down until an element that matches the toMarked is shown on the screen.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="toMarked">Marked selector to select what element to bring on screen.</param>
+        /// <param name="withinMarked">Marked selector to select what element to scroll within.</param>
+        /// <param name="strategy">Strategy for scrolling element.</param>
+        /// <param name="swipePercentage">How far across the element to swipe (from 0.0 to 1.0).</param>
+        /// <param name="swipeSpeed">The speed of the gesture.</param>
+        /// <param name="withInertia">Whether swipes should cause inertia.</param>
+        public static void ScrollDownTo(this IApp app, string toMarked, string withinMarked, ScrollStrategy strategy = ScrollStrategy.Auto, double swipePercentage = 0.67, int swipeSpeed = 500, bool withInertia = true)
+        {
+            var elementToScroll = FindElement(app, withinMarked);
+
+            app.ScrollDownTo(toMarked, elementToScroll, strategy, swipePercentage, swipeSpeed, withInertia);
+        }
+
+        /// <summary>
+        /// Scroll down until an element that matches the query is shown on the screen.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="toMarked">Marked selector to select what element to bring on screen.</param>
+        /// <param name="query">Represents the query that identify an element by parameters such as type, text it contains or identifier.</param>
+        /// <param name="strategy">Strategy for scrolling element.</param>
+        /// <param name="swipePercentage">How far across the element to swipe (from 0.0 to 1.0).</param>
+        /// <param name="swipeSpeed">The speed of the gesture.</param>
+        /// <param name="withInertia">Whether swipes should cause inertia.</param>
+        public static void ScrollDownTo(this IApp app, string toMarked, IQuery query, ScrollStrategy strategy = ScrollStrategy.Auto, double swipePercentage = 0.67, int swipeSpeed = 500, bool withInertia = true)
+        {
+            var elementToScroll = app.FindElement(query);
+
+            app.ScrollDownTo(toMarked, elementToScroll, strategy, swipePercentage, swipeSpeed, withInertia);
+        }
+
+        internal static void ScrollDownTo(this IApp app, string toMarked, IUIElement? element, ScrollStrategy strategy = ScrollStrategy.Auto, double swipePercentage = 0.67, int swipeSpeed = 500, bool withInertia = true)
+        {
+            if (element is not null)
+            {
+                app.CommandExecutor.Execute("scrollDown", new Dictionary<string, object>
+                {
+                    { "marked", toMarked },
+                    { "element", element },
+                    { "strategy", strategy },
+                    { "swipePercentage", swipePercentage },
+                    { "swipeSpeed", swipeSpeed },
+                    { "withInertia", withInertia }
+                });
+            }
+        }
+
+        /// <summary>
         /// Scrolls right on the first element matching query.
         /// </summary>
         /// <param name="app">Represents the main gateway to interact with an app.</param>
@@ -1076,6 +1215,56 @@ namespace Plugin.Maui.UITestHelpers.Appium
                      { "swipeSpeed", swipeSpeed },
                      { "withInertia", withInertia }
                  });
+            }
+        }
+
+        /// <summary>
+        /// Scroll up until an element that matches the <paramref name="toMarked"/> is shown on the screen in <paramref name="withinMarked"/>.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="toMarked">Marked selector to select what element to bring on screen.</param>
+        /// <param name="withinMarked">Marked selector to select what element to scroll within.</param>
+        /// <param name="strategy">Strategy for scrolling element.</param>
+        /// <param name="swipePercentage">How far across the element to swipe (from 0.0 to 1.0).</param>
+        /// <param name="swipeSpeed">The speed of the gesture.</param>
+        /// <param name="withInertia">Whether swipes should cause inertia.</param>
+        public static void ScrollUpTo(this IApp app, string toMarked, string withinMarked, ScrollStrategy strategy = ScrollStrategy.Auto, double swipePercentage = 0.67, int swipeSpeed = 500, bool withInertia = true)
+        {
+            var elementToScroll = FindElement(app, withinMarked);
+
+            app.ScrollUpTo(toMarked, elementToScroll, strategy, swipePercentage, swipeSpeed, withInertia);
+        }
+
+        /// <summary>
+        /// Scroll up until an element that matches <paramref name="toMarked"/> is shown on the screen.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="toMarked">Marked selector to select what element to bring on screen.</param>
+        /// <param name="query">Represents the query that identify an element by parameters such as type, text it contains or identifier.</param>
+        /// <param name="strategy">Strategy for scrolling element.</param>
+        /// <param name="swipePercentage">How far across the element to swipe (from 0.0 to 1.0).</param>
+        /// <param name="swipeSpeed">The speed of the gesture.</param>
+        /// <param name="withInertia">Whether swipes should cause inertia.</param>
+        public static void ScrollUpTo(this IApp app, string toMarked, IQuery query, ScrollStrategy strategy = ScrollStrategy.Auto, double swipePercentage = 0.67, int swipeSpeed = 500, bool withInertia = true)
+        {
+            var elementToScroll = app.FindElement(query);
+
+            app.ScrollUpTo(toMarked, elementToScroll, strategy, swipePercentage, swipeSpeed, withInertia);
+        }
+
+        internal static void ScrollUpTo(this IApp app, string toMarked, IUIElement? element, ScrollStrategy strategy = ScrollStrategy.Auto, double swipePercentage = 0.67, int swipeSpeed = 500, bool withInertia = true)
+        {
+            if (element is not null)
+            {
+                app.CommandExecutor.Execute("scrollUpTo", new Dictionary<string, object>
+                {
+                    { "marked", toMarked },
+                    { "element", element },
+                    { "strategy", strategy },
+                    { "swipePercentage", swipePercentage },
+                    { "swipeSpeed", swipeSpeed },
+                    { "withInertia", withInertia }
+                });
             }
         }
 
@@ -1183,11 +1372,18 @@ namespace Plugin.Maui.UITestHelpers.Appium
         /// <param name="y">The y coordinate to tap.</param>
         public static void TapCoordinates(this IApp app, float x, float y)
         {
-            app.CommandExecutor.Execute("tapCoordinates", new Dictionary<string, object>
+            if (app is AppiumCatalystApp)
             {
-                { "x", x },
-                { "y", y }
-            });
+                app.ClickCoordinates(x, y); // // Directly invoke coordinate-based click for AppiumCatalystApp.
+            }
+            else
+            {
+                app.CommandExecutor.Execute("tapCoordinates", new Dictionary<string, object>
+                {
+                    { "x", x },
+                    { "y", y }
+                });
+            }
         }
 
         /// <summary>
@@ -1303,6 +1499,32 @@ namespace Plugin.Maui.UITestHelpers.Appium
         }
 
         /// <summary>
+        /// Increases the value of a Stepper control.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="marked">Marked selector of the Stepper element to increase.</param>
+        public static void IncreaseStepper(this IApp app, string marked)
+        {
+            app.CommandExecutor.Execute("increaseStepper", new Dictionary<string, object>
+            {
+                ["elementId"] = marked
+            });
+        }
+
+        /// <summary>
+        /// Decreases the value of a Stepper control.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="marked">Marked selector of the Stepper element to decrease.</param>
+        public static void DecreaseStepper(this IApp app, string marked)
+        {
+            app.CommandExecutor.Execute("decreaseStepper", new Dictionary<string, object>
+            {
+                ["elementId"] = marked
+            });
+        }
+
+        /// <summary>
         /// Performs a continuous drag gesture between 2 points.
         /// </summary>
         /// <param name="app">Represents the main gateway to interact with an app.</param>
@@ -1365,14 +1587,26 @@ namespace Plugin.Maui.UITestHelpers.Appium
         /// </summary>
         /// <param name="app">Represents the main gateway to interact with an app.</param>
         /// <exception cref="InvalidOperationException">Unlock is only supported on <see cref="AppiumAndroidApp"/>.</exception>
-        public static void Unlock(this IApp app)
+        /// <summary>
+        /// Unlock the screen.
+        /// Functionality that's only available on Android and iOS.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="unlockType">This capability supports the following possible values: pin, pinWithKeyEvent, password, pattern.</param>
+        /// <param name="unlockKey">a valid pin (digits in range 0-9), password (latin characters) or pattern (treat the pattern pins similarly to numbers on a digital phone dial).</param>
+        /// <exception cref="InvalidOperationException">Unlock is only supported on <see cref="AppiumAndroidApp"/>.</exception>
+        public static void Unlock(this IApp app, string unlockType = "", string unlockKey = "")
         {
             if (app is not AppiumAndroidApp && app is not AppiumIOSApp)
             {
-                throw new InvalidOperationException($"Lock is only supported on AppiumAndroidApp and AppiumIOSApp");
+                throw new InvalidOperationException($"Unlock is only supported on AppiumAndroidApp and AppiumIOSApp");
             }
 
-            app.CommandExecutor.Execute("unlock", ImmutableDictionary<string, object>.Empty);
+            app.CommandExecutor.Execute("unlock", new Dictionary<string, object>()
+            {
+                { "unlockType", unlockType },
+                { "unlockKey", unlockKey },
+            });
         }
 
         /// <summary>
@@ -1736,6 +1970,17 @@ namespace Plugin.Maui.UITestHelpers.Appium
                 result = app.FindElementByText(element);
 
             return result;
+        }
+
+        static IUIElement FindAnyElement(IApp app, string[] elements)
+        {
+            foreach (var element in elements)
+            {
+                if (FindElement(app, element) is IUIElement result)
+                    return result;
+            }
+
+            throw new InvalidOperationException($"Did not find any elements in the list: {string.Join(", ", elements)}");
         }
 
         static IReadOnlyCollection<IUIElement> FindElements(IApp app, string element)
