@@ -29,6 +29,31 @@
 		IEnumerable<string> GetLogEntries(string logType);
 	}
 
+	/// <summary>
+	/// Interface for apps that support backdoor method invocation.
+	/// Backdoors allow tests to invoke app methods directly without going through the UI.
+	/// </summary>
+	public interface IBackdoorSupportedApp : IApp
+	{
+		/// <summary>
+		/// Invokes a backdoor method in the app with the specified method name and arguments.
+		/// </summary>
+		/// <param name="methodName">The name of the method to invoke</param>
+		/// <param name="args">Arguments to pass to the method</param>
+		/// <returns>The result of the method invocation, or null if no result</returns>
+		object? Invoke(string methodName, params object[] args);
+		
+		/// <summary>
+		/// Invokes a backdoor method in the app with the specified method name and arguments,
+		/// returning a strongly typed result.
+		/// </summary>
+		/// <typeparam name="T">The expected return type</typeparam>
+		/// <param name="methodName">The name of the method to invoke</param>
+		/// <param name="args">Arguments to pass to the method</param>
+		/// <returns>The result of the method invocation, or default(T) if no result</returns>
+		T? Invoke<T>(string methodName, params object[] args);
+	}
+
 	public static class AppExtensions
 	{
 		public static void Click(this IApp app, float x, float y)
@@ -67,5 +92,30 @@
 
 		public static IEnumerable<string> GetLogEntries(this IApp app, string logType) =>
 			app.As<ILogsSupportedApp>().GetLogEntries(logType);
+	}
+
+	public static class BackdoorSupportedAppExtensions
+	{
+		/// <summary>
+		/// Invokes a backdoor method in the app with the specified method name and arguments.
+		/// </summary>
+		/// <param name="app">The app instance</param>
+		/// <param name="methodName">The name of the method to invoke</param>
+		/// <param name="args">Arguments to pass to the method</param>
+		/// <returns>The result of the method invocation, or null if no result</returns>
+		public static object? Invoke(this IApp app, string methodName, params object[] args) =>
+			app.As<IBackdoorSupportedApp>().Invoke(methodName, args);
+
+		/// <summary>
+		/// Invokes a backdoor method in the app with the specified method name and arguments,
+		/// returning a strongly typed result.
+		/// </summary>
+		/// <typeparam name="T">The expected return type</typeparam>
+		/// <param name="app">The app instance</param>
+		/// <param name="methodName">The name of the method to invoke</param>
+		/// <param name="args">Arguments to pass to the method</param>
+		/// <returns>The result of the method invocation, or default(T) if no result</returns>
+		public static T? Invoke<T>(this IApp app, string methodName, params object[] args) =>
+			app.As<IBackdoorSupportedApp>().Invoke<T>(methodName, args);
 	}
 }
