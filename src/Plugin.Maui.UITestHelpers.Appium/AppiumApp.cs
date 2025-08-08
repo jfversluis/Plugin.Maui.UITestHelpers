@@ -150,7 +150,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
 			appiumOptions.AddAdditionalAppiumOption(MobileCapabilityType.NewCommandTimeout, 3000);
 		}
 
-		public void Dispose()
+		public virtual void Dispose()
 		{
 			_driver?.Dispose();
 		}
