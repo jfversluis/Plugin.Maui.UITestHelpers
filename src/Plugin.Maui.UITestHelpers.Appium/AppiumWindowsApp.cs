@@ -10,6 +10,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
 		public AppiumWindowsApp(Uri remoteAddress, IConfig config)
 			: base(new WindowsDriver(remoteAddress, GetOptions(config)), config)
 		{
+			_commandExecutor.AddCommandGroup(new AppiumWindowsContextMenuActions(this));
 		}
 
 		public override ApplicationState AppState
