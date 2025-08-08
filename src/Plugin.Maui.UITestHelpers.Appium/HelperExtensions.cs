@@ -1142,7 +1142,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
         {
             if (element is not null)
             {
-                app.CommandExecutor.Execute("scrollDown", new Dictionary<string, object>
+                app.CommandExecutor.Execute("scrollDownTo", new Dictionary<string, object>
                 {
                     { "marked", toMarked },
                     { "element", element },
