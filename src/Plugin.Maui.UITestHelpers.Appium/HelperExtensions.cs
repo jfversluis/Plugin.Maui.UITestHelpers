@@ -1875,7 +1875,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
         /// <param name="app">Represents the main gateway to interact with an app.</param>
         public static void SetLightTheme(this IApp app)
         {
-            if (app is not AppiumAndroidApp && app is not AppiumIOSApp)
+            if (app is AppiumCatalystApp)
             {
                 throw new InvalidOperationException($"SetLightTheme is not supported");
             }
@@ -1889,7 +1889,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
         /// <param name="app">Represents the main gateway to interact with an app.</param>
         public static void SetDarkTheme(this IApp app)
         {
-            if (app is not AppiumAndroidApp && app is not AppiumIOSApp)
+            if (app is AppiumCatalystApp)
             {
                 throw new InvalidOperationException($"SetDarkTheme is not supported");
             }

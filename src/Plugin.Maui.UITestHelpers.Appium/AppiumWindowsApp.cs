@@ -11,6 +11,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
 			: base(new WindowsDriver(remoteAddress, GetOptions(config)), config)
 		{
 			_commandExecutor.AddCommandGroup(new AppiumWindowsContextMenuActions(this));
+			_commandExecutor.AddCommandGroup(new AppiumWindowsThemeChangeAction());
 		}
 
 		public override ApplicationState AppState
