@@ -1691,6 +1691,27 @@ namespace Plugin.Maui.UITestHelpers.Appium
         }
 
         /// <summary>
+        /// Switch the System animations state.
+        /// Optimize and accelerate tests, eliminating animations entirely when Appium is executing tests, as they serve no practical purpose in this context.
+        /// Functionality that's only available on Android and Catalyst.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="enableSystemAnimations">Enable/disable the system animations.</param>
+        /// <exception cref="InvalidOperationException">ToggleSystemAnimations is only supported on <see cref="AppiumAndroidApp"/> and <see cref="AppiumCatalystApp"/>.</exception>
+        public static void ToggleSystemAnimations(this IApp app, bool enableSystemAnimations)
+        {
+            if (app is not AppiumAndroidApp && app is not AppiumCatalystApp)
+            {
+                throw new InvalidOperationException($"ToggleSystemAnimations is not supported");
+            }
+
+            app.CommandExecutor.Execute("toggleSystemAnimations", new Dictionary<string, object>()
+            {
+                { "enableSystemAnimations", enableSystemAnimations },
+            });
+        }
+
+        /// <summary>
         /// Simulate the device shaking.
         /// Functionality that's only available on iOS.
         /// </summary>
@@ -1704,6 +1725,32 @@ namespace Plugin.Maui.UITestHelpers.Appium
             }
 
             app.CommandExecutor.Execute("shake", ImmutableDictionary<string, object>.Empty);
+        }
+
+        /// <summary>
+        /// Triggers the SwipeBackNavigation, simulating the default swipe-back navigation.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// /// <exception cref="InvalidOperationException">SwipeBackNavigation is only supported on <see cref="AppiumIOSApp"/> and <see cref="AppiumAndroidApp"/>.</exception>
+        public static void SwipeBackNavigation(this IApp app)
+        {
+            if (app is not AppiumIOSApp && app is not AppiumAndroidApp)
+            {
+                throw new InvalidOperationException($"Interactive Pop Gesture is only supported on AppiumIOSAppp and AppiumAndroidApp");
+            }
+
+            if (app is AppiumIOSApp)
+            {
+                app.CommandExecutor.Execute("interactivePopGesture", ImmutableDictionary<string, object>.Empty);
+            }
+            else if (app is AppiumAndroidApp)
+            {
+                var response = app.CommandExecutor.Execute("checkIfGestureNavigationIsEnabled", new Dictionary<string, object>());
+                if (response?.Value is bool gestureNavigationIsEnabled && gestureNavigationIsEnabled)
+                    SwipeLeftToRight(app);
+                else
+                    Back(app);
+            }
         }
 
         /// <summary>
@@ -1732,6 +1779,24 @@ namespace Plugin.Maui.UITestHelpers.Appium
             }
 
             throw new InvalidOperationException($"Could not get the performance data");
+        }
+
+        /// <summary>
+        /// Gets the information of the system state regarding memory.
+        /// Functionality that's only available on Android.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <returns>The information of the system related to the memory performance.</returns>
+        /// <exception cref="InvalidOperationException">GetPerformanceData is only supported on <see cref="AppiumAndroidApp"/>.</exception>
+        public static IReadOnlyDictionary<string, int> GetPerformanceMemoryInfo(this IApp app)
+        {
+            var performanceData = GetPerformanceData(app, "memoryinfo");
+            var countersTitles = (object?[])performanceData[0];
+            var countersStrings = (object?[])performanceData[1];
+            var data = countersTitles.Zip(countersStrings)
+                .Where(x => x is { First: string, Second: string })
+                .ToDictionary(x => (string)x.First!, x => int.TryParse((string)x.Second!, out var value) ? value : 0);
+            return data;
         }
 
         /// <summary>
@@ -1800,6 +1865,49 @@ namespace Plugin.Maui.UITestHelpers.Appium
             }
 
             app.CommandExecutor.Execute("setDarkTheme", ImmutableDictionary<string, object>.Empty);
+        }
+
+        /// <summary>
+        /// Maximize the active App window.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        public static void EnterFullScreen(this IApp app)
+        {
+            if (app is not AppiumCatalystApp)
+            {
+                throw new InvalidOperationException($"EnterFullScreen is only supported on AppiumCatalystApp");
+            }
+
+            app.CommandExecutor.Execute("enterFullScreen", new Dictionary<string, object>());
+        }
+
+        /// <summary>
+        /// Leave the App full screen mode.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        public static void ExitFullScreen(this IApp app)
+        {
+            if (app is not AppiumCatalystApp)
+            {
+                throw new InvalidOperationException($"ExitFullScreen is only supported on AppiumCatalystApp");
+            }
+
+            app.CommandExecutor.Execute("exitFullScreen", new Dictionary<string, object>());
+        }
+
+        /// <summary>
+        /// Print in the Output the current application hierarchy XML (app).
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        public static void PrintTree(this IApp app)
+        {
+            if (app is not AppiumApp aaa)
+            {
+                throw new InvalidOperationException($"PrintTree is only supported on AppiumApp");
+            }
+
+            var pageSource = aaa.Driver.PageSource;
+            Console.WriteLine(pageSource);
         }
 
         /// <summary>
@@ -1930,6 +2038,95 @@ namespace Plugin.Maui.UITestHelpers.Appium
             }
 
             return element.AppiumElement.Equals(activeElement);
+        }
+
+        /// <summary>
+        /// Navigates back in the application by simulating a tap on the platform-specific back navigation button or using a custom identifier.
+        /// </summary>
+        /// <param name="app">The IApp instance representing the main gateway to interact with the application.</param>
+        /// <param name="customBackButtonIdentifier">Optional custom identifier string for the back button. If not provided, the default back arrow query will be used.</param>
+        public static void TapBackArrow(this IApp app, string customBackButtonIdentifier = "")
+        {
+            var query = string.IsNullOrEmpty(customBackButtonIdentifier)
+                ? GetDefaultBackArrowQuery(app)
+                : GetCustomBackArrowQuery(app, customBackButtonIdentifier);
+
+            TapBackArrow(app, query);
+        }
+
+        /// <summary>
+        /// Navigates back in the application using a custom IQuery.
+        /// </summary>
+        /// <param name="app">The IApp instance representing the main gateway to interact with the application.</param>
+        /// <param name="query">The custom IQuery for the back button.</param>
+        public static void TapBackArrow(this IApp app, IQuery query)
+        {
+            app.WaitForElement(query).Tap();
+        }
+
+        /// <summary>
+        /// Taps a button in a display alert dialog.
+        /// For AppiumCatalystApp, it uses specific element identifiers to locate and tap the alert button.
+        /// For other app types, it locates and taps the button using the provided text.
+        /// </summary>
+        /// <param name="app">The IApp instance representing the application.</param>
+        /// <param name="text">The text of the button to tap in the display alert (used for non-AppiumCatalystApp instances).</param>
+        /// <param name="buttonIndex">
+        /// The index of the button in the alert dialog, used to generate the correct element identifier.
+        /// For example, in a alert with two buttons:
+        /// - 0 (default) corresponds to the leftmost button (e.g., "OK" with identifier ending in 999)
+        /// - 1 corresponds to the button to its right (e.g., "Cancel" with identifier ending in 998)
+        /// </param>
+        public static void TapDisplayAlertButton(this IApp app, string text, int buttonIndex = 0)
+        {
+            if (app is AppiumCatalystApp)
+            {
+                app.WaitForElement(AppiumQuery.ById($"action-button--{999 - buttonIndex}"));
+                app.Tap(AppiumQuery.ById($"action-button--{999 - buttonIndex}"));
+            }
+            else
+            {
+                app.WaitForElement(text);
+                app.Tap(text);
+            }
+        }
+
+        /// <summary>
+        /// Gets the default query for the back arrow button based on the app type.
+        /// </summary>
+        /// <param name="app">The IApp instance representing the application.</param>
+        /// <returns>An IQuery for the default back arrow button.</returns>
+        /// <exception cref="ArgumentException">Thrown when an unsupported app type is provided.</exception>
+        static IQuery GetDefaultBackArrowQuery(IApp app)
+        {
+            return app switch
+            {
+                AppiumAndroidApp _ => AppiumQuery.ByXPath("//android.widget.ImageButton[@content-desc='Navigate up']"),
+                AppiumIOSApp _ => AppiumQuery.ByAccessibilityId("Back"),
+                AppiumCatalystApp _ => AppiumQuery.ByAccessibilityId("Back"),
+                AppiumWindowsApp _ => AppiumQuery.ByAccessibilityId("NavigationViewBackButton"),
+                _ => throw new ArgumentException("Unsupported app type", nameof(app))
+            };
+        }
+
+        /// <summary>
+        /// Gets a custom query for the back arrow button based on the app type and a custom identifier.
+        /// Note that for Windows apps, the back button is not customizable, so the default identifier is used.
+        /// </summary>
+        /// <param name="app">The IApp instance representing the application.</param>
+        /// <param name="customBackButtonIdentifier">The custom identifier for the back button.</param>
+        /// <returns>An IQuery for the custom back arrow button.</returns>
+        /// <exception cref="ArgumentException">Thrown when an unsupported app type is provided.</exception>
+        static IQuery GetCustomBackArrowQuery(IApp app, string customBackButtonIdentifier)
+        {
+            return app switch
+            {
+                AppiumAndroidApp _ => AppiumQuery.ByXPath($"//android.widget.ImageButton[@content-desc='{customBackButtonIdentifier}']"),
+                AppiumIOSApp _ => AppiumQuery.ByXPath($"//XCUIElementTypeButton[@name='{customBackButtonIdentifier}']"),
+                AppiumCatalystApp _ => AppiumQuery.ByName(customBackButtonIdentifier),
+                AppiumWindowsApp _ => AppiumQuery.ByAccessibilityId("NavigationViewBackButton"),
+                _ => throw new ArgumentException("Unsupported app type", nameof(app))
+            };
         }
 
         static IUIElement Wait(Func<IUIElement?> query,
