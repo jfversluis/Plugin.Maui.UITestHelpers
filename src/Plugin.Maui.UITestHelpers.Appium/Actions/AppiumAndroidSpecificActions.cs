@@ -7,7 +7,9 @@ namespace Plugin.Maui.UITestHelpers.Appium
     {
         const string ToggleAirplaneModeCommand = "toggleAirplaneMode";
         const string ToggleWifiCommand = "toggleWifi";
+        const string ToggleDataCommand = "toggleData";
         const string GetPerformanceDataCommand = "getPerformanceData";
+        const string GetSystemBarsCommand = "getSystemBars";
 
         readonly AppiumApp _appiumApp;
 
@@ -15,7 +17,9 @@ namespace Plugin.Maui.UITestHelpers.Appium
         {
             ToggleAirplaneModeCommand,
             ToggleWifiCommand,
+            ToggleDataCommand,
             GetPerformanceDataCommand,
+            GetSystemBarsCommand,
         };
 
         public AppiumAndroidSpecificActions(AppiumApp appiumApp)
@@ -34,7 +38,9 @@ namespace Plugin.Maui.UITestHelpers.Appium
             {
                 ToggleAirplaneModeCommand => ToggleAirplaneMode(parameters),
                 ToggleWifiCommand => ToggleWifi(parameters),
+                ToggleDataCommand => ToggleData(parameters),
                 GetPerformanceDataCommand => GetPerformanceData(parameters),
+                GetSystemBarsCommand => GetSystemBars(parameters),
                 _ => CommandResponse.FailedEmptyResponse,
             };
         }
@@ -78,6 +84,30 @@ namespace Plugin.Maui.UITestHelpers.Appium
 
                 // Returns the information of the system state which is supported to read as like cpu, memory, network traffic, and battery.
                 IList<object> result = androidDriver.GetPerformanceData(_appiumApp.GetAppId(), performanceDataType);
+
+                return new CommandResponse(result, CommandResponseResult.Success);
+            }
+
+            return CommandResponse.FailedEmptyResponse;
+        }
+
+        CommandResponse ToggleData(IDictionary<string, object> parameters)
+        {
+            if (_appiumApp.Driver is AndroidDriver androidDriver)
+            {
+                androidDriver.ToggleData();
+
+                return CommandResponse.SuccessEmptyResponse;
+            }
+
+            return CommandResponse.FailedEmptyResponse;
+        }
+
+        CommandResponse GetSystemBars(IDictionary<string, object> parameters)
+        {
+            if (_appiumApp.Driver is AndroidDriver androidDriver)
+            {
+                IDictionary<string, object> result = androidDriver.GetSystemBars();
 
                 return new CommandResponse(result, CommandResponseResult.Success);
             }
