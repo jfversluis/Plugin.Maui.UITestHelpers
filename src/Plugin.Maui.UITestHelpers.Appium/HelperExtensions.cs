@@ -2129,6 +2129,126 @@ namespace Plugin.Maui.UITestHelpers.Appium
             };
         }
 
+        /// <summary>
+        /// Waits for an element to be ready until page navigation has settled, with additional waiting for MacCatalyst.
+        /// This method helps prevent null reference exceptions during page transitions, especially in MacCatalyst.
+        /// </summary>
+        /// <param name="app">The IApp instance.</param>
+        /// <param name="elementId">The id of the element to wait for.</param>
+        /// <param name="timeout">Optional timeout for the wait operation. Default is null, which uses the default timeout.</param>
+        public static IUIElement WaitForElementTillPageNavigationSettled(this IApp app, string elementId, TimeSpan? timeout = null)
+        {
+            if (app is AppiumCatalystApp)
+                app.WaitForElement(AppiumQuery.ById(elementId), timeout: timeout);
+
+            return app.WaitForElement(elementId, timeout: timeout);
+        }
+
+        /// <summary>
+        /// Waits for an element to be ready until page navigation has settled, with additional waiting for MacCatalyst.
+        /// This method helps prevent null reference exceptions during page transitions, especially in MacCatalyst.
+        /// </summary>
+        /// <param name="app">The IApp instance.</param>
+        /// <param name="query">The query to use for finding the element.</param>
+        /// <param name="timeout">Optional timeout for the wait operation. Default is null, which uses the default timeout.</param>
+        public static void WaitForElementTillPageNavigationSettled(this IApp app, IQuery query, TimeSpan? timeout = null)
+        {
+            if (app is AppiumCatalystApp)
+                app.WaitForElement(query, timeout: timeout);
+
+            app.WaitForElement(query, timeout: timeout);
+        }
+
+        /// <summary>
+        /// Taps a tab in the application.
+        /// </summary>
+        /// <param name="app">The IApp instance representing the application.</param>
+        /// <param name="tabName">The name of the tab to tap.</param>
+        /// <param name="isTopTab">Indicates whether the tab is a top tab (default is false).</param>
+        /// <remarks>
+        /// This method handles platform-specific behaviors:
+        /// - For Android, it converts the tab name to uppercase.
+        /// - For Windows, if it's a top tab, it taps the navigation view item first.
+        /// The method waits for the tab element to be available before tapping it.
+        /// </remarks>
+        public static void TapTab(this IApp app, string tabName, bool isTopTab = false)
+        {
+            tabName = app is AppiumAndroidApp ? tabName.ToUpperInvariant() : tabName;
+
+            if (isTopTab && app is AppiumWindowsApp)
+            {
+                app.WaitForElement("navViewItem");
+                app.Tap("navViewItem");
+            }
+
+            app.WaitForElementTillPageNavigationSettled(tabName);
+            app.Tap(tabName);
+        }
+
+        /// <summary>
+        /// Waits for a tab element with the specified name to appear and for page navigation to settle.
+        /// </summary>
+        /// <param name="app">The IApp instance.</param>
+        /// <param name="tabName">The name of the tab to wait for.</param>
+        /// <remarks>
+        /// For Android apps, the tab name is converted to uppercase before searching.
+        /// </remarks>
+        public static IUIElement WaitForTabElement(this IApp app, string tabName)
+        {
+            tabName = app is AppiumAndroidApp ? tabName.ToUpperInvariant() : tabName;
+            return app.WaitForElementTillPageNavigationSettled(tabName);
+        }
+
+        /// <summary>
+        /// Determines whether a UI element with the specified name is currently visible in the app.
+        /// </summary>
+        /// <param name="app">The IApp instance representing the application.</param>
+        /// <param name="elementName">The name or identifier of the element to check for visibility.</param>
+        /// <returns>True if the element is visible; otherwise, false.</returns>
+        public static bool IsElementVisible(IApp app, string elementName)
+        {
+            try
+            {
+                app.WaitForElement(elementName);
+                return true;
+            }
+            catch (TimeoutException)
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Taps an element and retries until another element appears and is ready for interaction.
+        /// Sometimes elements may appear but are not yet ready for interaction; this helper method retries the tap until the target element is interactable or the retry limit is reached.
+        /// </summary>
+        /// <param name="app">The app instance</param>
+        /// <param name="elementToTap">The element to tap</param>
+        /// <param name="elementToWaitFor">The element to wait for after tapping</param>
+        /// <param name="maxRetries">Maximum number of retry attempts</param>
+        /// <param name="retryDelayMs">Delay between retries in milliseconds</param>
+        /// <returns>True if the target element appeared and is ready, false otherwise</returns>
+        public static bool TapWithRetriesUntilElementReady(this IApp app, string elementToTap, string elementToWaitFor,
+            int maxRetries = 5, int retryDelayMs = 500)
+        {
+            // Initial tap
+            app.Tap(elementToTap);
+
+            for (int retry = 0; retry < maxRetries - 1; retry++)
+            {
+                // Check if target element is visible
+                if (IsElementVisible(app, elementToWaitFor))
+                    return true;
+
+                // Element not found, wait and tap again
+                System.Threading.Thread.Sleep(retryDelayMs);
+                app.Tap(elementToTap);
+            }
+
+            // Final check
+            return IsElementVisible(app, elementToWaitFor);
+        }
+
         static IUIElement Wait(Func<IUIElement?> query,
             Func<IUIElement?, bool> satisfactory,
             string? timeoutMessage = null,
