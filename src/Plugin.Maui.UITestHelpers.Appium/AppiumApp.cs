@@ -22,6 +22,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
 			_commandExecutor.AddCommandGroup(new AppiumTouchActions(this));
 			_commandExecutor.AddCommandGroup(new AppiumTextActions());
 			_commandExecutor.AddCommandGroup(new AppiumGeneralActions());
+			_commandExecutor.AddCommandGroup(new AppiumClipboardActions(this));
 			_commandExecutor.AddCommandGroup(new AppiumVirtualKeyboardActions(this));
 			_commandExecutor.AddCommandGroup(new AppiumPinchToZoomActions(this));
 			_commandExecutor.AddCommandGroup(new AppiumSliderActions(this));
