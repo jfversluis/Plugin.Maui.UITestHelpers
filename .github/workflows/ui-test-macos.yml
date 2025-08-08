@@ -11,18 +11,18 @@ on:
 env:
   BUILD_CONFIGURATION: Release
   CSPROJ_TO_BUILD: samples/Plugin.Maui.UITestHelpers.Sample/Plugin.Maui.UITestHelpers.Sample.csproj
-  APP_TO_TEST: samples/Plugin.Maui.UITestHelpers.Sample/bin/Release/net8.0-maccatalyst/maccatalyst-arm64/Plugin.Maui.UITestHelpers.Sample.app
+  APP_TO_TEST: samples/Plugin.Maui.UITestHelpers.Sample/bin/Release/net9.0-maccatalyst/maccatalyst-arm64/Plugin.Maui.UITestHelpers.Sample.app
   CSPROJ_TO_TEST: samples/UITests.macOS/UITests.macOS.csproj
   APP_ID: com.companyname.uitesthelperssample
-  TARGET_FRAMEWORK: net8.0-maccatalyst
-  XCODE_VERSION: 15.2
-  SCREENCAPTURE_FOLDER: samples/UITests.macOS/bin/Debug/net8.0
+  TARGET_FRAMEWORK: net9.0-maccatalyst
+  XCODE_VERSION: 16.4
+  SCREENCAPTURE_FOLDER: samples/UITests.macOS/bin/Debug/net9.0
   ARTIFACTS_PATH: ${{ github.workspace }}/output
 
 jobs:
   ui-test-macos:
 
-    runs-on: macos-14
+    runs-on: macos-15
 
     steps:
     - uses: actions/checkout@v4
