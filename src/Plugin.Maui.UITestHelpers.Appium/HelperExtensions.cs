@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using OpenQA.Selenium.Appium;
 using OpenQA.Selenium.Appium.Interfaces;
@@ -57,6 +58,40 @@ namespace Plugin.Maui.UITestHelpers.Appium
             app.FindElement(query).Click();
         }
 
+        /// <summary>
+        /// Performs a right mouse click on the matched element.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="element">Target Element.</param>
+        public static void RightClick(this IApp app, string element)
+        {
+            var uiElement = FindElement(app, element);
+            uiElement.Command.Execute("click", new Dictionary<string, object>()
+            {
+                { "element", uiElement },
+                { "button", "right" }
+            });
+        }
+
+        /// <summary>
+        /// Performs a down/press on the matched element, without a matching release
+        /// </summary>
+        /// <param name="app"></param>
+        /// <param name="element"></param>
+        public static void PressDown(this IApp app, string element)
+        {
+            var uiElement = FindElement(app, element);
+            uiElement.Command.Execute("pressDown", new Dictionary<string, object>()
+            {
+                { "element", uiElement }
+            });
+        }
+
+        /// <summary>
+        /// Gets the text content of an element.
+        /// </summary>
+        /// <param name="element">Target Element.</param>
+        /// <returns>The text content of the element or null if no text is found.</returns>
         public static string? GetText(this IUIElement element)
         {
             var response = element.Command.Execute("getText", new Dictionary<string, object>()
@@ -65,6 +100,34 @@ namespace Plugin.Maui.UITestHelpers.Appium
             });
             return (string?)response.Value;
         }
+
+        /// <summary>
+        /// Attempts to get the text content of an element without throwing an exception.
+        /// </summary>
+        /// <param name="element">Target Element.</param>
+        /// <param name="text">When this method returns, contains the text content of the element if successful; otherwise, null.</param>
+        /// <returns>true if text was retrieved successfully; otherwise, false.</returns>
+        public static bool TryGetText(this IUIElement element, [NotNullWhen(true)] out string? text)
+        {
+            try
+            {
+                text = GetText(element);
+                return text is not null;
+            }
+            catch
+            {
+                text = null;
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Reads the text content of an element.
+        /// </summary>
+        /// <param name="element">Target Element.</param>
+        /// <returns>The text content of the element or null if no text is found.</returns>
+        public static string? ReadText(this IUIElement element)
+            => element.GetText();
 
         public static T? GetAttribute<T>(this IUIElement element, string attributeName)
         {
@@ -277,6 +340,11 @@ namespace Plugin.Maui.UITestHelpers.Appium
             });
         }
 
+        /// <summary>
+        /// Sends keystrokes to an element.
+        /// </summary>
+        /// <param name="element">Target Element.</param>
+        /// <param name="text">The text to send to the element.</param>
         public static void SendKeys(this IUIElement element, string text)
         {
             element.Command.Execute("sendKeys", new Dictionary<string, object>()
@@ -286,6 +354,10 @@ namespace Plugin.Maui.UITestHelpers.Appium
             });
         }
 
+        /// <summary>
+        /// Clears the content of an element.
+        /// </summary>
+        /// <param name="element">Target Element.</param>
         public static void Clear(this IUIElement element)
         {
             element.Command.Execute("clear", new Dictionary<string, object>()
@@ -366,11 +438,18 @@ namespace Plugin.Maui.UITestHelpers.Appium
         /// <param name="y">The y coordinate to double tap.</param>
         public static void DoubleTapCoordinates(this IApp app, float x, float y)
         {
-            app.CommandExecutor.Execute("doubleTapCoordinates", new Dictionary<string, object>
+            if (app is AppiumCatalystApp)
             {
-                { "x", x },
-                { "y", y }
-            });
+                app.DoubleClickCoordinates(x, y); // Directly invoke coordinate-based double click for AppiumCatalystApp.
+            }
+            else
+            {
+                app.CommandExecutor.Execute("doubleTapCoordinates", new Dictionary<string, object>
+                {
+                    { "x", x },
+                    { "y", y }
+                });
+            }
         }
 
         /// <summary>
@@ -420,8 +499,21 @@ namespace Plugin.Maui.UITestHelpers.Appium
                      { "element", element },
                  });
             }
+        }
 
-
+        /// <summary>
+        /// Performs a continuous touch gesture on the given coordinates.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="x">The x coordinate to touch.</param>
+        /// <param name="y">The y coordinate to touch.</param>
+        public static void TouchAndHoldCoordinates(this IApp app, float x, float y)
+        {
+            app.CommandExecutor.Execute("touchAndHoldCoordinates", new Dictionary<string, object>
+            {
+                { "x", x },
+                { "y", y }
+            });
         }
 
         /// <summary>
@@ -555,6 +647,24 @@ namespace Plugin.Maui.UITestHelpers.Appium
         }
 
         /// <summary>
+        /// Wait function that will repeatedly query the app until any matching element is found. 
+        /// Throws a TimeoutException if no element is found within the time limit.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="marked">Collection of target Elements.</param>
+        /// <param name="timeoutMessage">The message used in the TimeoutException.</param>
+        /// <param name="timeout">The TimeSpan to wait before failing.</param>
+        /// <param name="retryFrequency">The TimeSpan to wait between each query call to the app.</param>
+        /// <param name="postTimeout">The final TimeSpan to wait after the element has been found.</param>
+        public static IUIElement WaitForAnyElement(this IApp app, string[] marked, string timeoutMessage = "Timed out waiting for element...", TimeSpan? timeout = null, TimeSpan? retryFrequency = null, TimeSpan? postTimeout = null)
+        {
+            IUIElement result() => FindAnyElement(app, marked);
+            var results = WaitForAtLeastOne(result, timeoutMessage, timeout, retryFrequency);
+
+            return results;
+        }
+
+        /// <summary>
         /// Wait function that will repeatly query the app until a matching element is found. 
         /// Throws a TimeoutException if no element is found within the time limit.
         /// </summary>
@@ -650,26 +760,26 @@ namespace Plugin.Maui.UITestHelpers.Appium
             return WaitForElement(app, marked, timeoutMessage, timeout, retryFrequency, postTimeout);
         }
 
-        public static bool WaitForTextToBePresentInElement(this IApp app, string automationId, string text)
+        public static bool WaitForTextToBePresentInElement(this IApp app, string automationId, string text, TimeSpan? timeout = null)
         {
-            TimeSpan timeout = DefaultTimeout;
+            timeout ??= DefaultTimeout;
             TimeSpan retryFrequency = TimeSpan.FromMilliseconds(500);
-            string timeoutMessage = $"Timed out on {nameof(WaitForTextToBePresentInElement)}.";
 
             DateTime start = DateTime.Now;
 
             while (true)
             {
                 var element = app.FindElements(automationId).FirstOrDefault();
-                if (element != null && (element.GetText()?.Contains(text, StringComparison.OrdinalIgnoreCase) ?? false))
+
+                if (element is not null && element.TryGetText(out var s) && s.Contains(text, StringComparison.OrdinalIgnoreCase))
                 {
                     return true;
                 }
 
                 long elapsed = DateTime.Now.Subtract(start).Ticks;
-                if (elapsed >= timeout.Ticks)
+                if (elapsed >= timeout.Value.Ticks)
                 {
-                    Debug.WriteLine($">>>>> {elapsed} ticks elapsed, timeout value is {timeout.Ticks}");
+                    Debug.WriteLine($">>>>> {elapsed} ticks elapsed, timeout value is {timeout.Value.Ticks}");
 
                     return false;
                 }
@@ -694,6 +804,15 @@ namespace Plugin.Maui.UITestHelpers.Appium
         public static void PressVolumeDown(this IApp app)
         {
             app.CommandExecutor.Execute("pressVolumeDown", ImmutableDictionary<string, object>.Empty);
+        }
+
+        /// <summary>
+        /// Presses the enter key in the app.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        public static void PressEnter(this IApp app)
+        {
+            app.CommandExecutor.Execute("pressEnter", ImmutableDictionary<string, object>.Empty);
         }
 
         /// <summary>
@@ -986,6 +1105,56 @@ namespace Plugin.Maui.UITestHelpers.Appium
         }
 
         /// <summary>
+        /// Scroll down until an element that matches the toMarked is shown on the screen.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="toMarked">Marked selector to select what element to bring on screen.</param>
+        /// <param name="withinMarked">Marked selector to select what element to scroll within.</param>
+        /// <param name="strategy">Strategy for scrolling element.</param>
+        /// <param name="swipePercentage">How far across the element to swipe (from 0.0 to 1.0).</param>
+        /// <param name="swipeSpeed">The speed of the gesture.</param>
+        /// <param name="withInertia">Whether swipes should cause inertia.</param>
+        public static void ScrollDownTo(this IApp app, string toMarked, string withinMarked, ScrollStrategy strategy = ScrollStrategy.Auto, double swipePercentage = 0.67, int swipeSpeed = 500, bool withInertia = true)
+        {
+            var elementToScroll = FindElement(app, withinMarked);
+
+            app.ScrollDownTo(toMarked, elementToScroll, strategy, swipePercentage, swipeSpeed, withInertia);
+        }
+
+        /// <summary>
+        /// Scroll down until an element that matches the query is shown on the screen.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="toMarked">Marked selector to select what element to bring on screen.</param>
+        /// <param name="query">Represents the query that identify an element by parameters such as type, text it contains or identifier.</param>
+        /// <param name="strategy">Strategy for scrolling element.</param>
+        /// <param name="swipePercentage">How far across the element to swipe (from 0.0 to 1.0).</param>
+        /// <param name="swipeSpeed">The speed of the gesture.</param>
+        /// <param name="withInertia">Whether swipes should cause inertia.</param>
+        public static void ScrollDownTo(this IApp app, string toMarked, IQuery query, ScrollStrategy strategy = ScrollStrategy.Auto, double swipePercentage = 0.67, int swipeSpeed = 500, bool withInertia = true)
+        {
+            var elementToScroll = app.FindElement(query);
+
+            app.ScrollDownTo(toMarked, elementToScroll, strategy, swipePercentage, swipeSpeed, withInertia);
+        }
+
+        internal static void ScrollDownTo(this IApp app, string toMarked, IUIElement? element, ScrollStrategy strategy = ScrollStrategy.Auto, double swipePercentage = 0.67, int swipeSpeed = 500, bool withInertia = true)
+        {
+            if (element is not null)
+            {
+                app.CommandExecutor.Execute("scrollDown", new Dictionary<string, object>
+                {
+                    { "marked", toMarked },
+                    { "element", element },
+                    { "strategy", strategy },
+                    { "swipePercentage", swipePercentage },
+                    { "swipeSpeed", swipeSpeed },
+                    { "withInertia", withInertia }
+                });
+            }
+        }
+
+        /// <summary>
         /// Scrolls right on the first element matching query.
         /// </summary>
         /// <param name="app">Represents the main gateway to interact with an app.</param>
@@ -1076,6 +1245,56 @@ namespace Plugin.Maui.UITestHelpers.Appium
                      { "swipeSpeed", swipeSpeed },
                      { "withInertia", withInertia }
                  });
+            }
+        }
+
+        /// <summary>
+        /// Scroll up until an element that matches the <paramref name="toMarked"/> is shown on the screen in <paramref name="withinMarked"/>.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="toMarked">Marked selector to select what element to bring on screen.</param>
+        /// <param name="withinMarked">Marked selector to select what element to scroll within.</param>
+        /// <param name="strategy">Strategy for scrolling element.</param>
+        /// <param name="swipePercentage">How far across the element to swipe (from 0.0 to 1.0).</param>
+        /// <param name="swipeSpeed">The speed of the gesture.</param>
+        /// <param name="withInertia">Whether swipes should cause inertia.</param>
+        public static void ScrollUpTo(this IApp app, string toMarked, string withinMarked, ScrollStrategy strategy = ScrollStrategy.Auto, double swipePercentage = 0.67, int swipeSpeed = 500, bool withInertia = true)
+        {
+            var elementToScroll = FindElement(app, withinMarked);
+
+            app.ScrollUpTo(toMarked, elementToScroll, strategy, swipePercentage, swipeSpeed, withInertia);
+        }
+
+        /// <summary>
+        /// Scroll up until an element that matches <paramref name="toMarked"/> is shown on the screen.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="toMarked">Marked selector to select what element to bring on screen.</param>
+        /// <param name="query">Represents the query that identify an element by parameters such as type, text it contains or identifier.</param>
+        /// <param name="strategy">Strategy for scrolling element.</param>
+        /// <param name="swipePercentage">How far across the element to swipe (from 0.0 to 1.0).</param>
+        /// <param name="swipeSpeed">The speed of the gesture.</param>
+        /// <param name="withInertia">Whether swipes should cause inertia.</param>
+        public static void ScrollUpTo(this IApp app, string toMarked, IQuery query, ScrollStrategy strategy = ScrollStrategy.Auto, double swipePercentage = 0.67, int swipeSpeed = 500, bool withInertia = true)
+        {
+            var elementToScroll = app.FindElement(query);
+
+            app.ScrollUpTo(toMarked, elementToScroll, strategy, swipePercentage, swipeSpeed, withInertia);
+        }
+
+        internal static void ScrollUpTo(this IApp app, string toMarked, IUIElement? element, ScrollStrategy strategy = ScrollStrategy.Auto, double swipePercentage = 0.67, int swipeSpeed = 500, bool withInertia = true)
+        {
+            if (element is not null)
+            {
+                app.CommandExecutor.Execute("scrollUpTo", new Dictionary<string, object>
+                {
+                    { "marked", toMarked },
+                    { "element", element },
+                    { "strategy", strategy },
+                    { "swipePercentage", swipePercentage },
+                    { "swipeSpeed", swipeSpeed },
+                    { "withInertia", withInertia }
+                });
             }
         }
 
@@ -1183,11 +1402,18 @@ namespace Plugin.Maui.UITestHelpers.Appium
         /// <param name="y">The y coordinate to tap.</param>
         public static void TapCoordinates(this IApp app, float x, float y)
         {
-            app.CommandExecutor.Execute("tapCoordinates", new Dictionary<string, object>
+            if (app is AppiumCatalystApp)
             {
-                { "x", x },
-                { "y", y }
-            });
+                app.ClickCoordinates(x, y); // // Directly invoke coordinate-based click for AppiumCatalystApp.
+            }
+            else
+            {
+                app.CommandExecutor.Execute("tapCoordinates", new Dictionary<string, object>
+                {
+                    { "x", x },
+                    { "y", y }
+                });
+            }
         }
 
         /// <summary>
@@ -1303,6 +1529,32 @@ namespace Plugin.Maui.UITestHelpers.Appium
         }
 
         /// <summary>
+        /// Increases the value of a Stepper control.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="marked">Marked selector of the Stepper element to increase.</param>
+        public static void IncreaseStepper(this IApp app, string marked)
+        {
+            app.CommandExecutor.Execute("increaseStepper", new Dictionary<string, object>
+            {
+                ["elementId"] = marked
+            });
+        }
+
+        /// <summary>
+        /// Decreases the value of a Stepper control.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="marked">Marked selector of the Stepper element to decrease.</param>
+        public static void DecreaseStepper(this IApp app, string marked)
+        {
+            app.CommandExecutor.Execute("decreaseStepper", new Dictionary<string, object>
+            {
+                ["elementId"] = marked
+            });
+        }
+
+        /// <summary>
         /// Performs a continuous drag gesture between 2 points.
         /// </summary>
         /// <param name="app">Represents the main gateway to interact with an app.</param>
@@ -1365,14 +1617,26 @@ namespace Plugin.Maui.UITestHelpers.Appium
         /// </summary>
         /// <param name="app">Represents the main gateway to interact with an app.</param>
         /// <exception cref="InvalidOperationException">Unlock is only supported on <see cref="AppiumAndroidApp"/>.</exception>
-        public static void Unlock(this IApp app)
+        /// <summary>
+        /// Unlock the screen.
+        /// Functionality that's only available on Android and iOS.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="unlockType">This capability supports the following possible values: pin, pinWithKeyEvent, password, pattern.</param>
+        /// <param name="unlockKey">a valid pin (digits in range 0-9), password (latin characters) or pattern (treat the pattern pins similarly to numbers on a digital phone dial).</param>
+        /// <exception cref="InvalidOperationException">Unlock is only supported on <see cref="AppiumAndroidApp"/>.</exception>
+        public static void Unlock(this IApp app, string unlockType = "", string unlockKey = "")
         {
             if (app is not AppiumAndroidApp && app is not AppiumIOSApp)
             {
-                throw new InvalidOperationException($"Lock is only supported on AppiumAndroidApp and AppiumIOSApp");
+                throw new InvalidOperationException($"Unlock is only supported on AppiumAndroidApp and AppiumIOSApp");
             }
 
-            app.CommandExecutor.Execute("unlock", ImmutableDictionary<string, object>.Empty);
+            app.CommandExecutor.Execute("unlock", new Dictionary<string, object>()
+            {
+                { "unlockType", unlockType },
+                { "unlockKey", unlockKey },
+            });
         }
 
         /// <summary>
@@ -1457,6 +1721,27 @@ namespace Plugin.Maui.UITestHelpers.Appium
         }
 
         /// <summary>
+        /// Switch the System animations state.
+        /// Optimize and accelerate tests, eliminating animations entirely when Appium is executing tests, as they serve no practical purpose in this context.
+        /// Functionality that's only available on Android and Catalyst.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="enableSystemAnimations">Enable/disable the system animations.</param>
+        /// <exception cref="InvalidOperationException">ToggleSystemAnimations is only supported on <see cref="AppiumAndroidApp"/> and <see cref="AppiumCatalystApp"/>.</exception>
+        public static void ToggleSystemAnimations(this IApp app, bool enableSystemAnimations)
+        {
+            if (app is not AppiumAndroidApp && app is not AppiumCatalystApp)
+            {
+                throw new InvalidOperationException($"ToggleSystemAnimations is not supported");
+            }
+
+            app.CommandExecutor.Execute("toggleSystemAnimations", new Dictionary<string, object>()
+            {
+                { "enableSystemAnimations", enableSystemAnimations },
+            });
+        }
+
+        /// <summary>
         /// Simulate the device shaking.
         /// Functionality that's only available on iOS.
         /// </summary>
@@ -1470,6 +1755,32 @@ namespace Plugin.Maui.UITestHelpers.Appium
             }
 
             app.CommandExecutor.Execute("shake", ImmutableDictionary<string, object>.Empty);
+        }
+
+        /// <summary>
+        /// Triggers the SwipeBackNavigation, simulating the default swipe-back navigation.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// /// <exception cref="InvalidOperationException">SwipeBackNavigation is only supported on <see cref="AppiumIOSApp"/> and <see cref="AppiumAndroidApp"/>.</exception>
+        public static void SwipeBackNavigation(this IApp app)
+        {
+            if (app is not AppiumIOSApp && app is not AppiumAndroidApp)
+            {
+                throw new InvalidOperationException($"Interactive Pop Gesture is only supported on AppiumIOSAppp and AppiumAndroidApp");
+            }
+
+            if (app is AppiumIOSApp)
+            {
+                app.CommandExecutor.Execute("interactivePopGesture", ImmutableDictionary<string, object>.Empty);
+            }
+            else if (app is AppiumAndroidApp)
+            {
+                var response = app.CommandExecutor.Execute("checkIfGestureNavigationIsEnabled", new Dictionary<string, object>());
+                if (response?.Value is bool gestureNavigationIsEnabled && gestureNavigationIsEnabled)
+                    SwipeLeftToRight(app);
+                else
+                    Back(app);
+            }
         }
 
         /// <summary>
@@ -1498,6 +1809,24 @@ namespace Plugin.Maui.UITestHelpers.Appium
             }
 
             throw new InvalidOperationException($"Could not get the performance data");
+        }
+
+        /// <summary>
+        /// Gets the information of the system state regarding memory.
+        /// Functionality that's only available on Android.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <returns>The information of the system related to the memory performance.</returns>
+        /// <exception cref="InvalidOperationException">GetPerformanceData is only supported on <see cref="AppiumAndroidApp"/>.</exception>
+        public static IReadOnlyDictionary<string, int> GetPerformanceMemoryInfo(this IApp app)
+        {
+            var performanceData = GetPerformanceData(app, "memoryinfo");
+            var countersTitles = (object?[])performanceData[0];
+            var countersStrings = (object?[])performanceData[1];
+            var data = countersTitles.Zip(countersStrings)
+                .Where(x => x is { First: string, Second: string })
+                .ToDictionary(x => (string)x.First!, x => int.TryParse((string)x.Second!, out var value) ? value : 0);
+            return data;
         }
 
         /// <summary>
@@ -1566,6 +1895,49 @@ namespace Plugin.Maui.UITestHelpers.Appium
             }
 
             app.CommandExecutor.Execute("setDarkTheme", ImmutableDictionary<string, object>.Empty);
+        }
+
+        /// <summary>
+        /// Maximize the active App window.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        public static void EnterFullScreen(this IApp app)
+        {
+            if (app is not AppiumCatalystApp)
+            {
+                throw new InvalidOperationException($"EnterFullScreen is only supported on AppiumCatalystApp");
+            }
+
+            app.CommandExecutor.Execute("enterFullScreen", new Dictionary<string, object>());
+        }
+
+        /// <summary>
+        /// Leave the App full screen mode.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        public static void ExitFullScreen(this IApp app)
+        {
+            if (app is not AppiumCatalystApp)
+            {
+                throw new InvalidOperationException($"ExitFullScreen is only supported on AppiumCatalystApp");
+            }
+
+            app.CommandExecutor.Execute("exitFullScreen", new Dictionary<string, object>());
+        }
+
+        /// <summary>
+        /// Print in the Output the current application hierarchy XML (app).
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        public static void PrintTree(this IApp app)
+        {
+            if (app is not AppiumApp aaa)
+            {
+                throw new InvalidOperationException($"PrintTree is only supported on AppiumApp");
+            }
+
+            var pageSource = aaa.Driver.PageSource;
+            Console.WriteLine(pageSource);
         }
 
         /// <summary>
@@ -1698,6 +2070,215 @@ namespace Plugin.Maui.UITestHelpers.Appium
             return element.AppiumElement.Equals(activeElement);
         }
 
+        /// <summary>
+        /// Navigates back in the application by simulating a tap on the platform-specific back navigation button or using a custom identifier.
+        /// </summary>
+        /// <param name="app">The IApp instance representing the main gateway to interact with the application.</param>
+        /// <param name="customBackButtonIdentifier">Optional custom identifier string for the back button. If not provided, the default back arrow query will be used.</param>
+        public static void TapBackArrow(this IApp app, string customBackButtonIdentifier = "")
+        {
+            var query = string.IsNullOrEmpty(customBackButtonIdentifier)
+                ? GetDefaultBackArrowQuery(app)
+                : GetCustomBackArrowQuery(app, customBackButtonIdentifier);
+
+            TapBackArrow(app, query);
+        }
+
+        /// <summary>
+        /// Navigates back in the application using a custom IQuery.
+        /// </summary>
+        /// <param name="app">The IApp instance representing the main gateway to interact with the application.</param>
+        /// <param name="query">The custom IQuery for the back button.</param>
+        public static void TapBackArrow(this IApp app, IQuery query)
+        {
+            app.WaitForElement(query).Tap();
+        }
+
+        /// <summary>
+        /// Taps a button in a display alert dialog.
+        /// For AppiumCatalystApp, it uses specific element identifiers to locate and tap the alert button.
+        /// For other app types, it locates and taps the button using the provided text.
+        /// </summary>
+        /// <param name="app">The IApp instance representing the application.</param>
+        /// <param name="text">The text of the button to tap in the display alert (used for non-AppiumCatalystApp instances).</param>
+        /// <param name="buttonIndex">
+        /// The index of the button in the alert dialog, used to generate the correct element identifier.
+        /// For example, in a alert with two buttons:
+        /// - 0 (default) corresponds to the leftmost button (e.g., "OK" with identifier ending in 999)
+        /// - 1 corresponds to the button to its right (e.g., "Cancel" with identifier ending in 998)
+        /// </param>
+        public static void TapDisplayAlertButton(this IApp app, string text, int buttonIndex = 0)
+        {
+            if (app is AppiumCatalystApp)
+            {
+                app.WaitForElement(AppiumQuery.ById($"action-button--{999 - buttonIndex}"));
+                app.Tap(AppiumQuery.ById($"action-button--{999 - buttonIndex}"));
+            }
+            else
+            {
+                app.WaitForElement(text);
+                app.Tap(text);
+            }
+        }
+
+        /// <summary>
+        /// Gets the default query for the back arrow button based on the app type.
+        /// </summary>
+        /// <param name="app">The IApp instance representing the application.</param>
+        /// <returns>An IQuery for the default back arrow button.</returns>
+        /// <exception cref="ArgumentException">Thrown when an unsupported app type is provided.</exception>
+        static IQuery GetDefaultBackArrowQuery(IApp app)
+        {
+            return app switch
+            {
+                AppiumAndroidApp _ => AppiumQuery.ByXPath("//android.widget.ImageButton[@content-desc='Navigate up']"),
+                AppiumIOSApp _ => AppiumQuery.ByAccessibilityId("Back"),
+                AppiumCatalystApp _ => AppiumQuery.ByAccessibilityId("Back"),
+                AppiumWindowsApp _ => AppiumQuery.ByAccessibilityId("NavigationViewBackButton"),
+                _ => throw new ArgumentException("Unsupported app type", nameof(app))
+            };
+        }
+
+        /// <summary>
+        /// Gets a custom query for the back arrow button based on the app type and a custom identifier.
+        /// Note that for Windows apps, the back button is not customizable, so the default identifier is used.
+        /// </summary>
+        /// <param name="app">The IApp instance representing the application.</param>
+        /// <param name="customBackButtonIdentifier">The custom identifier for the back button.</param>
+        /// <returns>An IQuery for the custom back arrow button.</returns>
+        /// <exception cref="ArgumentException">Thrown when an unsupported app type is provided.</exception>
+        static IQuery GetCustomBackArrowQuery(IApp app, string customBackButtonIdentifier)
+        {
+            return app switch
+            {
+                AppiumAndroidApp _ => AppiumQuery.ByXPath($"//android.widget.ImageButton[@content-desc='{customBackButtonIdentifier}']"),
+                AppiumIOSApp _ => AppiumQuery.ByXPath($"//XCUIElementTypeButton[@name='{customBackButtonIdentifier}']"),
+                AppiumCatalystApp _ => AppiumQuery.ByName(customBackButtonIdentifier),
+                AppiumWindowsApp _ => AppiumQuery.ByAccessibilityId("NavigationViewBackButton"),
+                _ => throw new ArgumentException("Unsupported app type", nameof(app))
+            };
+        }
+
+        /// <summary>
+        /// Waits for an element to be ready until page navigation has settled, with additional waiting for MacCatalyst.
+        /// This method helps prevent null reference exceptions during page transitions, especially in MacCatalyst.
+        /// </summary>
+        /// <param name="app">The IApp instance.</param>
+        /// <param name="elementId">The id of the element to wait for.</param>
+        /// <param name="timeout">Optional timeout for the wait operation. Default is null, which uses the default timeout.</param>
+        public static IUIElement WaitForElementTillPageNavigationSettled(this IApp app, string elementId, TimeSpan? timeout = null)
+        {
+            if (app is AppiumCatalystApp)
+                app.WaitForElement(AppiumQuery.ById(elementId), timeout: timeout);
+
+            return app.WaitForElement(elementId, timeout: timeout);
+        }
+
+        /// <summary>
+        /// Waits for an element to be ready until page navigation has settled, with additional waiting for MacCatalyst.
+        /// This method helps prevent null reference exceptions during page transitions, especially in MacCatalyst.
+        /// </summary>
+        /// <param name="app">The IApp instance.</param>
+        /// <param name="query">The query to use for finding the element.</param>
+        /// <param name="timeout">Optional timeout for the wait operation. Default is null, which uses the default timeout.</param>
+        public static void WaitForElementTillPageNavigationSettled(this IApp app, IQuery query, TimeSpan? timeout = null)
+        {
+            if (app is AppiumCatalystApp)
+                app.WaitForElement(query, timeout: timeout);
+
+            app.WaitForElement(query, timeout: timeout);
+        }
+
+        /// <summary>
+        /// Taps a tab in the application.
+        /// </summary>
+        /// <param name="app">The IApp instance representing the application.</param>
+        /// <param name="tabName">The name of the tab to tap.</param>
+        /// <param name="isTopTab">Indicates whether the tab is a top tab (default is false).</param>
+        /// <remarks>
+        /// This method handles platform-specific behaviors:
+        /// - For Android, it converts the tab name to uppercase.
+        /// - For Windows, if it's a top tab, it taps the navigation view item first.
+        /// The method waits for the tab element to be available before tapping it.
+        /// </remarks>
+        public static void TapTab(this IApp app, string tabName, bool isTopTab = false)
+        {
+            tabName = app is AppiumAndroidApp ? tabName.ToUpperInvariant() : tabName;
+
+            if (isTopTab && app is AppiumWindowsApp)
+            {
+                app.WaitForElement("navViewItem");
+                app.Tap("navViewItem");
+            }
+
+            app.WaitForElementTillPageNavigationSettled(tabName);
+            app.Tap(tabName);
+        }
+
+        /// <summary>
+        /// Waits for a tab element with the specified name to appear and for page navigation to settle.
+        /// </summary>
+        /// <param name="app">The IApp instance.</param>
+        /// <param name="tabName">The name of the tab to wait for.</param>
+        /// <remarks>
+        /// For Android apps, the tab name is converted to uppercase before searching.
+        /// </remarks>
+        public static IUIElement WaitForTabElement(this IApp app, string tabName)
+        {
+            tabName = app is AppiumAndroidApp ? tabName.ToUpperInvariant() : tabName;
+            return app.WaitForElementTillPageNavigationSettled(tabName);
+        }
+
+        /// <summary>
+        /// Determines whether a UI element with the specified name is currently visible in the app.
+        /// </summary>
+        /// <param name="app">The IApp instance representing the application.</param>
+        /// <param name="elementName">The name or identifier of the element to check for visibility.</param>
+        /// <returns>True if the element is visible; otherwise, false.</returns>
+        public static bool IsElementVisible(IApp app, string elementName)
+        {
+            try
+            {
+                app.WaitForElement(elementName);
+                return true;
+            }
+            catch (TimeoutException)
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Taps an element and retries until another element appears and is ready for interaction.
+        /// Sometimes elements may appear but are not yet ready for interaction; this helper method retries the tap until the target element is interactable or the retry limit is reached.
+        /// </summary>
+        /// <param name="app">The app instance</param>
+        /// <param name="elementToTap">The element to tap</param>
+        /// <param name="elementToWaitFor">The element to wait for after tapping</param>
+        /// <param name="maxRetries">Maximum number of retry attempts</param>
+        /// <param name="retryDelayMs">Delay between retries in milliseconds</param>
+        /// <returns>True if the target element appeared and is ready, false otherwise</returns>
+        public static bool TapWithRetriesUntilElementReady(this IApp app, string elementToTap, string elementToWaitFor,
+            int maxRetries = 5, int retryDelayMs = 500)
+        {
+            // Initial tap
+            app.Tap(elementToTap);
+
+            for (int retry = 0; retry < maxRetries - 1; retry++)
+            {
+                // Check if target element is visible
+                if (IsElementVisible(app, elementToWaitFor))
+                    return true;
+
+                // Element not found, wait and tap again
+                System.Threading.Thread.Sleep(retryDelayMs);
+                app.Tap(elementToTap);
+            }
+
+            // Final check
+            return IsElementVisible(app, elementToWaitFor);
+        }
+
         static IUIElement Wait(Func<IUIElement?> query,
             Func<IUIElement?, bool> satisfactory,
             string? timeoutMessage = null,
@@ -1736,6 +2317,17 @@ namespace Plugin.Maui.UITestHelpers.Appium
                 result = app.FindElementByText(element);
 
             return result;
+        }
+
+        static IUIElement FindAnyElement(IApp app, string[] elements)
+        {
+            foreach (var element in elements)
+            {
+                if (FindElement(app, element) is IUIElement result)
+                    return result;
+            }
+
+            throw new InvalidOperationException($"Did not find any elements in the list: {string.Join(", ", elements)}");
         }
 
         static IReadOnlyCollection<IUIElement> FindElements(IApp app, string element)
