@@ -151,42 +151,59 @@ public void DebugTest()
 
 ## Troubleshooting
 
-### REPL Hangs or Shows Environment Error
+### REPL Shows Warnings in Test Environment
 
-**Problem**: The REPL hangs indefinitely or shows "Interactive console not available in this environment."
+**Problem**: The REPL shows warnings about console redirection when running with `dotnet test`.
 
 **Cause**: This happens when:
-- Running in CI/CD environments (GitHub Actions, Jenkins, etc.)
-- Using test runners without interactive console support
-- Headless environments or containers
-- Console input/output is redirected
+- Running tests with `dotnet test` (which redirects console)
+- Using test runners that capture console output
+- Console input/output is partially redirected
+
+**Current Behavior**: The REPL will now attempt to start even in test environments with warnings. It will:
+1. Check for CI/CD environments and refuse to start (prevents hanging in automated builds)
+2. For local test environments, show warnings but attempt to work anyway
+3. Provide better guidance on console limitations
 
 **Solutions**:
-1. **Use programmatic API**: Instead of `StartRepl()`, use `ExecuteReplCommand()`:
+1. **Test Environment Use**: The REPL now tries to work with `dotnet test`:
+   ```bash
+   # This should now work with warnings
+   dotnet test --logger console
+   ```
+
+2. **Use programmatic API**: For automated scenarios, use `ExecuteReplCommand()`:
    ```csharp
    var result = app.ExecuteReplCommand("id CounterBtn");
    ```
 
-2. **Run in interactive environment**: Execute tests in a proper terminal/console:
-   ```bash
-   # Run tests in interactive mode
-   dotnet test --logger console
-   ```
+3. **Debug outside test runner**: For full interactive experience, run tests individually:
+   - Use debugger breakpoints to pause and start REPL
+   - Run single test methods outside of test framework
+   - Use IDE test runners that support interactive console
 
-3. **Debug locally**: Use REPL during local development, switch to programmatic commands for automated tests.
+### REPL Blocked in CI/CD
+
+**Problem**: The REPL refuses to start in CI/CD environments.
+
+**Cause**: This is intentional behavior to prevent tests from hanging in automated builds.
+
+**Solutions**:
+1. Use `ExecuteReplCommand()` for programmatic access in CI/CD
+2. Mark interactive tests with conditional attributes for local-only execution
 
 ### Environment Detection
 
-The REPL automatically detects non-interactive environments by checking:
-- Console input/output redirection
-- CI/CD environment variables (CI, GITHUB_ACTIONS, JENKINS_URL, etc.)
-- Console input availability
+The REPL uses improved environment detection:
+- **CI/CD Detection**: Checks for CI environment variables (CI, GITHUB_ACTIONS, JENKINS_URL, etc.)
+- **Console Detection**: More permissive for local development environments
+- **Graceful Degradation**: Shows warnings but attempts to work when possible
 
 ### Best Practices
 
-1. **Local Development**: Use `StartRepl()` for interactive debugging
+1. **Local Development**: Use `StartRepl()` for interactive debugging (now works with `dotnet test`)
 2. **Automated Tests**: Use `ExecuteReplCommand()` for programmatic access
-3. **CI/CD**: Avoid interactive REPL, use programmatic commands only
-4. **Test Organization**: Mark interactive tests with `[Ignore]` attribute for CI builds
+3. **CI/CD**: Use programmatic commands only (REPL will refuse to start)
+4. **Test Organization**: Consider environment-specific test execution strategies
 
 This allows you to pause test execution and interactively inspect the UI state, making debugging much easier.

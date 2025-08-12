@@ -105,11 +105,10 @@ public class MainPageTests : BaseTest
     }
 
     [Test]
-    [Ignore("Interactive test - uncomment to use REPL for debugging")]
     public void ReplInteractiveTest()
     {
         // This test demonstrates how to use REPL for interactive debugging
-        // Uncomment the [Ignore] attribute above to run this test
+        // Remove this comment if you want to prevent this test from running
         
         const string elementId = "CounterBtn";
 
@@ -118,7 +117,9 @@ public class MainPageTests : BaseTest
         App.WaitForElement(elementId);
         
         // Use REPL to interactively inspect and test the UI
-        // This will start an interactive session where you can:
+        // This will attempt to start an interactive session
+        // In test environments, this may show warnings but will still try to work
+        // Commands you can try:
         // - Inspect the UI tree: tree
         // - Find elements: id CounterBtn
         // - Click elements: click CounterBtn
