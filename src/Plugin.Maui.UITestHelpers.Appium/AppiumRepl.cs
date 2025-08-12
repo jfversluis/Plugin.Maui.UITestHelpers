@@ -30,15 +30,35 @@ namespace Plugin.Maui.UITestHelpers.Appium
 				return;
 			}
 			
-			// For local development, try to start REPL even if console appears redirected
-			if (!IsLocalInteractiveEnvironment())
+			// Check if console is redirected (test runner environment)
+			if (Console.IsInputRedirected || Console.IsOutputRedirected)
 			{
-				Console.WriteLine("REPL Warning: Console may be redirected, but attempting to start REPL anyway...");
-				Console.WriteLine("If you experience issues:");
-				Console.WriteLine("1. Run the test manually outside of 'dotnet test' (e.g., with a debugger)");
-				Console.WriteLine("2. Remove the [Ignore] attribute and run a single test");
-				Console.WriteLine("3. Use ExecuteReplCommand() for programmatic access");
-				Console.WriteLine();
+				Console.WriteLine("REPL: Console is redirected (test runner environment detected).");
+				Console.WriteLine("Attempting to open a new console window for interactive REPL...");
+				
+				if (TryOpenNewConsoleWindow())
+				{
+					Console.WriteLine("REPL: New console window opened successfully!");
+					Console.WriteLine("Use the new window for interactive commands.");
+					Console.WriteLine("This test will continue after you exit the REPL.");
+					return;
+				}
+				else
+				{
+					Console.WriteLine("REPL Error: Failed to open new console window.");
+					Console.WriteLine("This is common when running 'dotnet test' as console redirection prevents interactive input.");
+					Console.WriteLine();
+					Console.WriteLine("Solutions:");
+					Console.WriteLine("1. Run the specific test in an IDE with debugging support");
+					Console.WriteLine("2. Run the test manually in a debugger/interactive environment");
+					Console.WriteLine("3. Use App.ExecuteReplCommand(\"command\") for programmatic access");
+					Console.WriteLine("4. Run tests outside of 'dotnet test' runner");
+					Console.WriteLine();
+					Console.WriteLine("Example programmatic usage:");
+					Console.WriteLine("  var result = App.ExecuteReplCommand(\"id CounterBtn\");");
+					Console.WriteLine("  var help = App.ExecuteReplCommand(\"help\");");
+					return;
+				}
 			}
 
 			StartInteractiveSession();
@@ -546,162 +566,36 @@ namespace Plugin.Maui.UITestHelpers.Appium
 		{
 			try
 			{
-				var currentDirectory = Directory.GetCurrentDirectory();
-				var replScript = CreateReplScript(currentDirectory);
+				// For now, provide helpful guidance instead of trying to open a new window
+				// Opening a new console window and connecting it back to the REPL is complex
+				// and may not work reliably across all platforms and environments
+				Console.WriteLine();
+				Console.WriteLine("REPL would normally try to open a new console window here,");
+				Console.WriteLine("but this feature is not yet implemented for test environments.");
+				Console.WriteLine();
+				Console.WriteLine("To use REPL interactively:");
+				Console.WriteLine("1. Run your test in Visual Studio/IDE with debugging");
+				Console.WriteLine("2. Set a breakpoint after App.StartRepl() and use the debugger console");
+				Console.WriteLine("3. Run the app manually and use REPL outside of test context");
+				Console.WriteLine("4. Use the programmatic REPL API: App.ExecuteReplCommand(\"command\")");
+				Console.WriteLine();
+				Console.WriteLine("Programmatic REPL examples that work in test environments:");
+				Console.WriteLine("  App.ExecuteReplCommand(\"tree\")          // Show UI tree");
+				Console.WriteLine("  App.ExecuteReplCommand(\"id CounterBtn\")  // Find element by ID");
+				Console.WriteLine("  App.ExecuteReplCommand(\"click CounterBtn\") // Click element");
+				Console.WriteLine("  App.ExecuteReplCommand(\"screenshot\")     // Take screenshot");
+				Console.WriteLine("  App.ExecuteReplCommand(\"help\")           // Show all commands");
 				
-				if (Environment.OSVersion.Platform == PlatformID.Win32NT)
-				{
-					return TryOpenWindowsConsole(replScript);
-				}
-				else if (Environment.OSVersion.Platform == PlatformID.Unix)
-				{
-					return TryOpenUnixConsole(replScript);
-				}
-				
-				return false;
+				return false; // We didn't actually open a window, so return false
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine($"Failed to open new console window: {ex.Message}");
+				Console.WriteLine($"Error in TryOpenNewConsoleWindow: {ex.Message}");
 				return false;
 			}
 		}
 
-		private bool TryOpenWindowsConsole(string scriptPath)
-		{
-			try
-			{
-				var startInfo = new System.Diagnostics.ProcessStartInfo
-				{
-					FileName = "cmd.exe",
-					Arguments = $"/k \"{scriptPath}\"",
-					UseShellExecute = true,
-					CreateNoWindow = false
-				};
-				
-				System.Diagnostics.Process.Start(startInfo);
-				return true;
-			}
-			catch
-			{
-				try
-				{
-					// Fallback to PowerShell
-					var startInfo = new System.Diagnostics.ProcessStartInfo
-					{
-						FileName = "powershell.exe",
-						Arguments = $"-NoExit -File \"{scriptPath}\"",
-						UseShellExecute = true,
-						CreateNoWindow = false
-					};
-					
-					System.Diagnostics.Process.Start(startInfo);
-					return true;
-				}
-				catch
-				{
-					return false;
-				}
-			}
-		}
 
-		private bool TryOpenUnixConsole(string scriptPath)
-		{
-			try
-			{
-				// Try common terminal emulators
-				var terminals = new[]
-				{
-					"gnome-terminal", "xterm", "konsole", "terminal", "x-terminal-emulator"
-				};
-
-				foreach (var terminal in terminals)
-				{
-					try
-					{
-						var startInfo = new System.Diagnostics.ProcessStartInfo
-						{
-							FileName = terminal,
-							Arguments = $"-e \"{scriptPath}\"",
-							UseShellExecute = true,
-							CreateNoWindow = false
-						};
-						
-						System.Diagnostics.Process.Start(startInfo);
-						return true;
-					}
-					catch
-					{
-						continue;
-					}
-				}
-				
-				return false;
-			}
-			catch
-			{
-				return false;
-			}
-		}
-
-		private string CreateReplScript(string workingDirectory)
-		{
-			var tempDir = Path.GetTempPath();
-			var scriptExtension = Environment.OSVersion.Platform == PlatformID.Win32NT ? ".bat" : ".sh";
-			var scriptPath = Path.Combine(tempDir, $"uitest_repl_{Guid.NewGuid():N}{scriptExtension}");
-			
-			if (Environment.OSVersion.Platform == PlatformID.Win32NT)
-			{
-				var batchContent = $@"@echo off
-echo Starting UI Test REPL in new console window...
-echo This is a new console window for the REPL session.
-echo Type 'help' for available commands or 'exit' to quit.
-echo {new string('=', 50)}
-cd ""{workingDirectory}""
-:loop
-set /p input=""uitest> ""
-if ""%input%""==""exit"" goto end
-if ""%input%""==""quit"" goto end
-echo Command executed: %input%
-echo (Note: This is a placeholder - actual REPL functionality needs to be implemented)
-goto loop
-:end
-echo Exiting REPL...
-pause
-del ""{scriptPath}""
-";
-				File.WriteAllText(scriptPath, batchContent);
-			}
-			else
-			{
-				var bashContent = $@"#!/bin/bash
-echo ""Starting UI Test REPL in new console window...""
-echo ""This is a new console window for the REPL session.""
-echo ""Type 'help' for available commands or 'exit' to quit.""
-echo ""{new string('=', 50)}""
-cd ""{workingDirectory}""
-while true; do
-    read -p ""uitest> "" input
-    if [ ""$input"" = ""exit"" ] || [ ""$input"" = ""quit"" ]; then
-        break
-    fi
-    echo ""Command executed: $input""
-    echo ""(Note: This is a placeholder - actual REPL functionality needs to be implemented)""
-done
-echo ""Exiting REPL...""
-rm ""{scriptPath}""
-";
-				File.WriteAllText(scriptPath, bashContent);
-				// Make the script executable
-				try
-				{
-					System.Diagnostics.Process.Start("chmod", $"+x {scriptPath}");
-				}
-				catch { }
-			}
-			
-			return scriptPath;
-		}
 
 		private bool IsInCIEnvironment()
 		{
@@ -721,36 +615,7 @@ rm ""{scriptPath}""
 			return false;
 		}
 
-		private bool IsLocalInteractiveEnvironment()
-		{
-			try
-			{
-				// Don't be too strict about console redirection for local development
-				// Many test runners redirect console but we can still interact
-				
-				// Try to see if we can use Console.ReadLine() at all
-				// This is a basic check - if it fails, we really can't interact
-				try
-				{
-					// This is a safer check than Console.KeyAvailable in some environments
-					if (Console.IsInputRedirected && Console.IsOutputRedirected)
-					{
-						// Both are redirected, probably running in a completely headless environment
-						return false;
-					}
-					
-					return true;
-				}
-				catch
-				{
-					return false;
-				}
-			}
-			catch
-			{
-				return false;
-			}
-		}
+
 
 		private string FormatElementInfo(IUIElement element)
 		{

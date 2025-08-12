@@ -151,36 +151,57 @@ public void DebugTest()
 
 ## Troubleshooting
 
-### REPL Shows Warnings in Test Environment
+### REPL in Test Environment (`dotnet test`)
 
-**Problem**: The REPL shows warnings about console redirection when running with `dotnet test`.
+**Problem**: When running `ReplInteractiveTest` with `dotnet test`, the REPL immediately exits with "Input stream ended. Exiting REPL...".
 
-**Cause**: This happens when:
-- Running tests with `dotnet test` (which redirects console)
-- Using test runners that capture console output
-- Console input/output is partially redirected
+**Cause**: Test runners like `dotnet test` redirect console input/output, making interactive input impossible.
 
-**Current Behavior**: The REPL will now attempt to start even in test environments with warnings. It will:
-1. Check for CI/CD environments and refuse to start (prevents hanging in automated builds)
-2. For local test environments, show warnings but attempt to work anyway
-3. Provide better guidance on console limitations
+**Current Behavior**: The REPL now:
+1. Detects console redirection in test environments
+2. Provides clear error messages with guidance
+3. Offers specific solutions for different scenarios
+4. Suggests programmatic alternatives
 
 **Solutions**:
-1. **Test Environment Use**: The REPL now tries to work with `dotnet test`:
-   ```bash
-   # This should now work with warnings
-   dotnet test --logger console
-   ```
 
-2. **Use programmatic API**: For automated scenarios, use `ExecuteReplCommand()`:
+1. **Use Programmatic API** (Recommended for test environments):
    ```csharp
-   var result = app.ExecuteReplCommand("id CounterBtn");
+   [Test]
+   public void ReplProgrammaticUsage()
+   {
+       var result = App.ExecuteReplCommand("id CounterBtn");
+       var help = App.ExecuteReplCommand("help");
+       var screenshot = App.ExecuteReplCommand("screenshot test.png");
+   }
    ```
 
-3. **Debug outside test runner**: For full interactive experience, run tests individually:
-   - Use debugger breakpoints to pause and start REPL
-   - Run single test methods outside of test framework
-   - Use IDE test runners that support interactive console
+2. **Run in IDE with Debugging**:
+   - Set a breakpoint after `App.StartRepl()`
+   - Use the debugger console for interactive commands
+   - Step through and interact with the REPL
+
+3. **Run Tests Outside Test Runner**:
+   - Execute test methods manually in a console application
+   - Use interactive development environments
+   - Run single tests with full console access
+
+4. **Alternative Test Approach**:
+   ```csharp
+   [Test]
+   public void InteractiveDebugHelper()
+   {
+       // This test is for manual debugging only
+       // Run this specific test in your IDE with debugger
+       var element = App.FindElement("CounterBtn");
+       
+       // Set breakpoint here and use immediate window:
+       // App.ExecuteReplCommand("tree")
+       // App.ExecuteReplCommand("click CounterBtn")
+       
+       App.StartRepl(); // Will show helpful guidance in test runners
+   }
+   ```
 
 ### REPL Blocked in CI/CD
 
@@ -190,14 +211,23 @@ public void DebugTest()
 
 **Solutions**:
 1. Use `ExecuteReplCommand()` for programmatic access in CI/CD
-2. Mark interactive tests with conditional attributes for local-only execution
+2. Mark interactive tests with conditional attributes for local-only execution:
+   ```csharp
+   [Test]
+   [Category("Interactive")] // Skip in CI with --filter "Category!=Interactive"
+   public void ReplInteractiveTest()
+   {
+       App.StartRepl();
+   }
+   ```
 
 ### Environment Detection
 
 The REPL uses improved environment detection:
 - **CI/CD Detection**: Checks for CI environment variables (CI, GITHUB_ACTIONS, JENKINS_URL, etc.)
-- **Console Detection**: More permissive for local development environments
-- **Graceful Degradation**: Shows warnings but attempts to work when possible
+- **Console Redirection Detection**: Detects when running in test runners like `dotnet test`
+- **Graceful Error Handling**: Provides clear guidance instead of hanging or failing silently
+- **Programmatic Fallback**: Always provides programmatic access regardless of environment
 
 ### Best Practices
 
