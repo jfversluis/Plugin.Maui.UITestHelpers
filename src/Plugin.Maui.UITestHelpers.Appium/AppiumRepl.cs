@@ -20,22 +20,58 @@ namespace Plugin.Maui.UITestHelpers.Appium
 		public void Start()
 		{
 			_isRunning = true;
+			
+			// Check if we're in an interactive console environment
+			if (!IsInteractiveEnvironment())
+			{
+				Console.WriteLine("REPL Error: Interactive console not available in this environment.");
+				Console.WriteLine("The REPL requires an interactive console with stdin/stdout support.");
+				Console.WriteLine("This typically happens when running in CI/CD, test runners, or headless environments.");
+				Console.WriteLine();
+				Console.WriteLine("To use REPL functionality:");
+				Console.WriteLine("1. Run tests in an interactive console/terminal");
+				Console.WriteLine("2. Use ExecuteReplCommand() for programmatic access");
+				Console.WriteLine("3. Ensure the test is not running in a headless environment");
+				return;
+			}
+
 			Console.WriteLine("Starting UI Test REPL for Appium...");
 			Console.WriteLine("Type 'help' for available commands or 'exit' to quit.");
 			Console.WriteLine(new string('=', 50));
 
 			while (_isRunning)
 			{
-				Console.Write("uitest> ");
-				var input = Console.ReadLine();
-
-				if (string.IsNullOrWhiteSpace(input))
-					continue;
-
-				var result = ExecuteCommand(input.Trim());
-				if (!string.IsNullOrEmpty(result))
+				try
 				{
-					Console.WriteLine(result);
+					Console.Write("uitest> ");
+					var input = Console.ReadLine();
+
+					if (input == null) // End of stream (Ctrl+C, EOF, etc.)
+					{
+						Console.WriteLine();
+						Console.WriteLine("Input stream ended. Exiting REPL...");
+						break;
+					}
+
+					if (string.IsNullOrWhiteSpace(input))
+						continue;
+
+					var result = ExecuteCommand(input.Trim());
+					if (!string.IsNullOrEmpty(result))
+					{
+						Console.WriteLine(result);
+					}
+				}
+				catch (InvalidOperationException ex) when (ex.Message.Contains("not available"))
+				{
+					Console.WriteLine();
+					Console.WriteLine("Console input is no longer available. Exiting REPL...");
+					break;
+				}
+				catch (Exception ex)
+				{
+					Console.WriteLine($"REPL Error: {ex.Message}");
+					Console.WriteLine("Type 'exit' to quit or continue with other commands.");
 				}
 			}
 		}
@@ -119,6 +155,9 @@ namespace Plugin.Maui.UITestHelpers.Appium
 			help.AppendLine("  text CounterBtn");
 			help.AppendLine("  type MyEntry \"Hello World\"");
 			help.AppendLine("  xpath //button[@text='Click me']");
+			help.AppendLine("");
+			help.AppendLine("Note: Interactive REPL requires a console environment with stdin/stdout.");
+			help.AppendLine("      Use ExecuteReplCommand() for programmatic access in automated tests.");
 
 			return help.ToString();
 		}
@@ -475,6 +514,46 @@ namespace Plugin.Maui.UITestHelpers.Appium
 			catch (Exception ex)
 			{
 				return $"Error getting app info: {ex.Message}";
+			}
+		}
+
+		private bool IsInteractiveEnvironment()
+		{
+			try
+			{
+				// Check if we have a console available
+				if (Console.IsInputRedirected || Console.IsOutputRedirected)
+					return false;
+
+				// Check if we're in a CI/CD environment
+				var ciIndicators = new[]
+				{
+					"CI", "CONTINUOUS_INTEGRATION", "BUILD_NUMBER", "JENKINS_URL",
+					"GITHUB_ACTIONS", "TRAVIS", "APPVEYOR", "BUILDKITE", "CIRCLECI"
+				};
+
+				foreach (var indicator in ciIndicators)
+				{
+					if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable(indicator)))
+						return false;
+				}
+
+				// Check if we can read from console (this is a safer test than Console.ReadLine())
+				try
+				{
+					// This is a non-blocking check to see if KeyAvailable works
+					// If it throws, we're probably not in an interactive environment
+					var _ = Console.KeyAvailable;
+					return true;
+				}
+				catch
+				{
+					return false;
+				}
+			}
+			catch
+			{
+				return false;
 			}
 		}
 

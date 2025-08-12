@@ -43,6 +43,9 @@ namespace Plugin.Maui.UITestHelpers.Examples
                 Console.WriteLine("1. Appium server running");
                 Console.WriteLine("2. Android device/emulator with test app");
                 Console.WriteLine("3. Proper configuration in CreateExampleConfig()");
+                Console.WriteLine("4. Interactive console environment (not CI/CD)");
+                Console.WriteLine();
+                Console.WriteLine("Note: REPL will detect non-interactive environments and show appropriate message.");
                 Console.WriteLine();
                 Console.WriteLine("Demonstrating REPL commands without real app:");
                 DemonstrateReplCommands();

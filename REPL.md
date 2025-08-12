@@ -4,6 +4,15 @@
 
 The Plugin.Maui.UITestHelpers.Appium package now includes a REPL (Read-Eval-Print Loop) feature that allows for interactive UI inspection and testing, similar to what was available in Xamarin.UITest.
 
+## Environment Requirements
+
+The interactive REPL requires:
+- A console environment with stdin/stdout support
+- Interactive terminal/console session
+- **Not suitable for headless environments, CI/CD, or automated test runners**
+
+For automated testing scenarios, use the programmatic API instead (see [Programmatic Usage](#programmatic-usage)).
+
 ## Getting Started
 
 To start a REPL session with your app:
@@ -139,5 +148,45 @@ public void DebugTest()
     Assert.That(element.GetText(), Is.EqualTo("Clicked 1 time"));
 }
 ```
+
+## Troubleshooting
+
+### REPL Hangs or Shows Environment Error
+
+**Problem**: The REPL hangs indefinitely or shows "Interactive console not available in this environment."
+
+**Cause**: This happens when:
+- Running in CI/CD environments (GitHub Actions, Jenkins, etc.)
+- Using test runners without interactive console support
+- Headless environments or containers
+- Console input/output is redirected
+
+**Solutions**:
+1. **Use programmatic API**: Instead of `StartRepl()`, use `ExecuteReplCommand()`:
+   ```csharp
+   var result = app.ExecuteReplCommand("id CounterBtn");
+   ```
+
+2. **Run in interactive environment**: Execute tests in a proper terminal/console:
+   ```bash
+   # Run tests in interactive mode
+   dotnet test --logger console
+   ```
+
+3. **Debug locally**: Use REPL during local development, switch to programmatic commands for automated tests.
+
+### Environment Detection
+
+The REPL automatically detects non-interactive environments by checking:
+- Console input/output redirection
+- CI/CD environment variables (CI, GITHUB_ACTIONS, JENKINS_URL, etc.)
+- Console input availability
+
+### Best Practices
+
+1. **Local Development**: Use `StartRepl()` for interactive debugging
+2. **Automated Tests**: Use `ExecuteReplCommand()` for programmatic access
+3. **CI/CD**: Avoid interactive REPL, use programmatic commands only
+4. **Test Organization**: Mark interactive tests with `[Ignore]` attribute for CI builds
 
 This allows you to pause test execution and interactively inspect the UI state, making debugging much easier.
