@@ -5,11 +5,12 @@ using Plugin.Maui.UITestHelpers.Core;
 
 namespace Plugin.Maui.UITestHelpers.Appium
 {
-	public abstract class AppiumApp : IApp, IScreenshotSupportedApp, ILogsSupportedApp
+	public abstract class AppiumApp : IApp, IScreenshotSupportedApp, ILogsSupportedApp, IReplSupportedApp
 	{
 		protected readonly AppiumDriver _driver;
 		protected readonly IConfig _config;
 		protected readonly AppiumCommandExecutor _commandExecutor;
+		private readonly Lazy<AppiumRepl> _repl;
 
 		public AppiumApp(AppiumDriver driver, IConfig config)
 		{
@@ -30,6 +31,8 @@ namespace Plugin.Maui.UITestHelpers.Appium
 			_commandExecutor.AddCommandGroup(new AppiumScrollActions(this));
 			_commandExecutor.AddCommandGroup(new AppiumOrientationActions(this));
 			_commandExecutor.AddCommandGroup(new AppiumLifecycleActions(this));
+
+			_repl = new Lazy<AppiumRepl>(() => new AppiumRepl(this));
 		}
 
 		public abstract ApplicationState AppState { get; }
@@ -38,6 +41,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
 		public AppiumDriver Driver => _driver;
 		public ICommandExecution CommandExecutor => _commandExecutor;
 		public string ElementTree => _driver.PageSource;
+		public IRepl Repl => _repl.Value;
 
 		public FileInfo Screenshot(string fileName)
 		{

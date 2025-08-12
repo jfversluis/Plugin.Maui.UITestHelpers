@@ -32,6 +32,24 @@ All platforms that are supported by the cross section of the support of Appium a
 
 TBD -->
 
+## Features
+
+### REPL (Read-Eval-Print Loop)
+
+New in this version! The Appium package now includes an interactive REPL for UI inspection and testing, similar to what was available in Xamarin.UITest.
+
+```csharp
+// Start an interactive REPL session
+app.StartRepl();
+```
+
+The REPL supports commands for:
+- Element finding (`id`, `xpath`, `class`, `name`, `accessibility`)
+- Element interaction (`click`, `text`, `type`)
+- UI inspection (`tree`, `screenshot`, `info`, `logs`)
+
+See [REPL.md](REPL.md) for detailed documentation and usage examples.
+
 # Acknowledgements
 
 This project could not have came to be without these projects and people, thank you! <3
