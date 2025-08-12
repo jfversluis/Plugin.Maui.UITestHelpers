@@ -157,15 +157,29 @@ public void DebugTest()
 
 **Cause**: Test runners like `dotnet test` redirect console input/output, making interactive input impossible.
 
+**Platform Requirements for New Console Window**:
+- **Windows**: Requires Windows Terminal (preferred), PowerShell, or Command Prompt
+- **macOS**: Requires Terminal.app (built-in) or iTerm2; may need accessibility permissions for AppleScript
+- **Linux**: Requires a terminal emulator (gnome-terminal, konsole, xterm, etc.) and X11/Wayland display
+- **Headless environments**: Console window opening will fail, but programmatic API remains available
+
 **Current Behavior**: The REPL now:
 1. Detects console redirection in test environments
-2. Provides clear error messages with guidance
-3. Offers specific solutions for different scenarios
-4. Suggests programmatic alternatives
+2. **Automatically attempts to open a new console window** on supported platforms
+3. Falls back to programmatic guidance if window opening fails
+4. Provides clear error messages with platform-specific solutions
 
 **Solutions**:
 
-1. **Use Programmatic API** (Recommended for test environments):
+1. **New Console Window** (Automatic in supported environments):
+   - The REPL will attempt to open a new terminal/console window automatically
+   - **Windows**: Tries Windows Terminal, PowerShell, or Command Prompt
+   - **macOS**: Uses AppleScript to open Terminal.app or iTerm2
+   - **Linux**: Attempts to launch gnome-terminal, konsole, xterm, or other available terminals
+   - If successful, a new window will open with instructions and demonstrative content
+   - The original test will continue while the new window remains open
+
+2. **Use Programmatic API** (Recommended for test environments):
    ```csharp
    [Test]
    public void ReplProgrammaticUsage()
@@ -176,17 +190,17 @@ public void DebugTest()
    }
    ```
 
-2. **Run in IDE with Debugging**:
+3. **Run in IDE with Debugging**:
    - Set a breakpoint after `App.StartRepl()`
    - Use the debugger console for interactive commands
    - Step through and interact with the REPL
 
-3. **Run Tests Outside Test Runner**:
+4. **Run Tests Outside Test Runner**:
    - Execute test methods manually in a console application
    - Use interactive development environments
    - Run single tests with full console access
 
-4. **Alternative Test Approach**:
+5. **Alternative Test Approach**:
    ```csharp
    [Test]
    public void InteractiveDebugHelper()

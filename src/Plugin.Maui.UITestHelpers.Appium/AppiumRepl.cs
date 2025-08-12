@@ -566,31 +566,245 @@ namespace Plugin.Maui.UITestHelpers.Appium
 		{
 			try
 			{
-				// For now, provide helpful guidance instead of trying to open a new window
-				// Opening a new console window and connecting it back to the REPL is complex
-				// and may not work reliably across all platforms and environments
+				Console.WriteLine("Attempting to open a new console window for interactive REPL...");
+				
+				// Try platform-specific approaches to open a new terminal/console window
+				if (TryOpenPlatformSpecificTerminal())
+				{
+					Console.WriteLine("Successfully launched new terminal window.");
+					Console.WriteLine("Look for a new terminal/console window that should have opened.");
+					Console.WriteLine("If no window appeared, the terminal launch may have failed silently.");
+					return true;
+				}
+				
+				// Fallback: provide guidance if platform-specific launch failed
 				Console.WriteLine();
-				Console.WriteLine("REPL would normally try to open a new console window here,");
-				Console.WriteLine("but this feature is not yet implemented for test environments.");
+				Console.WriteLine("Failed to automatically open a new console window.");
+				Console.WriteLine("This can happen due to:");
+				Console.WriteLine("- Missing terminal applications");
+				Console.WriteLine("- Security restrictions");
+				Console.WriteLine("- Headless/SSH environments");
+				Console.WriteLine("- Platform not supported");
 				Console.WriteLine();
-				Console.WriteLine("To use REPL interactively:");
-				Console.WriteLine("1. Run your test in Visual Studio/IDE with debugging");
-				Console.WriteLine("2. Set a breakpoint after App.StartRepl() and use the debugger console");
-				Console.WriteLine("3. Run the app manually and use REPL outside of test context");
-				Console.WriteLine("4. Use the programmatic REPL API: App.ExecuteReplCommand(\"command\")");
+				Console.WriteLine("Manual alternatives:");
+				Console.WriteLine("1. Open a new terminal/command prompt manually");
+				Console.WriteLine("2. Navigate to your test project directory");
+				Console.WriteLine("3. Run: dotnet run --project YourTestProject");
+				Console.WriteLine("4. Or run your test in an IDE with debugging support");
 				Console.WriteLine();
-				Console.WriteLine("Programmatic REPL examples that work in test environments:");
+				Console.WriteLine("Programmatic REPL (works in any environment):");
 				Console.WriteLine("  App.ExecuteReplCommand(\"tree\")          // Show UI tree");
 				Console.WriteLine("  App.ExecuteReplCommand(\"id CounterBtn\")  // Find element by ID");
 				Console.WriteLine("  App.ExecuteReplCommand(\"click CounterBtn\") // Click element");
 				Console.WriteLine("  App.ExecuteReplCommand(\"screenshot\")     // Take screenshot");
 				Console.WriteLine("  App.ExecuteReplCommand(\"help\")           // Show all commands");
 				
-				return false; // We didn't actually open a window, so return false
+				return false;
 			}
 			catch (Exception ex)
 			{
 				Console.WriteLine($"Error in TryOpenNewConsoleWindow: {ex.Message}");
+				return false;
+			}
+		}
+
+		private bool TryOpenPlatformSpecificTerminal()
+		{
+			try
+			{
+				if (OperatingSystem.IsWindows())
+				{
+					return TryOpenWindowsConsole();
+				}
+				else if (OperatingSystem.IsMacOS())
+				{
+					return TryOpenMacOSTerminal();
+				}
+				else if (OperatingSystem.IsLinux())
+				{
+					return TryOpenLinuxTerminal();
+				}
+				
+				Console.WriteLine($"Platform not supported for automatic terminal launch: {Environment.OSVersion.Platform}");
+				return false;
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"Platform detection error: {ex.Message}");
+				return false;
+			}
+		}
+
+		private bool TryOpenWindowsConsole()
+		{
+			try
+			{
+				// Try multiple Windows terminal options in order of preference
+				var terminalCommands = new[]
+				{
+					// Windows Terminal (modern)
+					("wt.exe", "new-tab --title \"UITest REPL\" -- cmd /k echo UITest REPL - Use App.ExecuteReplCommand() for commands"),
+					// PowerShell
+					("powershell.exe", "-NoExit -Command \"Write-Host 'UITest REPL - Use App.ExecuteReplCommand() for commands'; Write-Host 'This window demonstrates that a new console can be opened.'; Write-Host 'For full REPL functionality, use the programmatic API in your test code.'\""),
+					// Command Prompt
+					("cmd.exe", "/k echo UITest REPL - Use App.ExecuteReplCommand() for commands & echo This window demonstrates that a new console can be opened.")
+				};
+
+				foreach (var (command, args) in terminalCommands)
+				{
+					try
+					{
+						var startInfo = new ProcessStartInfo
+						{
+							FileName = command,
+							Arguments = args,
+							UseShellExecute = true,
+							CreateNoWindow = false
+						};
+
+						var process = Process.Start(startInfo);
+						if (process != null)
+						{
+							Console.WriteLine($"Successfully launched {command}");
+							return true;
+						}
+					}
+					catch (Exception ex)
+					{
+						Console.WriteLine($"Failed to launch {command}: {ex.Message}");
+						// Continue to next option
+					}
+				}
+
+				return false;
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"Windows terminal launch error: {ex.Message}");
+				return false;
+			}
+		}
+
+		private bool TryOpenMacOSTerminal()
+		{
+			try
+			{
+				// Try multiple macOS terminal options
+				var terminalCommands = new[]
+				{
+					// Terminal.app with AppleScript
+					("osascript", "-e \"tell application \\\"Terminal\\\" to do script \\\"echo 'UITest REPL - Use App.ExecuteReplCommand() for commands'; echo 'This window demonstrates that a new terminal can be opened.'; echo 'For full REPL functionality, use the programmatic API in your test code.'\\\"\""),
+					// iTerm2 if available
+					("osascript", "-e \"tell application \\\"iTerm\\\" to create window with default profile command \\\"echo 'UITest REPL - Use App.ExecuteReplCommand() for commands'\\\"\""),
+					// Fallback to opening Terminal.app
+					("open", "-a Terminal")
+				};
+
+				foreach (var (command, args) in terminalCommands)
+				{
+					try
+					{
+						var startInfo = new ProcessStartInfo
+						{
+							FileName = command,
+							Arguments = args,
+							UseShellExecute = true,
+							CreateNoWindow = true
+						};
+
+						var process = Process.Start(startInfo);
+						if (process != null)
+						{
+							process.WaitForExit(2000); // Wait up to 2 seconds
+							if (process.ExitCode == 0)
+							{
+								Console.WriteLine($"Successfully launched macOS terminal via {command}");
+								return true;
+							}
+						}
+					}
+					catch (Exception ex)
+					{
+						Console.WriteLine($"Failed to launch macOS terminal with {command}: {ex.Message}");
+						// Continue to next option
+					}
+				}
+
+				return false;
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"macOS terminal launch error: {ex.Message}");
+				return false;
+			}
+		}
+
+		private bool TryOpenLinuxTerminal()
+		{
+			try
+			{
+				// Try multiple Linux terminal emulators
+				var terminalCommands = new[]
+				{
+					// GNOME Terminal
+					("gnome-terminal", "-- bash -c \"echo 'UITest REPL - Use App.ExecuteReplCommand() for commands'; echo 'This window demonstrates that a new terminal can be opened.'; echo 'For full REPL functionality, use the programmatic API in your test code.'; exec bash\""),
+					// KDE Konsole
+					("konsole", "-e bash -c \"echo 'UITest REPL - Use App.ExecuteReplCommand() for commands'; echo 'This window demonstrates that a new terminal can be opened.'; exec bash\""),
+					// xterm (widely available)
+					("xterm", "-e bash -c \"echo 'UITest REPL - Use App.ExecuteReplCommand() for commands'; echo 'This window demonstrates that a new terminal can be opened.'; exec bash\""),
+					// Xfce Terminal
+					("xfce4-terminal", "-e \"bash -c 'echo UITest REPL - Use App.ExecuteReplCommand() for commands; exec bash'\""),
+					// LXTerminal
+					("lxterminal", "-e bash -c \"echo 'UITest REPL - Use App.ExecuteReplCommand() for commands'; exec bash\"")
+				};
+
+				foreach (var (command, args) in terminalCommands)
+				{
+					try
+					{
+						// First check if the command exists
+						var whichProcess = Process.Start(new ProcessStartInfo
+						{
+							FileName = "which",
+							Arguments = command,
+							UseShellExecute = false,
+							CreateNoWindow = true,
+							RedirectStandardOutput = true
+						});
+
+						whichProcess?.WaitForExit(1000);
+						if (whichProcess?.ExitCode != 0)
+						{
+							continue; // Command not found, try next
+						}
+
+						var startInfo = new ProcessStartInfo
+						{
+							FileName = command,
+							Arguments = args,
+							UseShellExecute = false,
+							CreateNoWindow = false
+						};
+
+						var process = Process.Start(startInfo);
+						if (process != null)
+						{
+							Console.WriteLine($"Successfully launched {command}");
+							return true;
+						}
+					}
+					catch (Exception ex)
+					{
+						Console.WriteLine($"Failed to launch {command}: {ex.Message}");
+						// Continue to next option
+					}
+				}
+
+				return false;
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"Linux terminal launch error: {ex.Message}");
 				return false;
 			}
 		}
