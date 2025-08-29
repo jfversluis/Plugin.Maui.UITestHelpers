@@ -32,6 +32,17 @@ All platforms that are supported by the cross section of the support of Appium a
 
 TBD -->
 
+# Related resources
+
+To make it easier to add UI test projects to your existing solution, I also have a template that you can use: https://github.com/jfversluis/Template.Maui.UITesting/
+
+Additionally, please find some blog posts and samples that we have made available to get you started:
+
+* https://devblogs.microsoft.com/dotnet/dotnet-maui-ui-testing-appium/
+* https://devblogs.microsoft.com/dotnet/browserstack-appium-dotnet-maui/
+* https://learn.microsoft.com/samples/dotnet/maui-samples/uitest-appium-nunit/ 
+* https://learn.microsoft.com/samples/dotnet/maui-samples/uitest-browserstack/ 
+
 # Acknowledgements
 
 This project could not have came to be without these projects and people, thank you! <3
