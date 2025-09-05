@@ -5,7 +5,7 @@ using Plugin.Maui.UITestHelpers.Core;
 
 namespace Plugin.Maui.UITestHelpers.Appium
 {
-	public abstract class AppiumApp : IApp, IScreenshotSupportedApp, ILogsSupportedApp
+	public abstract class AppiumApp : IApp, IScreenshotSupportedApp, ILogsSupportedApp, IBackdoorSupportedApp
 	{
 		protected readonly AppiumDriver _driver;
 		protected readonly IConfig _config;
@@ -30,6 +30,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
 			_commandExecutor.AddCommandGroup(new AppiumScrollActions(this));
 			_commandExecutor.AddCommandGroup(new AppiumOrientationActions(this));
 			_commandExecutor.AddCommandGroup(new AppiumLifecycleActions(this));
+			_commandExecutor.AddCommandGroup(new AppiumBackdoorActions(this));
 		}
 
 		public abstract ApplicationState AppState { get; }
@@ -64,6 +65,46 @@ namespace Plugin.Maui.UITestHelpers.Appium
 			foreach (var entry in entries)
 			{
 				yield return entry.Message;
+			}
+		}
+
+		public object? Invoke(string methodName, params object[] args)
+		{
+			var response = CommandExecutor.Execute("invoke", new Dictionary<string, object>
+			{
+				{ "methodName", methodName },
+				{ "args", args }
+			});
+
+			return response.Result == CommandResponseResult.Success ? response.Value : null;
+		}
+
+		public T? Invoke<T>(string methodName, params object[] args)
+		{
+			var result = Invoke(methodName, args);
+			
+			if (result == null)
+				return default(T);
+
+			try
+			{
+				// Handle simple type conversions
+				if (result is T directResult)
+					return directResult;
+
+				// Handle JSON string results that need deserialization
+				if (result is string jsonString && typeof(T) != typeof(string))
+				{
+					return System.Text.Json.JsonSerializer.Deserialize<T>(jsonString);
+				}
+
+				// Attempt conversion for value types
+				return (T)Convert.ChangeType(result, typeof(T));
+			}
+			catch
+			{
+				// If conversion fails, return default
+				return default(T);
 			}
 		}
 
