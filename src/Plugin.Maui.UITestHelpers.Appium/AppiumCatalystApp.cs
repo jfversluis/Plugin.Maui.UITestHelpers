@@ -39,6 +39,44 @@ namespace Plugin.Maui.UITestHelpers.Appium
 			}
 		}
 
+		public override void Dispose()
+		{
+			try
+			{
+				// Terminate the app before disposing the driver to ensure proper cleanup on macOS
+				var appId = Config.GetProperty<string>("AppId");
+				if (!string.IsNullOrWhiteSpace(appId) && _driver != null)
+				{
+					try
+					{
+						_driver.ExecuteScript("macos: terminateApp", new Dictionary<string, object>
+						{
+							{ "bundleId", appId },
+						});
+					}
+					catch
+					{
+						// Ignore errors during app termination as the app may already be closed
+					}
+
+					// Explicitly quit the driver session to ensure proper cleanup
+					try
+					{
+						_driver.Quit();
+					}
+					catch
+					{
+						// Ignore errors during quit as the session may already be terminated
+					}
+				}
+			}
+			finally
+			{
+				// Call the base dispose to handle standard cleanup
+				base.Dispose();
+			}
+		}
+
 		private static AppiumOptions GetOptions(IConfig config)
 		{
 			config.SetProperty("PlatformName", "mac");
