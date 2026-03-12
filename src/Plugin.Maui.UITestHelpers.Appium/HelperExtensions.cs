@@ -821,6 +821,62 @@ namespace Plugin.Maui.UITestHelpers.Appium
             }
         }
 
+        public static IUIElement? WaitForAndLog(this IApp app, string elementId, TimeSpan? timeout = null)
+        {
+            string beforeMessage = $"Waiting for {elementId} - {DateTime.Now.ToString("HH:mm:ss")}";
+            Console.WriteLine(beforeMessage);
+            var result = app.WaitForElement(elementId, beforeMessage, timeout);
+            string afterMessage = $"Found {elementId} - {DateTime.Now.ToString("HH:mm:ss")}";
+            Console.WriteLine(afterMessage);
+            try
+            {
+                if (result is not null && result.IsDisplayed())
+                {
+                    Console.WriteLine($"{elementId} was visible");
+                    return (IUIElement?)result;
+                }
+                else
+                {
+                    Console.WriteLine($"{elementId} was not visible");
+                    return null;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.InnerException?.Message.ToString());
+                Console.WriteLine($"{elementId} was not visible and threw an exception");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Method that waits for element to be visible, selects element that is visible then taps.
+        /// </summary>
+        /// <param name="automationId"></param>
+        /// <param name="delay"></param>
+        public static void WaitForAndTap(this IApp app, string automationId, int? delay = null)
+        {
+            var element = WaitForAndLog(app, automationId);
+
+            if (element is null)
+            {
+                string nullElement = $"Element with id '{automationId}  was null' - {DateTime.Now.ToString("HH:mm:ss")}";
+                Console.WriteLine(nullElement);
+                throw new NullReferenceException();
+            }
+            string beforeMessage = $"Will tap element: '{automationId}' - {DateTime.Now.ToString("HH:mm:ss")}";
+            Console.WriteLine(beforeMessage);
+            element.Tap();
+            string afterMessage = $"Tapped element: ' {automationId}' - {DateTime.Now.ToString("HH:mm:ss")}";
+            Console.WriteLine(afterMessage);
+            if (delay is not null)
+            {
+                Task.Delay(delay.Value).Wait();
+                string delayMessage = $"Delayed after tapping element: ' {automationId}' - {DateTime.Now.ToString("HH:mm:ss")}";
+                Console.WriteLine(delayMessage);
+            }
+        }
+
         /// <summary>
         /// Presses the volume up button on the device.
         /// </summary>
