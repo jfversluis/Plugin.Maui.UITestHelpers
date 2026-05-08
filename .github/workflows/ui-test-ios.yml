@@ -18,7 +18,7 @@ env:
   TARGET_FRAMEWORK: net10.0-ios
   XCODE_VERSION: 16.4
   TEST_SIM_NAME: UITestSim
-  SCREENCAPTURE_FOLDER: samples/UITests.iOS/bin/Debug/net9.0
+  SCREENCAPTURE_FOLDER: samples/UITests.iOS/bin/Debug/net10.0
   ARTIFACTS_PATH: ${{ github.workspace }}/output
 
 jobs:
@@ -28,6 +28,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 10.0.x
 
     - name: Select Xcode version
       run: sudo xcode-select -s '/Applications/Xcode_${{ env.XCODE_VERSION }}.app/Contents/Developer'
