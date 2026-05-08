@@ -16,7 +16,7 @@ env:
   CSPROJ_TO_TEST: samples/UITests.iOS/UITests.iOS.csproj
   APP_ID: com.companyname.uitesthelperssample
   TARGET_FRAMEWORK: net10.0-ios
-  XCODE_VERSION: 16.4
+  XCODE_VERSION: 26.4
   TEST_SIM_NAME: UITestSim
   SCREENCAPTURE_FOLDER: samples/UITests.iOS/bin/Debug/net10.0
   ARTIFACTS_PATH: ${{ github.workspace }}/output
