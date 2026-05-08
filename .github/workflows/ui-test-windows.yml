@@ -34,7 +34,7 @@ jobs:
       run: dotnet workload restore ${{ env.CSPROJ_TO_BUILD }}
 
     - name: Build App
-      run: dotnet build ${{ env.CSPROJ_TO_BUILD }} -f ${{ env.TARGET_FRAMEWORK }} -c ${{ env.BUILD_CONFIGURATION }}
+      run: dotnet build ${{ env.CSPROJ_TO_BUILD }} -f ${{ env.TARGET_FRAMEWORK }} -c ${{ env.BUILD_CONFIGURATION }} -r win10-x64
 
     - name: Install Appium
       run: |

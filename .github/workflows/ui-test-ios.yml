@@ -16,7 +16,7 @@ env:
   CSPROJ_TO_TEST: samples/UITests.iOS/UITests.iOS.csproj
   APP_ID: com.companyname.uitesthelperssample
   TARGET_FRAMEWORK: net10.0-ios
-  XCODE_VERSION: 26.4
+  XCODE_VERSION: 26.3
   TEST_SIM_NAME: UITestSim
   SCREENCAPTURE_FOLDER: samples/UITests.iOS/bin/Debug/net10.0
   ARTIFACTS_PATH: ${{ github.workspace }}/output
@@ -38,7 +38,7 @@ jobs:
       run: sudo xcode-select -s '/Applications/Xcode_${{ env.XCODE_VERSION }}.app/Contents/Developer'
 
     - name: Restore Workload
-      run: dotnet workload restore --project ${{ env.CSPROJ_TO_BUILD }}
+      run: dotnet workload restore --project ${{ env.CSPROJ_TO_BUILD }} --version 10.0.203
 
     - name: Build App
       run: dotnet build ${{ env.CSPROJ_TO_BUILD }} -f ${{ env.TARGET_FRAMEWORK }} -c ${{ env.BUILD_CONFIGURATION }}
