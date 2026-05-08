@@ -1,18 +1,20 @@
-# $ Copilot InstructionsREPO 
+# Plugin.Maui.UITestHelpers - Copilot Instructions
 
 ## Project Overview
 
-This is a .NET MAUI plugin that provides helpers for UI testing .NET MAUI apps with Appium. It targets Android, iOS, macOS (Catalyst), Windows.
+This is a .NET MAUI plugin that provides helpers for UI testing .NET MAUI apps with Appium. It targets Android, iOS, macOS (Catalyst), and Windows.
 
-### Architecture
+## Architecture
 
-**Test helper  three packages:library** 
-- `Plugin.Maui.UITestHelpers. Abstractions (IApp, IQuery)Core` 
-- `Plugin.Maui.UITestHelpers. Appium implementationAppium` 
-- `Plugin.Maui.UITestHelpers. NUnit integrationNUnit` 
+**Test helper library** with three packages:
 
-Platform drivers: AppiumAndroidApp, AppiumIOSApp, AppiumCatalystApp, AppiumWindowsApp.
-Migration path from Xamarin.UITest to Appium.
+- `Plugin.Maui.UITestHelpers.Core` - Abstractions (`IApp`, `IQuery`)
+- `Plugin.Maui.UITestHelpers.Appium` - Appium implementation
+- `Plugin.Maui.UITestHelpers.NUnit` - NUnit integration
+
+Platform drivers: `AppiumAndroidApp`, `AppiumIOSApp`, `AppiumCatalystApp`, `AppiumWindowsApp`.
+
+This provides a migration path from Xamarin.UITest to Appium.
 
 ## Code Conventions
 
@@ -20,11 +22,11 @@ Migration path from Xamarin.UITest to Appium.
 All code uses: `Plugin.Maui.UITestHelpers`
 
 ### File Naming
-- `*.shared. Cross-platform codecs` 
-- `*.android. Androidcs` 
-- `*.macios. iOS/macOScs` 
-- `*.windows. Windowscs` 
-- `*.net. Generic .NET fallbackcs` 
+- `*.shared.cs` - Cross-platform code
+- `*.android.cs` - Android-specific code
+- `*.macios.cs` - iOS/macOS-specific code
+- `*.windows.cs` - Windows-specific code
+- `*.net.cs` - Generic .NET fallback
 
 ### Standards
 - File-scoped namespaces
@@ -35,11 +37,11 @@ All code uses: `Plugin.Maui.UITestHelpers`
 ## Building
 
 ```bash
-dotnet build src/Plugin.Maui.UITestHelpers/Plugin.Maui.UITestHelpers.csproj -c Release
+dotnet build src/Plugin.Maui.UITestHelpers.Appium/Plugin.Maui.UITestHelpers.Appium.csproj -c Release
 ```
 
 ## When Making Changes
-1. Ensure the plugin builds on all target platforms
-2. If adding public API, update the interface
-3. Implement on all supported platforms
+1. Ensure all three packages build
+2. If adding public API, update the interface in Core
+3. Implement in the Appium package
 4. Update sample app and README
