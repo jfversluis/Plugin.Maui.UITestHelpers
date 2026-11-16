@@ -13,6 +13,12 @@ public class AppiumActionsTests : BaseTest
     [Test]
     public void GetOrientationTest()
     {
+        // Orientation tests can't be run on Mac Catalyst
+        if (App is AppiumCatalystApp)
+        {
+            Assert.Ignore("Orientation tests are not supported on Mac Catalyst");
+        }
+
         // Act & Assert - should not throw
         var orientation = App.GetOrientation();
         

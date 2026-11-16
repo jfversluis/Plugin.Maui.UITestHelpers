@@ -22,7 +22,9 @@ env:
 jobs:
   ui-test-macos:
 
-    runs-on: macos-26
+    # xcode-27 has the latest Xcode versions installed; revert to macos-latest as soon as the
+    # macOS runners also have Xcode 27
+    runs-on: xcode-27
 
     steps:
     - uses: actions/checkout@v7
@@ -36,7 +38,7 @@ jobs:
       run: sudo xcode-select -s '/Applications/Xcode_${{ env.XCODE_VERSION }}.app/Contents/Developer'
 
     - name: Restore Workload
-      run: dotnet workload restore --project ${{ env.CSPROJ_TO_BUILD }} --version 11.0.100.1
+      run: dotnet workload restore --project ${{ env.CSPROJ_TO_BUILD }}
 
     - name: Build App
       run: dotnet build ${{ env.CSPROJ_TO_BUILD }} -f ${{ env.TARGET_FRAMEWORK }} -c ${{ env.BUILD_CONFIGURATION }}
