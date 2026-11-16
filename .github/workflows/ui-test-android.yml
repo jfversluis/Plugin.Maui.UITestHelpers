@@ -16,7 +16,7 @@ env:
   APP_ID: com.companyname.uitesthelperssample
   TARGET_FRAMEWORK: net11.0-android
   TEST_EMULATOR_NAME: UITestEmu
-  ANDROID_EMULATOR_IMAGE: system-images;android-37.0;arm64-v8a
+  ANDROID_EMULATOR_IMAGE: system-images;android-37.0;google_apis;arm64-v8a
   SCREENCAPTURE_FOLDER: samples/UITests.Android/bin/Debug/net11.0
   ARTIFACTS_PATH: ${{ github.workspace }}/output
 
@@ -44,6 +44,7 @@ jobs:
 
     - name: Boot Android emulator
       run: |
+        dotnet android sdk list --available
         dotnet android sdk install --package '${{ env.ANDROID_EMULATOR_IMAGE }}'
         dotnet android avd create --name ${{ env.TEST_EMULATOR_NAME }} --sdk '${{ env.ANDROID_EMULATOR_IMAGE }}' --force
         dotnet android avd start --name ${{ env.TEST_EMULATOR_NAME }} --wait-boot --gpu guest --no-snapshot --no-audio --no-boot-anim --no-window
