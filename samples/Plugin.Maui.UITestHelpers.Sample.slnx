@@ -1,4 +1,13 @@
 <Solution>
+  <Folder Name="/GitHub Actions/">
+    <File Path="../.github/workflows/ci-sample.yml" />
+    <File Path="../.github/workflows/ci.yml" />
+    <File Path="../.github/workflows/release-nuget.yml" />
+    <File Path="../.github/workflows/ui-test-android.yml" />
+    <File Path="../.github/workflows/ui-test-ios.yml" />
+    <File Path="../.github/workflows/ui-test-macos.yml" />
+    <File Path="../.github/workflows/ui-test-windows.yml" />
+  </Folder>
   <Folder Name="/Plugin Projects/">
     <Project Path="../src/Plugin.Maui.UITestHelpers.Appium/Plugin.Maui.UITestHelpers.Appium.csproj" />
     <Project Path="../src/Plugin.Maui.UITestHelpers.Core/Plugin.Maui.UITestHelpers.Core.csproj" />
