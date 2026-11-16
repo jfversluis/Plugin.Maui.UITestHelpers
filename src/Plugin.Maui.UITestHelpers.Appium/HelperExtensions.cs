@@ -817,7 +817,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
                     return false;
                 }
 
-                Task.Delay(retryFrequency.Milliseconds).Wait();
+                Task.Delay(retryFrequency).Wait();
             }
         }
 
@@ -2347,7 +2347,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
                     throw new TimeoutException(timeoutMessage);
                 }
 
-                Task.Delay(retryFrequency.Value.Milliseconds).Wait();
+                Task.Delay(retryFrequency.Value).Wait();
                 result = query();
             }
 
