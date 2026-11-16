@@ -298,6 +298,12 @@ namespace Plugin.Maui.UITestHelpers.Appium
         /// <returns>true if the soft keyboard is shown; otherwise, false.</returns>
         public static bool IsKeyboardShown(this IApp app)
         {
+            if (app is AppiumWindowsApp)
+            {
+                // on Windows, the driver would just throw a NotImplementedException
+                return false;
+            }
+
             var response = app.CommandExecutor.Execute("isKeyboardShown", ImmutableDictionary<string, object>.Empty);
             var responseValue = response?.Value ?? false;
             return (bool)responseValue;
@@ -662,7 +668,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
         }
 
         /// <summary>
-        /// Wait function that will repeatly query the app until a matching element is found. 
+        /// Wait function that will repeatly query the app until a matching element is found.
         /// Throws a TimeoutException if no element is found within the time limit.
         /// </summary>
         /// <param name="app">Represents the main gateway to interact with an app.</param>
@@ -680,7 +686,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
         }
 
         /// <summary>
-        /// Wait function that will repeatedly query the app until any matching element is found. 
+        /// Wait function that will repeatedly query the app until any matching element is found.
         /// Throws a TimeoutException if no element is found within the time limit.
         /// </summary>
         /// <param name="app">Represents the main gateway to interact with an app.</param>
@@ -698,7 +704,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
         }
 
         /// <summary>
-        /// Wait function that will repeatly query the app until a matching element is found. 
+        /// Wait function that will repeatly query the app until a matching element is found.
         /// Throws a TimeoutException if no element is found within the time limit.
         /// </summary>
         /// <param name="app">Represents the main gateway to interact with an app.</param>
@@ -716,7 +722,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
         }
 
         /// <summary>
-		/// Wait function that will repeatly query the app until a matching element is found. 
+		/// Wait function that will repeatly query the app until a matching element is found.
 		/// Throws a TimeoutException if no element is found within the time limit.
 		/// </summary>
 		/// <param name="app">Represents the main gateway to interact with an app.</param>
@@ -732,7 +738,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
         }
 
         /// <summary>
-        /// Wait function that will repeatly query the app until a matching element is no longer found. 
+        /// Wait function that will repeatly query the app until a matching element is no longer found.
         /// Throws a TimeoutException if the element is visible at the end of the time limit.
         /// </summary>
         /// <param name="app">Represents the main gateway to interact with an app.</param>
@@ -748,7 +754,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
         }
 
         /// <summary>
-		/// Wait function that will repeatly query the app until a matching element is no longer found. 
+		/// Wait function that will repeatly query the app until a matching element is no longer found.
 		/// Throws a TimeoutException if the element is visible at the end of the time limit.
 		/// </summary>
 		/// <param name="app">Represents the main gateway to interact with an app.</param>
@@ -764,7 +770,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
         }
 
         /// <summary>
-        /// Wait function that will repeatly query the app until a matching element is no longer found. 
+        /// Wait function that will repeatly query the app until a matching element is no longer found.
         /// Throws a TimeoutException if the element is visible at the end of the time limit.
         /// </summary>
         /// <param name="app">Represents the main gateway to interact with an app.</param>
@@ -849,7 +855,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
         }
 
         /// <summary>
-        /// Performs a left to right swipe gesture on the screen. 
+        /// Performs a left to right swipe gesture on the screen.
         /// </summary>
         /// <param name="app">Represents the main gateway to interact with an app.</param>
         /// <param name="swipePercentage">How far across the element to swipe (from 0.0 to 1.0).</param>
@@ -866,7 +872,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
         }
 
         /// <summary>
-        /// Performs a left to right swipe gesture on the matching element. 
+        /// Performs a left to right swipe gesture on the matching element.
         /// If multiple elements are matched, the first one will be used.
         /// </summary>
         /// <param name="app">Represents the main gateway to interact with an app.</param>
@@ -911,7 +917,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
         }
 
         /// <summary>
-        ///  Performs a right to left swipe gesture on the screen. 
+        ///  Performs a right to left swipe gesture on the screen.
         /// </summary>
         /// <param name="app">Represents the main gateway to interact with an app.</param>
         /// <param name="swipePercentage">How far across the element to swipe (from 0.0 to 1.0).</param>
@@ -928,7 +934,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
         }
 
         /// <summary>
-        /// Performs a right to left swipe gesture on the matching element. 
+        /// Performs a right to left swipe gesture on the matching element.
         /// If multiple elements are matched, the first one will be used.
         /// </summary>
         /// <param name="app">Represents the main gateway to interact with an app.</param>
@@ -974,7 +980,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
         }
 
         /// <summary>
-        /// Performs a pinch gestures on the matched element to zoom the view in. 
+        /// Performs a pinch gestures on the matched element to zoom the view in.
         /// If multiple elements are matched, the first one will be used.
         /// </summary>
         /// <param name="app">Represents the main gateway to interact with an app.</param>
@@ -1009,7 +1015,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
         }
 
         /// <summary>
-        /// Performs a pinch gestures on the matched element to zoom the view out. 
+        /// Performs a pinch gestures on the matched element to zoom the view out.
         /// If multiple elements are matched, the first one will be used.
         /// </summary>
         /// <param name="app">Represents the main gateway to interact with an app.</param>
@@ -1391,7 +1397,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
             }
 
             var response = app.CommandExecutor.Execute("getClipboardText", new Dictionary<string, object>());
-            
+
             if (response?.Value != null)
             {
                 return (string)response.Value;
@@ -1438,8 +1444,8 @@ namespace Plugin.Maui.UITestHelpers.Appium
         /// <summary>
         /// Performs a tap / touch gesture on the given coordinates.
         /// This API currently doesn't work on Catalyst https://github.com/dotnet/maui/issues/19754
-        /// For Catalyst you'll currently need to use Click instead. 
-        /// Tap is more mobile-specific and provides more flexibility than click. Click is more general and is 
+        /// For Catalyst you'll currently need to use Click instead.
+        /// Tap is more mobile-specific and provides more flexibility than click. Click is more general and is
         /// used for simpler interactions. Depending on the context of your test, you might prefer one over the other.
         /// </summary>
         /// <param name="app">Represents the main gateway to interact with an app.</param>
@@ -1462,7 +1468,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
         }
 
         /// <summary>
-        /// Executes an existing application on the device. 
+        /// Executes an existing application on the device.
         /// If the application is already running then it will be brought to the foreground.
         /// </summary>
         /// <param name="app">Represents the main gateway to interact with an app.</param>
@@ -1877,7 +1883,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
         /// <summary>
         /// Switch the state of data service.
         /// Functionality that's only available on Android.
-        /// This API does not work for Android API level 21+ because it requires system or carrier privileged permission, 
+        /// This API does not work for Android API level 21+ because it requires system or carrier privileged permission,
         /// and Android <= 21 does not support granting permissions.
         /// </summary>
         /// <param name="app">Represents the main gateway to interact with an app.</param>

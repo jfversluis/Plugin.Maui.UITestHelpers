@@ -1,5 +1,6 @@
 ﻿using OpenQA.Selenium.Appium.Windows;
 using Plugin.Maui.UITestHelpers.Core;
+using System.Collections.Immutable;
 
 namespace Plugin.Maui.UITestHelpers.Appium
 {
@@ -69,7 +70,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
                 // Currently the appium-windows-driver reports the following commands as compatible:
                 //   startRecordingScreen,stopRecordingScreen,launchApp,closeApp,deleteFile,deleteFolder,
                 //   click,scroll,clickAndDrag,hover,keys,setClipboard,getClipboard
-                windowsDriver.ExecuteScript("windows: launchApp", [_app.GetAppId()]);
+                windowsDriver.ExecuteScript("windows: launchApp", ImmutableDictionary<string, object>.Empty);
             }
             else
             {
@@ -133,7 +134,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
             {
                 // TODO: Pass in logger so we can log these exceptions
 
-                // Occasionally the app seems to get so locked up it can't 
+                // Occasionally the app seems to get so locked up it can't
                 // even report back the appstate. In that case, we'll just
                 // try to trigger a reset.
             }
@@ -149,10 +150,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
                 }
                 else if (_app.Driver is WindowsDriver windowsDriver)
                 {
-                    // This is still here for now, but it looks like it will get removed just like
-                    // LaunchApp was in 5.0.0, in which case we may need to use:
-                    // windowsDriver.ExecuteScript("windows: closeApp", [_app.GetAppId()]);
-                    windowsDriver.CloseApp();
+                    windowsDriver.ExecuteScript("windows: closeApp", ImmutableDictionary<string, object>.Empty);
                 }
                 else
                 {
@@ -179,7 +177,14 @@ namespace Plugin.Maui.UITestHelpers.Appium
             try
             {
                 // Navigate backwards in the history, if possible.
-                _app.Driver.Navigate().Back();
+                if (_app is AppiumWindowsApp)
+                {
+                    _app.TapBackArrow();
+                }
+                else
+                {
+                    _app.Driver.Navigate().Back();
+                }
 
                 return CommandResponse.SuccessEmptyResponse;
             }
