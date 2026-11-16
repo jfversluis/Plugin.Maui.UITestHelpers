@@ -67,8 +67,12 @@ jobs:
     - name: Run UI Tests
       # We're passing on the values we used to create the Simulator with to the test project to find the correct one
       run: |
-        dotnet test ${{ env.CSPROJ_TO_TEST }} --environment SIMNAME="${{ env.TEST_SIM_NAME }}" --environment SIMID="${{ env.SIM_UDID }}" \
-        --environment APPIUM_LOG_FILE=${{ env.ARTIFACTS_PATH }}/appium-logs/appium.log --environment APPID="${{ env.APP_ID }}"
+        dotnet test ${{ env.CSPROJ_TO_TEST }} \
+        --logger "console;verbosity=normal" \
+        --environment SIMNAME="${{ env.TEST_SIM_NAME }}" \
+        --environment SIMID="${{ env.SIM_UDID }}" \
+        --environment APPIUM_LOG_FILE=${{ env.ARTIFACTS_PATH }}/appium-logs/appium.log \
+        --environment APPID="${{ env.APP_ID }}"
 
     - name: Publish Artifacts
       uses: actions/upload-artifact@v7
