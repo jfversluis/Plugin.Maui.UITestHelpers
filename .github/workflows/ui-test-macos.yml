@@ -11,18 +11,18 @@ on:
 env:
   BUILD_CONFIGURATION: Release
   CSPROJ_TO_BUILD: samples/Plugin.Maui.UITestHelpers.Sample/Plugin.Maui.UITestHelpers.Sample.csproj
-  APP_TO_TEST: samples/Plugin.Maui.UITestHelpers.Sample/bin/Release/net10.0-maccatalyst/maccatalyst-arm64/Plugin.Maui.UITestHelpers.Sample.app
+  APP_TO_TEST: samples/Plugin.Maui.UITestHelpers.Sample/bin/Release/net11.0-maccatalyst/maccatalyst-arm64/Plugin.Maui.UITestHelpers.Sample.app
   CSPROJ_TO_TEST: samples/UITests.macOS/UITests.macOS.csproj
   APP_ID: com.companyname.uitesthelperssample
-  TARGET_FRAMEWORK: net10.0-maccatalyst
-  XCODE_VERSION: 26.3
-  SCREENCAPTURE_FOLDER: samples/UITests.macOS/bin/Debug/net10.0
+  TARGET_FRAMEWORK: net11.0-maccatalyst
+  XCODE_VERSION: 27.2
+  SCREENCAPTURE_FOLDER: samples/UITests.macOS/bin/Debug/net11.0
   ARTIFACTS_PATH: ${{ github.workspace }}/output
 
 jobs:
   ui-test-macos:
 
-    runs-on: macos-15
+    runs-on: macos-26
 
     steps:
     - uses: actions/checkout@v4
@@ -30,13 +30,13 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 10.0.x
+        dotnet-version: 11.0.x
 
     - name: Select Xcode version
       run: sudo xcode-select -s '/Applications/Xcode_${{ env.XCODE_VERSION }}.app/Contents/Developer'
 
     - name: Restore Workload
-      run: dotnet workload restore --project ${{ env.CSPROJ_TO_BUILD }} --version 10.0.203
+      run: dotnet workload restore --project ${{ env.CSPROJ_TO_BUILD }} --version 11.0.100.1
 
     - name: Build App
       run: dotnet build ${{ env.CSPROJ_TO_BUILD }} -f ${{ env.TARGET_FRAMEWORK }} -c ${{ env.BUILD_CONFIGURATION }}
@@ -45,7 +45,7 @@ jobs:
       run: |
         npm install -g appium
         appium driver install mac2
-    
+
     - name: Install App
       # Deploy the app by running it on this Mac
       run: dotnet build ${{ env.CSPROJ_TO_BUILD }} -t:Run -f ${{ env.TARGET_FRAMEWORK }} -c ${{ env.BUILD_CONFIGURATION }}

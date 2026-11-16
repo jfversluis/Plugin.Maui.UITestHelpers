@@ -12,19 +12,19 @@ env:
   # Release builds don't run on the Simulator
   BUILD_CONFIGURATION: Debug
   CSPROJ_TO_BUILD: samples/Plugin.Maui.UITestHelpers.Sample/Plugin.Maui.UITestHelpers.Sample.csproj
-  APP_TO_TEST: samples/Plugin.Maui.UITestHelpers.Sample/bin/Debug/net10.0-ios/iossimulator-arm64/Plugin.Maui.UITestHelpers.Sample.app
+  APP_TO_TEST: samples/Plugin.Maui.UITestHelpers.Sample/bin/Debug/net11.0-ios/iossimulator-arm64/Plugin.Maui.UITestHelpers.Sample.app
   CSPROJ_TO_TEST: samples/UITests.iOS/UITests.iOS.csproj
   APP_ID: com.companyname.uitesthelperssample
-  TARGET_FRAMEWORK: net10.0-ios
-  XCODE_VERSION: 26.3
+  TARGET_FRAMEWORK: net11.0-ios
+  XCODE_VERSION: 27.2
   TEST_SIM_NAME: UITestSim
-  SCREENCAPTURE_FOLDER: samples/UITests.iOS/bin/Debug/net10.0
+  SCREENCAPTURE_FOLDER: samples/UITests.iOS/bin/Debug/net11.0
   ARTIFACTS_PATH: ${{ github.workspace }}/output
 
 jobs:
   ui-test-ios:
 
-    runs-on: macos-15
+    runs-on: macos-26
 
     steps:
     - uses: actions/checkout@v4
@@ -32,13 +32,13 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 10.0.x
+        dotnet-version: 11.0.x
 
     - name: Select Xcode version
       run: sudo xcode-select -s '/Applications/Xcode_${{ env.XCODE_VERSION }}.app/Contents/Developer'
 
     - name: Restore Workload
-      run: dotnet workload restore --project ${{ env.CSPROJ_TO_BUILD }} --version 10.0.203
+      run: dotnet workload restore --project ${{ env.CSPROJ_TO_BUILD }} --version 11.0.100.1
 
     - name: Build App
       run: dotnet build ${{ env.CSPROJ_TO_BUILD }} -f ${{ env.TARGET_FRAMEWORK }} -c ${{ env.BUILD_CONFIGURATION }}
@@ -56,7 +56,7 @@ jobs:
         simudid=$(xcrun simctl create ${{ env.TEST_SIM_NAME }} com.apple.CoreSimulator.SimDeviceType.iPhone-15-Pro)
         echo "SIM_UDID=$(echo $simudid)" >> $GITHUB_ENV
         echo "Created Simulator UDID: $simudid"
-    
+
     - name: Install App
       run: |
         xcrun simctl boot "${{ env.SIM_UDID }}"
