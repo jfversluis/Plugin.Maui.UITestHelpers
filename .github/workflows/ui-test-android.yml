@@ -16,14 +16,14 @@ env:
   APP_ID: com.companyname.uitesthelperssample
   TARGET_FRAMEWORK: net11.0-android
   TEST_EMULATOR_NAME: UITestEmu
-  ANDROID_EMULATOR_IMAGE: system-images;android-37.0;google_apis;arm64-v8a
+  ANDROID_EMULATOR_IMAGE: system-images;android-37.2;google_apis_ps16k;x86_64
   SCREENCAPTURE_FOLDER: samples/UITests.Android/bin/Debug/net11.0
   ARTIFACTS_PATH: ${{ github.workspace }}/output
 
 jobs:
   ui-test-android:
 
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v7
@@ -42,12 +42,27 @@ jobs:
     - name: Publish APK
       run: dotnet publish ${{ env.CSPROJ_TO_BUILD }} -f ${{ env.TARGET_FRAMEWORK }}
 
-    - name: Boot Android emulator
+    - name: Enable KVM
       run: |
+        echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+        sudo udevadm control --reload-rules
+        sudo udevadm trigger --name-match=kvm
+
+    - name: Boot Android emulator
+      timeout-minutes: 15
+      run: |
+        export ANDROID_AVD_HOME="$HOME/.android/avd"
+        mkdir -p "$ANDROID_AVD_HOME"
+
         dotnet android sdk list --available
-        dotnet android sdk install --package '${{ env.ANDROID_EMULATOR_IMAGE }}'
-        dotnet android avd create --name ${{ env.TEST_EMULATOR_NAME }} --sdk '${{ env.ANDROID_EMULATOR_IMAGE }}' --force
-        dotnet android avd start --name ${{ env.TEST_EMULATOR_NAME }} --wait-boot --gpu guest --no-snapshot --no-audio --no-boot-anim --no-window
+
+        dotnet android sdk install --package "$ANDROID_EMULATOR_IMAGE"
+        dotnet android avd create --name "$TEST_EMULATOR_NAME" --sdk "$ANDROID_EMULATOR_IMAGE" --force
+        dotnet android avd start --name "$TEST_EMULATOR_NAME" --wait-boot --timeout 600 --gpu guest --no-snapshot --no-audio --no-boot-anim --no-window
+
+        # Fail if no device booted (older AndroidSdk.Tool versions exit with 0 on a failed start)
+        "$ANDROID_HOME/platform-tools/adb" shell getprop sys.boot_completed | grep -q 1
+
         dotnet android device list
 
     - name: Install App
