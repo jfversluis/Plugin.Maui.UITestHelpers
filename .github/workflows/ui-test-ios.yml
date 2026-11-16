@@ -45,7 +45,7 @@ jobs:
 
     - name: Install Appium
       run: |
-        npm install -g appium
+        npm install -g appium@3
         appium driver install xcuitest
 
     - name: Create iOS Simulator
