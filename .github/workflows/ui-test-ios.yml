@@ -24,7 +24,9 @@ env:
 jobs:
   ui-test-ios:
 
-    runs-on: macos-26
+    # xcode-27 has the latest Xcode versions installed; revert to macos-latest as soon as the
+    # macOS runners also have Xcode 27
+    runs-on: xcode-27
 
     steps:
     - uses: actions/checkout@v7
@@ -38,7 +40,7 @@ jobs:
       run: sudo xcode-select -s '/Applications/Xcode_${{ env.XCODE_VERSION }}.app/Contents/Developer'
 
     - name: Restore Workload
-      run: dotnet workload restore --project ${{ env.CSPROJ_TO_BUILD }} --version 11.0.100.1
+      run: dotnet workload restore --project ${{ env.CSPROJ_TO_BUILD }}
 
     - name: Build App
       run: dotnet build ${{ env.CSPROJ_TO_BUILD }} -f ${{ env.TARGET_FRAMEWORK }} -c ${{ env.BUILD_CONFIGURATION }}
@@ -49,17 +51,17 @@ jobs:
         appium driver install xcuitest
 
     - name: Create iOS Simulator
-      # This creates a iPhone 15 Pro Simulator with iOS 17.5
+      # This creates a iPhone 17 Pro Simulator with iOS 27.2
       run: |
-        #xcodes runtimes install "iOS 17.5"
-        #simudid=$(xcrun simctl create ${{ env.TEST_SIM_NAME }} com.apple.CoreSimulator.SimDeviceType.iPhone-15-Pro com.apple.CoreSimulator.SimRuntime.iOS-17-5)
-        simudid=$(xcrun simctl create ${{ env.TEST_SIM_NAME }} com.apple.CoreSimulator.SimDeviceType.iPhone-15-Pro)
+        simudid=$(xcrun simctl create ${{ env.TEST_SIM_NAME }} com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro com.apple.CoreSimulator.SimRuntime.iOS-27-2)
         echo "SIM_UDID=$(echo $simudid)" >> $GITHUB_ENV
         echo "Created Simulator UDID: $simudid"
 
-    - name: Install App
+    - name: Boot Simulator and Install App
       run: |
         xcrun simctl boot "${{ env.SIM_UDID }}"
+        # Wait until the Simulator has fully finished booting, so Appium finds it ready
+        xcrun simctl bootstatus "${{ env.SIM_UDID }}" -b
         xcrun simctl install "${{ env.SIM_UDID }}" "${{ env.APP_TO_TEST }}"
 
     - name: Run UI Tests

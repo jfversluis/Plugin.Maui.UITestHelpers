@@ -55,9 +55,11 @@ public abstract class BaseTest : UITestBase
             }
             else
             {
-                config.SetProperty("DeviceName", "iPhone 15 Pro");
-                config.SetProperty("PlatformVersion", "17.2");
+                config.SetProperty("DeviceName", "iPhone 17 Pro");
+                config.SetProperty("PlatformVersion", "27.2");
             }
+
+            config.SetProperty("Headless", true);
         }
 
         return config;
