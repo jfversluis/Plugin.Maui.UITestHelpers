@@ -20,5 +20,13 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 10.0.x
+
+    - name: Install .NET MAUI Workload
+      run: dotnet workload restore ${{ env.CSPROJ_TO_BUILD }}
+
     - name: Build Sample App
       run: dotnet build ${{ env.CSPROJ_TO_BUILD }} -c ${{ env.BUILD_CONFIGURATION }}
