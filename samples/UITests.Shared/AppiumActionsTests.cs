@@ -21,7 +21,7 @@ public class AppiumActionsTests : BaseTest
 
         // Act & Assert - should not throw
         var orientation = App.GetOrientation();
-        
+
         // Verify we get a valid orientation value
         Assert.That(orientation, Is.AnyOf(
             OpenQA.Selenium.ScreenOrientation.Portrait,
@@ -38,13 +38,18 @@ public class AppiumActionsTests : BaseTest
             Assert.Ignore("Clipboard operations are only supported on Android and iOS");
         }
 
+        if (App is AppiumAndroidApp)
+        {
+            Assert.Ignore("Newer Appium versions (3.x) don't support clipboard - skip test for now");
+        }
+
         // Arrange
         const string testText = "Test clipboard content";
-        
+
         // Act
         App.SetClipboardText(testText);
         var retrievedText = App.GetClipboardText();
-        
+
         // Assert
         Assert.That(retrievedText, Is.EqualTo(testText));
     }
@@ -73,7 +78,7 @@ public class AppiumActionsTests : BaseTest
 
         // Act
         var systemBars = App.GetSystemBars();
-        
+
         // Assert
         Assert.That(systemBars, Is.Not.Null);
         Assert.That(systemBars, Is.Not.Empty);
