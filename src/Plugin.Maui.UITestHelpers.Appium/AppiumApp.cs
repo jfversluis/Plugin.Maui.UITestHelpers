@@ -1,6 +1,8 @@
 using OpenQA.Selenium;
 using OpenQA.Selenium.Appium;
 using OpenQA.Selenium.Appium.Enums;
+using OpenQA.Selenium.Appium.iOS;
+using OpenQA.Selenium.Appium.Windows;
 using Plugin.Maui.UITestHelpers.Core;
 
 namespace Plugin.Maui.UITestHelpers.Appium
@@ -90,7 +92,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
 #nullable disable
         public virtual IUIElement FindElementByText(string text)
         {
-            return AppiumQuery.ByXPath("//*[@text='" + text + "']").FindElement(this);
+            return AppiumQuery.ByXPath(GetTextXPath(text)).FindElement(this);
         }
 #nullable enable
 
@@ -114,7 +116,47 @@ namespace Plugin.Maui.UITestHelpers.Appium
 
         public virtual IReadOnlyCollection<IUIElement> FindElementsByText(string text)
         {
-            return AppiumQuery.ByXPath("//*[@text='" + text + "']").FindElements(this);
+            return AppiumQuery.ByXPath(GetTextXPath(text)).FindElements(this);
+        }
+
+        /// <summary>
+        /// Returns the XPath that finds elements by their displayed text. The attribute that
+        /// contains the text differs per platform: Android (UiAutomator2) uses "text", iOS
+        /// (XCUITest) uses "label" and "value", Windows (UI Automation) uses "Name".
+        /// </summary>
+        /// <param name="text">Text to search for.</param>
+        /// <returns>XPath expression.</returns>
+        protected virtual string GetTextXPath(string text)
+        {
+            string literal = ToXPathLiteral(text);
+
+            return _driver switch
+            {
+                IOSDriver => $"//*[@label={literal} or @value={literal}]",
+                WindowsDriver => $"//*[@Name={literal}]",
+                _ => $"//*[@text={literal}]",
+            };
+        }
+
+        /// <summary>
+        /// Converts a string to an XPath 1.0 string literal; texts containing both kinds of
+        /// quotes are combined with concat().
+        /// </summary>
+        /// <param name="value">String value.</param>
+        /// <returns>XPath string literal.</returns>
+        protected static string ToXPathLiteral(string value)
+        {
+            if (!value.Contains('\''))
+            {
+                return $"'{value}'";
+            }
+
+            if (!value.Contains('"'))
+            {
+                return $"\"{value}\"";
+            }
+
+            return "concat('" + value.Replace("'", "', \"'\", '") + "')";
         }
 
         protected static void SetGeneralAppiumOptions(IConfig config, AppiumOptions appiumOptions)
