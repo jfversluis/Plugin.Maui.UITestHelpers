@@ -250,9 +250,11 @@ namespace Plugin.Maui.UITestHelpers.Appium
         /// <param name="app">Represents the main gateway to interact with an app.</param>
         /// <param name="element">Target Element.</param>
         /// <param name="text">The text to enter.</param>
+        /// <exception cref="InvalidOperationException">Thrown when the element can't be found.</exception>
         public static void EnterText(this IApp app, string element, string text)
         {
-            var appElement = FindElement(app, element);
+            var appElement = FindElement(app, element)
+                ?? throw new InvalidOperationException($"Could not find element '{element}' to enter text into");
 
             app.EnterText(appElement, text);
         }
@@ -263,22 +265,21 @@ namespace Plugin.Maui.UITestHelpers.Appium
         /// <param name="app">Represents the main gateway to interact with an app.</param>
         /// <param name="element">Target Element.</param>
         /// <param name="query">Represents the query that identify an element by parameters such as type, text it contains or identifier.</param>
+        /// <exception cref="InvalidOperationException">Thrown when the element can't be found.</exception>
         public static void EnterText(this IApp app, IQuery query, string text)
         {
-            var appElement = app.FindElement(query);
+            var appElement = app.FindElement(query)
+                ?? throw new InvalidOperationException("Could not find element of the query to enter text into");
 
             app.EnterText(appElement, text);
         }
 
-        internal static void EnterText(this IApp app, IUIElement? element, string text)
+        internal static void EnterText(this IApp app, IUIElement element, string text)
         {
-            if (element is not null)
+            element.SendKeys(text);
+            if (app.IsKeyboardShown())
             {
-                element.SendKeys(text);
-                if (app.IsKeyboardShown())
-                {
-                    app.DismissKeyboard();
-                }
+                app.DismissKeyboard();
             }
         }
 
@@ -337,9 +338,13 @@ namespace Plugin.Maui.UITestHelpers.Appium
         /// </summary>
         /// <param name="app">Represents the main gateway to interact with an app.</param>
         /// <param name="element">Target Element.</param>
+        /// <exception cref="InvalidOperationException">Thrown when the element can't be found.</exception>
         public static void ClearText(this IApp app, string element)
         {
-            FindElement(app, element).Clear();
+            var appElement = FindElement(app, element)
+                ?? throw new InvalidOperationException($"Could not find element '{element}' to clear text");
+
+            appElement.Clear();
         }
 
         /// <summary>
@@ -347,9 +352,13 @@ namespace Plugin.Maui.UITestHelpers.Appium
  		/// </summary>
  		/// <param name="app">Represents the main gateway to interact with an app.</param>
  		/// <param name="query">Represents the query that identify an element by parameters such as type, text it contains or identifier.</param>
+        /// <exception cref="InvalidOperationException">Thrown when the element can't be found.</exception>
  		public static void ClearText(this IApp app, IQuery query)
         {
-            app.FindElement(query).Clear();
+            var appElement = app.FindElement(query)
+                ?? throw new InvalidOperationException($"Could not find element of the query to clear text");
+
+            appElement.Clear();
         }
 
         /// <summary>
