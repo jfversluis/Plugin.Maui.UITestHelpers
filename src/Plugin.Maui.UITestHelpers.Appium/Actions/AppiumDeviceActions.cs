@@ -72,7 +72,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
                 string unlockType = (string)parameters["unlockType"];
                 string unlockKey = (string)parameters["unlockKey"];
 
-                androidDriver.Unlock(unlockType, unlockKey);
+                androidDriver.Unlock(unlockKey, unlockType);
 
                 return CommandResponse.SuccessEmptyResponse;
             }
