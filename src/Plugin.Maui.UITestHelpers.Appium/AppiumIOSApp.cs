@@ -9,12 +9,12 @@ namespace Plugin.Maui.UITestHelpers.Appium
 	public class AppiumIOSApp : AppiumApp, IIOSApp
 	{
 		public AppiumIOSApp(Uri remoteAddress, IConfig config)
-			: base(new IOSDriver(remoteAddress, GetOptions(config)), config)
+			: base(new IOSDriver(remoteAddress, GetOptions(config), TimeSpan.FromMinutes(5)), config)
 		{
 			_commandExecutor.AddCommandGroup(new AppiumIOSMouseActions(this));
 			_commandExecutor.AddCommandGroup(new AppiumIOSTouchActions(this));
 			_commandExecutor.AddCommandGroup(new AppiumIOSVirtualKeyboardActions(this));
-			_commandExecutor.AddCommandGroup(new AppiumIOSAlertActions(this)); 
+			_commandExecutor.AddCommandGroup(new AppiumIOSAlertActions(this));
 			_commandExecutor.AddCommandGroup(new AppiumIOSSpecificActions(this));
 			_commandExecutor.AddCommandGroup(new AppiumIOSThemeChangeAction(this));
 			_commandExecutor.AddCommandGroup(new AppiumAppleContextMenuActions(this));
