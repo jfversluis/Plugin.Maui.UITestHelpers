@@ -117,6 +117,11 @@ namespace Plugin.Maui.UITestHelpers.Appium
 		{
 			var element = GetAppiumElement(parameters["element"]);
 
+			if (element == null)
+			{
+				return CommandResponse.FailedEmptyResponse;
+			}
+
 			OpenQA.Selenium.Appium.Interactions.PointerInputDevice touchDevice = new OpenQA.Selenium.Appium.Interactions.PointerInputDevice(PointerKind.Touch);
 			var sequence = new ActionSequence(touchDevice, 0);
 			sequence.AddAction(touchDevice.CreatePointerMove(element, 0, 0, TimeSpan.FromMilliseconds(5)));
