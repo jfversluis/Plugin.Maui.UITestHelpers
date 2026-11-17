@@ -62,6 +62,12 @@ namespace Plugin.Maui.UITestHelpers.Appium
 				options.AddAdditionalAppiumOption(IOSMobileCapabilityType.BundleId, appId);
 			}
 
+			bool headless = config.GetProperty<bool>("Headless");
+			if (headless)
+			{
+				options.AddAdditionalAppiumOption("appium:isHeadless", true);
+			}
+
 			return options;
 		}
 	}

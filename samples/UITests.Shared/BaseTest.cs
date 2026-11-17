@@ -34,7 +34,7 @@ public abstract class BaseTest : UITestBase
             appIdentifierKey = "AppPath";
 
             // Note: a release build has to be done and the path to this .exe file should exist. Tweak this path if necessary
-            var absolutePath = Path.GetFullPath("..\\..\\..\\..\\Plugin.Maui.UITestHelpers.Sample\\bin\\Release\\net8.0-windows10.0.19041.0\\win10-x64\\Plugin.Maui.UITestHelpers.Sample.exe");
+            var absolutePath = Path.GetFullPath("..\\..\\..\\..\\Plugin.Maui.UITestHelpers.Sample\\bin\\Release\\net11.0-windows10.0.19041.0\\win-x64\\Plugin.Maui.UITestHelpers.Sample.exe");
             appIdentifier = absolutePath;
         }
 
@@ -55,9 +55,11 @@ public abstract class BaseTest : UITestBase
             }
             else
             {
-                config.SetProperty("DeviceName", "iPhone 15 Pro");
-                config.SetProperty("PlatformVersion", "17.2");
+                config.SetProperty("DeviceName", "iPhone 17 Pro");
+                config.SetProperty("PlatformVersion", "27.2");
             }
+
+            config.SetProperty("Headless", true);
         }
 
         return config;

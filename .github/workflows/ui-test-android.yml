@@ -11,22 +11,27 @@ on:
 env:
   BUILD_CONFIGURATION: Release
   CSPROJ_TO_BUILD: samples/Plugin.Maui.UITestHelpers.Sample/Plugin.Maui.UITestHelpers.Sample.csproj
-  APP_TO_TEST: samples/Plugin.Maui.UITestHelpers.Sample/bin/Release/net9.0-android/com.companyname.uitesthelperssample-Signed.apk
+  APP_TO_TEST: samples/Plugin.Maui.UITestHelpers.Sample/bin/Release/net11.0-android/com.companyname.uitesthelperssample-Signed.apk
   CSPROJ_TO_TEST: samples/UITests.Android/UITests.Android.csproj
   APP_ID: com.companyname.uitesthelperssample
-  TARGET_FRAMEWORK: net9.0-android
+  TARGET_FRAMEWORK: net11.0-android
   TEST_EMULATOR_NAME: UITestEmu
-  ANDROID_EMULATOR_IMAGE: system-images;android-33;default;x86_64
-  SCREENCAPTURE_FOLDER: samples/UITests.Android/bin/Debug/net9.0
+  ANDROID_EMULATOR_IMAGE: system-images;android-37.2;google_apis_ps16k;x86_64
+  SCREENCAPTURE_FOLDER: samples/UITests.Android/bin/Debug/net11.0
   ARTIFACTS_PATH: ${{ github.workspace }}/output
 
 jobs:
   ui-test-android:
 
-    runs-on: macos-13
+    runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v6
+      with:
+        dotnet-version: 11.0.x
 
     - name: Restore Tools
       run: dotnet tool restore
@@ -37,11 +42,27 @@ jobs:
     - name: Publish APK
       run: dotnet publish ${{ env.CSPROJ_TO_BUILD }} -f ${{ env.TARGET_FRAMEWORK }}
 
-    - name: Boot Android emulator
+    - name: Enable KVM
       run: |
-        dotnet android sdk install --package '${{ env.ANDROID_EMULATOR_IMAGE }}'
-        dotnet android avd create --name ${{ env.TEST_EMULATOR_NAME }} --sdk '${{ env.ANDROID_EMULATOR_IMAGE }}' --force
-        dotnet android avd start --name ${{ env.TEST_EMULATOR_NAME }} --wait-boot --gpu guest --no-snapshot --no-audio --no-boot-anim --no-window
+        echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+        sudo udevadm control --reload-rules
+        sudo udevadm trigger --name-match=kvm
+
+    - name: Boot Android emulator
+      timeout-minutes: 15
+      run: |
+        export ANDROID_AVD_HOME="$HOME/.android/avd"
+        mkdir -p "$ANDROID_AVD_HOME"
+
+        dotnet android sdk list --available
+
+        dotnet android sdk install --package "$ANDROID_EMULATOR_IMAGE"
+        dotnet android avd create --name "$TEST_EMULATOR_NAME" --sdk "$ANDROID_EMULATOR_IMAGE" --force
+        dotnet android avd start --name "$TEST_EMULATOR_NAME" --wait-boot --timeout 600 --gpu guest --no-snapshot --no-audio --no-boot-anim --no-window
+
+        # Fail if no device booted (older AndroidSdk.Tool versions exit with 0 on a failed start)
+        "$ANDROID_HOME/platform-tools/adb" shell getprop sys.boot_completed | grep -q 1
+
         dotnet android device list
 
     - name: Install App
@@ -49,14 +70,18 @@ jobs:
 
     - name: Install Appium
       run: |
-        npm install -g appium
+        npm install -g appium@3
         appium driver install uiautomator2
 
     - name: Run UI Tests
-      run: dotnet test ${{ env.CSPROJ_TO_TEST }} --environment APPIUM_LOG_FILE=${{ env.ARTIFACTS_PATH }}/appium-logs/appium.log --environment APPID="${{ env.APP_ID }}"
+      run: |
+        dotnet test ${{ env.CSPROJ_TO_TEST }} \
+        --logger "console;verbosity=normal" \
+        --environment APPIUM_LOG_FILE=${{ env.ARTIFACTS_PATH }}/appium-logs/appium.log \
+        --environment APPID="${{ env.APP_ID }}"
 
     - name: Publish Artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       if: always()
       with:
         name: logs-and-screenshots

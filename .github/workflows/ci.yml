@@ -14,6 +14,12 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v6
+      with:
+        dotnet-version: 11.0.x
+
     - name: Build
       run: dotnet build src\Plugin.Maui.UITestHelpers.sln -c Release

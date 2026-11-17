@@ -11,21 +11,28 @@ on:
 env:
   BUILD_CONFIGURATION: Release
   CSPROJ_TO_BUILD: samples/Plugin.Maui.UITestHelpers.Sample/Plugin.Maui.UITestHelpers.Sample.csproj
-  APP_TO_TEST: samples/Plugin.Maui.UITestHelpers.Sample/bin/Release/net9.0-maccatalyst/maccatalyst-arm64/Plugin.Maui.UITestHelpers.Sample.app
+  APP_TO_TEST: samples/Plugin.Maui.UITestHelpers.Sample/bin/Release/net11.0-maccatalyst/maccatalyst-arm64/Plugin.Maui.UITestHelpers.Sample.app
   CSPROJ_TO_TEST: samples/UITests.macOS/UITests.macOS.csproj
   APP_ID: com.companyname.uitesthelperssample
-  TARGET_FRAMEWORK: net9.0-maccatalyst
-  XCODE_VERSION: 16.4
-  SCREENCAPTURE_FOLDER: samples/UITests.macOS/bin/Debug/net9.0
+  TARGET_FRAMEWORK: net11.0-maccatalyst
+  XCODE_VERSION: 27.2
+  SCREENCAPTURE_FOLDER: samples/UITests.macOS/bin/Debug/net11.0
   ARTIFACTS_PATH: ${{ github.workspace }}/output
 
 jobs:
   ui-test-macos:
 
-    runs-on: macos-15
+    # xcode-27 has the latest Xcode versions installed; revert to macos-latest as soon as the
+    # macOS runners also have Xcode 27
+    runs-on: xcode-27
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v6
+      with:
+        dotnet-version: 11.0.x
 
     - name: Select Xcode version
       run: sudo xcode-select -s '/Applications/Xcode_${{ env.XCODE_VERSION }}.app/Contents/Developer'
@@ -38,9 +45,9 @@ jobs:
 
     - name: Install Appium
       run: |
-        npm install -g appium
+        npm install -g appium@3
         appium driver install mac2
-    
+
     - name: Install App
       # Deploy the app by running it on this Mac
       run: dotnet build ${{ env.CSPROJ_TO_BUILD }} -t:Run -f ${{ env.TARGET_FRAMEWORK }} -c ${{ env.BUILD_CONFIGURATION }}
@@ -50,7 +57,7 @@ jobs:
         dotnet test ${{ env.CSPROJ_TO_TEST }} --environment APPIUM_LOG_FILE=${{ env.ARTIFACTS_PATH }}/appium-logs/appium.log --environment APPID="${{ env.APP_ID }}"
 
     - name: Publish Artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       if: always()
       with:
         name: logs-and-screenshots

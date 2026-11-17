@@ -1,0 +1,24 @@
+<Solution>
+  <Folder Name="/GitHub Actions/">
+    <File Path="../.github/workflows/ci-sample.yml" />
+    <File Path="../.github/workflows/ci.yml" />
+    <File Path="../.github/workflows/release-nuget.yml" />
+    <File Path="../.github/workflows/ui-test-android.yml" />
+    <File Path="../.github/workflows/ui-test-ios.yml" />
+    <File Path="../.github/workflows/ui-test-macos.yml" />
+    <File Path="../.github/workflows/ui-test-windows.yml" />
+  </Folder>
+  <Folder Name="/Plugin Projects/">
+    <Project Path="../src/Plugin.Maui.UITestHelpers.Appium/Plugin.Maui.UITestHelpers.Appium.csproj" />
+    <Project Path="../src/Plugin.Maui.UITestHelpers.Core/Plugin.Maui.UITestHelpers.Core.csproj" />
+    <Project Path="../src/Plugin.Maui.UITestHelpers.NUnit/Plugin.Maui.UITestHelpers.NUnit.csproj" />
+  </Folder>
+  <Project Path="Plugin.Maui.UITestHelpers.Sample/Plugin.Maui.UITestHelpers.Sample.csproj">
+    <Deploy />
+  </Project>
+  <Project Path="UITests.Android/UITests.Android.csproj" />
+  <Project Path="UITests.iOS/UITests.iOS.csproj" />
+  <Project Path="UITests.macOS/UITests.macOS.csproj" />
+  <Project Path="UITests.Shared/UITests.Shared.csproj" />
+  <Project Path="UITests.Windows/UITests.Windows.csproj" />
+</Solution>

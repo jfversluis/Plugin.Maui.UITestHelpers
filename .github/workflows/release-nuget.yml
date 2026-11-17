@@ -7,11 +7,17 @@ on:
     - "v[0-9]+.[0-9]+.[0-9]+-preview[0-9]+"
 jobs:
   release-nuget:
-  
+
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 11.0.x
+
       - name: Verify commit exists in origin/main
         run: |
           git fetch --no-tags --prune --depth=1 origin +refs/heads/*:refs/remotes/origin/*

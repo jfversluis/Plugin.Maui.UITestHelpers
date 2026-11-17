@@ -1337,6 +1337,10 @@ namespace Plugin.Maui.UITestHelpers.Appium
         /// <param name="app">Represents the main gateway to interact with an app.</param>
         public static void SetOrientationLandscape(this IApp app)
         {
+            if (app is AppiumCatalystApp)
+                throw new NotSupportedException(
+                    $"Orientation is not supported on Mac Catalyst.");
+
             app.CommandExecutor.Execute("setOrientationLandscape", ImmutableDictionary<string, object>.Empty);
         }
 
@@ -1346,6 +1350,10 @@ namespace Plugin.Maui.UITestHelpers.Appium
         /// <param name="app">Represents the main gateway to interact with an app.</param>
         public static void SetOrientationPortrait(this IApp app)
         {
+            if (app is AppiumCatalystApp)
+                throw new NotSupportedException(
+                    $"Orientation is not supported on Mac Catalyst.");
+
             app.CommandExecutor.Execute("setOrientationPortrait", ImmutableDictionary<string, object>.Empty);
         }
 
@@ -1356,6 +1364,10 @@ namespace Plugin.Maui.UITestHelpers.Appium
         /// <returns>The current device orientation</returns>
         public static OpenQA.Selenium.ScreenOrientation GetOrientation(this IApp app)
         {
+            if (app is AppiumCatalystApp)
+                throw new NotSupportedException(
+                    $"Orientation is not supported on Mac Catalyst.");
+
             var response = app.CommandExecutor.Execute("getOrientation", new Dictionary<string, object>());
 
             if (response?.Value != null)
