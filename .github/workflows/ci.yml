@@ -22,4 +22,4 @@ jobs:
         dotnet-version: 11.0.x
 
     - name: Build
-      run: dotnet build src\Plugin.Maui.UITestHelpers.sln -c Release
+      run: dotnet build src\Plugin.Maui.UITestHelpers.slnx -c Release
