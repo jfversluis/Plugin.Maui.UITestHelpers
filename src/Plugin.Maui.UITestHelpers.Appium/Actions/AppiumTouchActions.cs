@@ -124,6 +124,11 @@ namespace Plugin.Maui.UITestHelpers.Appium
 		{
 			var element = GetAppiumElement(parameters["element"]);
 
+			if (element == null)
+			{
+				return CommandResponse.FailedEmptyResponse;
+			}
+
 			OpenQA.Selenium.Appium.Interactions.PointerInputDevice touchDevice = new OpenQA.Selenium.Appium.Interactions.PointerInputDevice(PointerKind.Touch);
 			var sequence = new ActionSequence(touchDevice, 0);
 			sequence.AddAction(touchDevice.CreatePointerMove(element, 0, 0, TimeSpan.FromMilliseconds(5)));
@@ -158,9 +163,14 @@ namespace Plugin.Maui.UITestHelpers.Appium
 		{
 			var element = GetAppiumElement(parameters["element"]);
 
+			if (element == null)
+			{
+				return CommandResponse.FailedEmptyResponse;
+			}
+
 			OpenQA.Selenium.Appium.Interactions.PointerInputDevice touchDevice = new OpenQA.Selenium.Appium.Interactions.PointerInputDevice(PointerKind.Touch);
 			var longPress = new ActionSequence(touchDevice, 0);
-		
+
 			longPress.AddAction(touchDevice.CreatePointerMove(element, 0, 0, TimeSpan.FromMilliseconds(0)));
 			longPress.AddAction(touchDevice.CreatePointerDown(PointerButton.TouchContact));
 			longPress.AddAction(touchDevice.CreatePointerMove(element, 0, 0, TimeSpan.FromMilliseconds(2000)));
@@ -169,7 +179,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
 
 			return CommandResponse.SuccessEmptyResponse;
 		}
-		
+
 		CommandResponse DragAndDrop(IDictionary<string, object> actionParams)
 		{
 			AppiumElement? sourceAppiumElement = GetAppiumElement(actionParams["sourceElement"]);
@@ -193,7 +203,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
 
 		CommandResponse ScrollTo(IDictionary<string, object> parameters)
 		{
-			// This method will keep scrolling in the specified direction until it finds an element 
+			// This method will keep scrolling in the specified direction until it finds an element
 			// which matches the query, or until it times out.
 
 			bool down = !parameters.TryGetValue("down", out object? val) || (bool)val;
