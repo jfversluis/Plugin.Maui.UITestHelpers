@@ -2385,7 +2385,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
         {
             var result = app.FindElements(element);
 
-            if (result is null)
+            if (result is null || result.Count == 0)
                 result = app.FindElementsByText(element);
 
             return result;
