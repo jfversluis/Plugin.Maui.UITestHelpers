@@ -1198,6 +1198,13 @@ namespace Plugin.Maui.UITestHelpers.Appium
         {
             if (element is not null)
             {
+                // don't scroll when the element is already present; the scrollDownTo command
+                // scrolls before checking and could move it out of view
+                if (FindElement(app, toMarked) is not null)
+                {
+                    return;
+                }
+
                 app.CommandExecutor.Execute("scrollDownTo", new Dictionary<string, object>
                 {
                     { "marked", toMarked },
@@ -1342,6 +1349,13 @@ namespace Plugin.Maui.UITestHelpers.Appium
         {
             if (element is not null)
             {
+                // don't scroll when the element is already present; the scrollUpTo command
+                // scrolls before checking and could move it out of view
+                if (FindElement(app, toMarked) is not null)
+                {
+                    return;
+                }
+
                 app.CommandExecutor.Execute("scrollUpTo", new Dictionary<string, object>
                 {
                     { "marked", toMarked },
