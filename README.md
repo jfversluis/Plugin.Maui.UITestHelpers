@@ -32,6 +32,27 @@ All platforms that are supported by the cross section of the support of Appium a
 
 TBD -->
 
+On Android, app data is preserved by default when `AppId` is set. Set `FullReset` to `true`
+and provide an `AppPath` to reinstall the app when the Appium session starts. Do not enable
+`NoReset` and `FullReset` together.
+
+`FullReset` applies when an Appium session starts, not before each test. `UITestBase` reuses one
+session across tests and only starts a new one when `Reset()` is called, for example after a crash.
+To start every test from a freshly launched app, add a `[SetUp]` method to your test class that
+derives from `UITestBase`:
+
+```csharp
+using NUnit.Framework;
+using Plugin.Maui.UITestHelpers.Appium;
+
+[SetUp]
+public void RestartApp() => App.ResetApp();
+```
+
+`ResetApp()` closes and relaunches the app, but keeps its data. Leave the app running at the end
+of a test: if the app is closed when the test finishes, `UITestBase` treats it as a crash and fails
+the test.
+
 # Related resources
 
 To make it easier to add UI test projects to your existing solution, I also have a template that you can use: https://github.com/jfversluis/Template.Maui.UITesting/

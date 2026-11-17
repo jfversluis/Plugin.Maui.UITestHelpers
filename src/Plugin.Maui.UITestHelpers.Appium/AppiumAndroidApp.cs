@@ -83,7 +83,9 @@ namespace Plugin.Maui.UITestHelpers.Appium
 
 			if (!string.IsNullOrWhiteSpace(appId))
 			{
-				options.AddAdditionalAppiumOption(MobileCapabilityType.NoReset, "true");
+				if (!config.GetProperty<bool>("FullReset"))
+					options.AddAdditionalAppiumOption(MobileCapabilityType.NoReset, "true");
+
 				options.AddAdditionalAppiumOption(AndroidMobileCapabilityType.AppPackage, appId);
 				options.AddAdditionalAppiumOption(AndroidMobileCapabilityType.AppActivity, $"{appId}.MainActivity");
 			}
