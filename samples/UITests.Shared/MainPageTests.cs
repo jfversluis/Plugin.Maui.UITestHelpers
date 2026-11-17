@@ -18,6 +18,23 @@ public class MainPageTests : BaseTest
     }
 
     [Test]
+    public void ExistsTest()
+    {
+        const string elementId = "CounterBtn";
+
+        // Arrange
+        App.WaitForElement("MainPage");
+
+        // Act
+        bool elementExistsById = App.Exists(elementId);
+        bool elementExistsByText = App.Exists("Hello, World!");
+
+        // Assert
+        Assert.That(elementExistsById, Is.True, "element must have been found by AutomationId");
+        Assert.That(elementExistsByText, Is.True, "element must have been found by text");
+    }
+
+    [Test]
     public void ClickCounterTest()
     {
         const string elementId = "CounterBtn";

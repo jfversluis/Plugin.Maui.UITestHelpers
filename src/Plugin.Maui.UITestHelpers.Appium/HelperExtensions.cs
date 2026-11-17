@@ -13,6 +13,26 @@ namespace Plugin.Maui.UITestHelpers.Appium
         static TimeSpan DefaultTimeout = TimeSpan.FromSeconds(15);
 
         /// <summary>
+        /// Checks if an element currently exists, by marked text.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="marked">AutomationId or text to search element.</param>
+        public static bool Exists(this IApp app, string marked)
+        {
+            return FindElement(app, marked) != null;
+        }
+
+        /// <summary>
+        /// Checks if an element currently exists, by query.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="query">Represents the query that identifies an element by parameters such as type, text it contains or identifier.</param>
+        public static bool Exists(this IApp app, IQuery query)
+        {
+            return app.FindElement(query) != null;
+        }
+
+        /// <summary>
         /// For desktop, this will perform a mouse click on the target element.
         /// For mobile, this will tap the element.
         /// This API works for all platforms whereas TapCoordinates currently doesn't work on Catalyst
