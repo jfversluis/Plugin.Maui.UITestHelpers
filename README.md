@@ -32,6 +32,10 @@ All platforms that are supported by the cross section of the support of Appium a
 
 TBD -->
 
+On Android, app data is preserved by default when `AppId` is set. Set `FullReset` to `true`
+and provide an `AppPath` to reinstall the app when the Appium session starts. Do not enable
+`NoReset` and `FullReset` together.
+
 # Related resources
 
 To make it easier to add UI test projects to your existing solution, I also have a template that you can use: https://github.com/jfversluis/Template.Maui.UITesting/
