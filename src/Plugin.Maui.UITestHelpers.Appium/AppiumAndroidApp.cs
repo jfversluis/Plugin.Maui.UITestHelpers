@@ -96,6 +96,12 @@ namespace Plugin.Maui.UITestHelpers.Appium
 				options.AddAdditionalAppiumOption(AndroidMobileCapabilityType.AppActivity, appActivity);
 			}
 
+			var deviceSerial = config.GetProperty<string>("DeviceSerial");
+			if (!string.IsNullOrWhiteSpace(deviceSerial))
+			{
+				options.AddAdditionalAppiumOption(MobileCapabilityType.Udid, appActivity);
+			}
+
 			return options;
 		}
 	}
