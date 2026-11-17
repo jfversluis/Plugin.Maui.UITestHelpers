@@ -749,7 +749,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
         /// <param name="postTimeout">The final TimeSpan to wait after the element has been found.</param>
         public static void WaitForNoElement(this IApp app, string marked, string timeoutMessage = "Timed out waiting for no element...", TimeSpan? timeout = null, TimeSpan? retryFrequency = null, TimeSpan? postTimeout = null)
         {
-            IUIElement result() => app.FindElement(marked);
+            IUIElement result() => FindElement(app, marked);
             WaitForNone(result, timeoutMessage, timeout, retryFrequency);
         }
 
@@ -823,7 +823,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
                     return false;
                 }
 
-                Task.Delay(retryFrequency.Milliseconds).Wait();
+                Task.Delay(retryFrequency).Wait();
             }
         }
 
@@ -2353,7 +2353,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
                     throw new TimeoutException(timeoutMessage);
                 }
 
-                Task.Delay(retryFrequency.Value.Milliseconds).Wait();
+                Task.Delay(retryFrequency.Value).Wait();
                 result = query();
             }
 

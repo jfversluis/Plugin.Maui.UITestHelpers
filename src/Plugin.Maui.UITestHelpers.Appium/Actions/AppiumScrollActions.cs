@@ -311,7 +311,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
 					throw new TimeoutException("Timed out on scroll to.");
 				}
 
-				Task.Delay(retryFrequency.Milliseconds).Wait();
+				Task.Delay(retryFrequency).Wait();
 				result = ScrollDownUntilPresent(driver, marked, element, strategy, swipePercentage, swipeSpeed, withInertia);
 			}
 
@@ -384,7 +384,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
 					throw new TimeoutException("Timed out on scroll to.");
 				}
 
-				Task.Delay(retryFrequency.Milliseconds).Wait();
+				Task.Delay(retryFrequency).Wait();
 				result = ScrollUpUntilPresent(driver, target, element, strategy, swipePercentage, swipeSpeed, withInertia);
 			}
 
@@ -405,7 +405,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
 		AppiumElement? ScrollUpUntilPresent(AppiumDriver driver, string marked, AppiumElement element, ScrollStrategy strategy, double swipePercentage, int swipeSpeed, bool withInertia = true)
 		{
 			ScrollToUp(driver, element, strategy, swipePercentage, swipeSpeed, withInertia);
-			
+
 			try
 			{
 				var result = driver.FindElement(By.Id(marked));
