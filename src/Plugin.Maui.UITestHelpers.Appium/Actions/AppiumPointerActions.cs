@@ -3,7 +3,6 @@ using System.Drawing;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Appium;
 using OpenQA.Selenium.Appium.Interactions;
-using OpenQA.Selenium.Appium.MultiTouch;
 using OpenQA.Selenium.Interactions;
 using Plugin.Maui.UITestHelpers.Core;
 
@@ -155,7 +154,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
 
 		CommandResponse ScrollTo(IDictionary<string, object> parameters)
 		{
-			// This method will keep scrolling in the specified direction until it finds an element 
+			// This method will keep scrolling in the specified direction until it finds an element
 			// which matches the query, or until it times out.
 
 			bool down = !parameters.TryGetValue("down", out object? val) || (bool)val;
