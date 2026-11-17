@@ -14,7 +14,10 @@ namespace Plugin.Maui.UITestHelpers.Appium
 		{
 			try
 			{
-				_app.Driver.HideKeyboard();
+				if (_app.Driver.IsKeyboardShown())
+				{
+					_app.Driver.HideKeyboard();
+				}
 
 				return CommandResponse.SuccessEmptyResponse;
 			}
