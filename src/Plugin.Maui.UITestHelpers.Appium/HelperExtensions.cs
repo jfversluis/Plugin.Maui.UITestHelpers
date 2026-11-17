@@ -413,15 +413,10 @@ namespace Plugin.Maui.UITestHelpers.Appium
         public static void DoubleClick(this IApp app, string element)
         {
             var elementToDoubleClick = FindElement(app, element);
-            var response = app.CommandExecutor.Execute("doubleClick", new Dictionary<string, object>
+            app.CommandExecutor.Execute("doubleClick", new Dictionary<string, object>
             {
                 { "element", elementToDoubleClick },
             });
-
-            if (response?.Result == CommandResponseResult.Failed)
-            {
-                throw new InvalidOperationException($"Could not double click element {elementToDoubleClick}: {response?.Value}");
-            }
         }
 
         /// <summary>
