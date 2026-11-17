@@ -16,7 +16,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
 
 		public ICommandExecution Command => _appiumApp.CommandExecutor;
 
-		internal AppiumElement AppiumElement { get { return _element; } }
+		public AppiumElement AppiumElement { get { return _element; } }
 
 		public IReadOnlyCollection<IUIElement> ById(string id)
 		{

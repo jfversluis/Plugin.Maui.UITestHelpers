@@ -14,13 +14,14 @@ The set of helpers are extracted from the .NET MAUI codebase ([here](https://git
 
 ## Install Plugin
 
-This project consists of three packages. please find the details below. All packages are available on NuGet.
+This project consists of four packages. please find the details below. All packages are available on NuGet.
 
 | Package Name | Description | NuGet Package |
 |----------|------------|---------------|
 | Plugin.Maui.UITestHelpers.Core   | Shared, core types that are used across the different projects | [![NuGet Version](https://img.shields.io/nuget/vpre/Plugin.Maui.UITestHelpers.Core)](https://www.nuget.org/packages/Plugin.Maui.UITestHelpers.Core/1.0.0-preview1) |
 | Plugin.Maui.UITestHelpers.Appium | This package contains code specific to UI testing with Appium. It's filled with helpers that will make writing UI tests easier, as well as methods that (mostly) mimic Xamarin.UITest to make transitioning your current UI tests easier | [![NuGet Version](https://img.shields.io/nuget/vpre/Plugin.Maui.UITestHelpers.Appium)](https://www.nuget.org/packages/Plugin.Maui.UITestHelpers.Appium/1.0.0-preview1) |
 | Plugin.Maui.UITestHelpers.NUnit | This package contains helpers that will make it easier to write UI tests based on NUnit | [![NuGet Version](https://img.shields.io/nuget/vpre/Plugin.Maui.UITestHelpers.NUnit)](https://www.nuget.org/packages/Plugin.Maui.UITestHelpers.NUnit/1.0.0-preview1) |
+| Plugin.Maui.UITestHelpers.Repl | An interactive REPL for your UI tests, like the one in Xamarin.UITest. Explore your running app and try out test code live | [![NuGet Version](https://img.shields.io/nuget/vpre/Plugin.Maui.UITestHelpers.Repl)](https://www.nuget.org/packages/Plugin.Maui.UITestHelpers.Repl/) |
 
 Install with the dotnet CLI, for example: `dotnet add package Plugin.Maui.UITestHelpers.Appium`, or through the NuGet Package Manager in Visual Studio.
 
@@ -52,6 +53,23 @@ public void RestartApp() => App.ResetApp();
 `ResetApp()` closes and relaunches the app, but keeps its data. Leave the app running at the end
 of a test: if the app is closed when the test finishes, `UITestBase` treats it as a crash and fails
 the test.
+
+## REPL
+
+Call `App.Repl()` from a test to pause it and open an interactive prompt that is connected to your running app. Anything you type is C#, with `app` being the app, so you can try `app.Tap("CounterBtn")` or look at the screen with `tree`, and `copy` what worked into your test. It works on every platform Appium does.
+
+```csharp
+using Plugin.Maui.UITestHelpers.Core;
+
+[Test, Explicit]
+public void ExploreTheApp()
+{
+    App.WaitForElement("CounterBtn");
+    App.Repl(); // continues when you type 'exit'
+}
+```
+
+Install `Plugin.Maui.UITestHelpers.Repl` to use it. See the [REPL guide](https://github.com/jfversluis/Plugin.Maui.UITestHelpers/blob/main/docs/REPL.md) for everything it can do.
 
 # Related resources
 

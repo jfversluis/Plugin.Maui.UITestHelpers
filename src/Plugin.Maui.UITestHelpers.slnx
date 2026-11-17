@@ -1,5 +1,9 @@
 <Solution>
   <Project Path="Plugin.Maui.UITestHelpers.Appium/Plugin.Maui.UITestHelpers.Appium.csproj" />
   <Project Path="Plugin.Maui.UITestHelpers.Core/Plugin.Maui.UITestHelpers.Core.csproj" />
+  <Project Path="Plugin.Maui.UITestHelpers.Repl/Plugin.Maui.UITestHelpers.Repl.csproj" />
   <Project Path="Plugin.Maui.UITestHelpers.NUnit/Plugin.Maui.UITestHelpers.NUnit.csproj" />
+  <Folder Name="/tests/">
+    <Project Path="../tests/Plugin.Maui.UITestHelpers.Repl.Tests/Plugin.Maui.UITestHelpers.Repl.Tests.csproj" />
+  </Folder>
 </Solution>
