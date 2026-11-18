@@ -1,10 +1,11 @@
+using OpenQA.Selenium;
+using OpenQA.Selenium.Appium;
+using OpenQA.Selenium.Appium.Interfaces;
+using Plugin.Maui.UITestHelpers.Core;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
-using OpenQA.Selenium.Appium;
-using OpenQA.Selenium.Appium.Interfaces;
-using Plugin.Maui.UITestHelpers.Core;
 
 namespace Plugin.Maui.UITestHelpers.Appium
 {
@@ -19,7 +20,18 @@ namespace Plugin.Maui.UITestHelpers.Appium
         /// <param name="marked">AutomationId or text to search element.</param>
         public static bool Exists(this IApp app, string marked)
         {
-            return FindElement(app, marked) != null;
+            try
+            {
+                return FindElement(app, marked) != null;
+            }
+            catch (StaleElementReferenceException)
+            {
+                return false;
+            }
+            catch (NoSuchElementException)
+            {
+                return false;
+            }
         }
 
         /// <summary>
@@ -29,7 +41,18 @@ namespace Plugin.Maui.UITestHelpers.Appium
         /// <param name="query">Represents the query that identifies an element by parameters such as type, text it contains or identifier.</param>
         public static bool Exists(this IApp app, IQuery query)
         {
-            return app.FindElement(query) != null;
+            try
+            {
+                return app.FindElement(query) != null;
+            }
+            catch (StaleElementReferenceException)
+            {
+                return false;
+            }
+            catch (NoSuchElementException)
+            {
+                return false;
+            }
         }
 
         /// <summary>
