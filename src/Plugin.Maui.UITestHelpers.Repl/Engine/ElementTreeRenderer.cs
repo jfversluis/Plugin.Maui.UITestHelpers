@@ -86,7 +86,7 @@ namespace Plugin.Maui.UITestHelpers.Repl.Engine
 
 			var info = ElementDescription.From(element);
 
-			if (!options.All && info.IsHidden)
+			if (!options.All && !force && info.IsHidden)
 			{
 				return;
 			}
@@ -169,7 +169,9 @@ namespace Plugin.Maui.UITestHelpers.Repl.Engine
 					bounds = $"{x},{y} {w}×{h}";
 				}
 
-				bool hidden = Attr(element, "visible") == "false" || Attr(element, "displayed") == "false";
+				// Zero-sized elements aren't on screen, like the items of closed menus on macOS.
+				bool emptyBounds = Attr(element, "width") == "0" && Attr(element, "height") == "0";
+				bool hidden = emptyBounds || Attr(element, "visible") == "false" || Attr(element, "displayed") == "false";
 				bool clickable = Attr(element, "clickable") == "true";
 				bool disabled = Attr(element, "enabled") == "false";
 				bool isChecked = Attr(element, "checked") == "true";

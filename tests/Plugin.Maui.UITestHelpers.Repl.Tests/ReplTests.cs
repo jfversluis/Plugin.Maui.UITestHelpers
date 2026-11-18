@@ -248,6 +248,22 @@ public class ElementTreeRendererTests
     }
 
     [Test]
+    public void ZeroSizedElementsAreHiddenUnlessAllIsUsed()
+    {
+        const string mac = """
+            <AppiumAUT>
+              <XCUIElementTypeApplication type="XCUIElementTypeApplication" name="Sample" x="0" y="0" width="0" height="0">
+                <XCUIElementTypeMenuItem type="XCUIElementTypeMenuItem" name="About" label="About" x="0" y="1080" width="0" height="0" />
+                <XCUIElementTypeButton type="XCUIElementTypeButton" name="Go" label="Go" x="10" y="10" width="50" height="20" />
+              </XCUIElementTypeApplication>
+            </AppiumAUT>
+            """;
+
+        Assert.That(Render(mac, new TreeOptions(), out _), Does.Not.Contain("About").And.Contain("\"Go\""));
+        Assert.That(Render(mac, new TreeOptions(All: true), out _), Does.Contain("About"));
+    }
+
+    [Test]
     public void IosTreeUsesNamesAndLabels()
     {
         var output = Render(Ios, new TreeOptions(), out _);
