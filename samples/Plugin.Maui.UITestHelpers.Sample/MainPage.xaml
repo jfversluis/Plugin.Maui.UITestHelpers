@@ -43,6 +43,12 @@
                 <RadioButton Content="Dog" AutomationId="RB2" />
             </HorizontalStackLayout>
 
+            <Button
+                AutomationId="OpenWebViewBtn"
+                Text="Open WebView"
+                Clicked="OnOpenWebViewClicked"
+                HorizontalOptions="Fill" />
+
         </VerticalStackLayout>
     </ScrollView>
 
