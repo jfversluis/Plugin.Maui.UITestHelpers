@@ -21,7 +21,8 @@ public class WebViewTests : BaseTest
 
         var driver = ((AppiumApp)App).Driver;
 
-        App.WaitForElement("OpenWebViewBtn");
+        // The button is at the bottom of the page and can be off screen on small devices
+        App.ScrollDownTo("OpenWebViewBtn", "MainScrollView");
         App.Tap("OpenWebViewBtn");
 
         try
@@ -51,7 +52,8 @@ public class WebViewTests : BaseTest
         {
             App.SwitchContextToNative();
             App.Back();
-            App.WaitForElement("OpenWebViewBtn");
+            App.WaitForElement("MainScrollView");
+            App.ScrollUpTo("CounterBtn", "MainScrollView");
         }
     }
 

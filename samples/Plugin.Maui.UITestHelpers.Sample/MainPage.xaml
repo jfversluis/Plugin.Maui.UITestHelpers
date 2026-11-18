@@ -4,7 +4,7 @@
              x:Class="Plugin.Maui.UITestHelpers.Sample.MainPage"
              AutomationId="MainPage">
 
-    <ScrollView>
+    <ScrollView AutomationId="MainScrollView">
         <VerticalStackLayout
             Padding="30,0"
             Spacing="20">
