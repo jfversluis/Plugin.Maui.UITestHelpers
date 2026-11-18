@@ -1260,9 +1260,9 @@ namespace Plugin.Maui.UITestHelpers.Appium
         {
             if (element is not null)
             {
-                // don't scroll when the element is already present; the scrollDownTo command
-                // scrolls before checking and could move it out of view
-                if (FindElement(app, toMarked) is not null)
+                // don't scroll when the element is already visible inside the scroll container;
+                // the scrollDownTo command scrolls before checking and could move it out of view
+                if (IsVisibleInContainer(app, element, toMarked))
                 {
                     return;
                 }
@@ -1276,6 +1276,43 @@ namespace Plugin.Maui.UITestHelpers.Appium
                     { "swipeSpeed", swipeSpeed },
                     { "withInertia", withInertia }
                 });
+            }
+        }
+
+        static bool IsVisibleInContainer(IApp app, IUIElement container, string marked)
+        {
+            if (app is not AppiumApp appiumApp || container is not AppiumDriverElement driverElement)
+            {
+                return false;   // can't check: scroll as before
+            }
+
+            try
+            {
+                // relative XPath (".//"): only descendants of the container
+                string xpath = $".{appiumApp.GetMarkedXPath(marked)}";
+
+                var candidates = AppiumQuery.ByXPath(xpath).FindElements(driverElement.AppiumElement, appiumApp);
+                if (candidates.Count == 0)
+                {
+                    return false;
+                }
+
+                Rectangle bounds = container.GetRect();
+
+                return candidates.Any(candidate =>
+                {
+                    if (!candidate.IsDisplayed())
+                    {
+                        return false;
+                    }
+
+                    Rectangle rect = candidate.GetRect();
+                    return bounds.Contains(rect.X + (rect.Width / 2), rect.Y + (rect.Height / 2));
+                });
+            }
+            catch (WebDriverException)
+            {
+                return false;   // e.g. a stale element: scroll to be sure
             }
         }
 
@@ -1411,9 +1448,9 @@ namespace Plugin.Maui.UITestHelpers.Appium
         {
             if (element is not null)
             {
-                // don't scroll when the element is already present; the scrollUpTo command
-                // scrolls before checking and could move it out of view
-                if (FindElement(app, toMarked) is not null)
+                // don't scroll when the element is already visible inside the scroll container;
+                // the scrollUpTo command scrolls before checking and could move it out of view
+                if (IsVisibleInContainer(app, element, toMarked))
                 {
                     return;
                 }
