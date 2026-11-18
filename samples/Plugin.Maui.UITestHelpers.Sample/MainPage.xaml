@@ -4,7 +4,14 @@
              x:Class="Plugin.Maui.UITestHelpers.Sample.MainPage"
              AutomationId="MainPage">
 
-    <ScrollView AutomationId="MainScrollView">
+    <ContentPage.ToolbarItems>
+        <ToolbarItem
+            AutomationId="OpenWebViewBtn"
+            Text="Open WebView"
+            Clicked="OnOpenWebViewClicked" />
+    </ContentPage.ToolbarItems>
+
+    <ScrollView>
         <VerticalStackLayout
             Padding="30,0"
             Spacing="20">
@@ -42,12 +49,6 @@
                 <RadioButton Content="Cat" AutomationId="RB1" IsChecked="True"/>
                 <RadioButton Content="Dog" AutomationId="RB2" />
             </HorizontalStackLayout>
-
-            <Button
-                AutomationId="OpenWebViewBtn"
-                Text="Open WebView"
-                Clicked="OnOpenWebViewClicked"
-                HorizontalOptions="Fill" />
 
         </VerticalStackLayout>
     </ScrollView>

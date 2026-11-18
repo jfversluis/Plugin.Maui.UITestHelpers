@@ -11,6 +11,9 @@ public class WebViewTests : BaseTest
     {
     }
 
+    // The WebView's AutomationId isn't exposed on Android, so the page is identified by its title
+    const string WebViewPageTitle = "WebView sample";
+
     [Test]
     public void WebViewHelpers_InteractWithWebContent()
     {
@@ -21,13 +24,15 @@ public class WebViewTests : BaseTest
 
         var driver = ((AppiumApp)App).Driver;
 
-        // The button is at the bottom of the page and can be off screen on small devices
-        App.ScrollDownTo("OpenWebViewBtn", "MainScrollView");
-        App.Tap("OpenWebViewBtn");
+        // Toolbar items expose their AutomationId as content description (Android) or name (iOS), so use Marked()
+        App.Tap(App.Marked("OpenWebViewBtn"));
 
         try
         {
-            Assert.That(App.SwitchContextToWebview(), Is.True, "should switch to the webview context");
+            App.WaitForElement(WebViewPageTitle, "The WebView page did not open");
+            App.Screenshot($"{nameof(WebViewHelpers_InteractWithWebContent)}.png");
+
+            Assert.That(App.SwitchContextToWebview(TimeSpan.FromSeconds(30)), Is.True, "should switch to the webview context");
             WaitForPageLoaded(driver);
 
             Assert.That(App.GetCurrentUri(), Is.Not.Null);
@@ -51,9 +56,14 @@ public class WebViewTests : BaseTest
         finally
         {
             App.SwitchContextToNative();
-            App.Back();
-            App.WaitForElement("MainScrollView");
-            App.ScrollUpTo("CounterBtn", "MainScrollView");
+
+            // Only navigate back when the WebView page is open, otherwise Back closes the app
+            if (App.Exists(WebViewPageTitle))
+            {
+                App.Back();
+            }
+
+            App.WaitForElement("CounterBtn");
         }
     }
 

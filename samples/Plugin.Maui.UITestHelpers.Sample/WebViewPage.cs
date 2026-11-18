@@ -19,7 +19,7 @@ public class WebViewPage : ContentPage
 
 	public WebViewPage()
 	{
-		Title = "WebView";
+		Title = "WebView sample";
 		Content = new WebView
 		{
 			AutomationId = "SampleWebView",
