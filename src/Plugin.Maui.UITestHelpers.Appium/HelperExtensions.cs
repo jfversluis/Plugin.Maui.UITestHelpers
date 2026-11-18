@@ -1,16 +1,78 @@
+using OpenQA.Selenium;
+using OpenQA.Selenium.Appium;
+using OpenQA.Selenium.Appium.Interfaces;
+using Plugin.Maui.UITestHelpers.Core;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
-using OpenQA.Selenium.Appium;
-using OpenQA.Selenium.Appium.Interfaces;
-using Plugin.Maui.UITestHelpers.Core;
 
 namespace Plugin.Maui.UITestHelpers.Appium
 {
     public static class HelperExtensions
     {
         static TimeSpan DefaultTimeout = TimeSpan.FromSeconds(15);
+
+        /// <summary>
+        /// Checks if an element currently exists, by marked text.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="marked">AutomationId or text to search element.</param>
+        public static bool Exists(this IApp app, string marked)
+        {
+            try
+            {
+                return FindElement(app, marked) != null;
+            }
+            catch (StaleElementReferenceException)
+            {
+                return false;
+            }
+            catch (NoSuchElementException)
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Checks if an element currently exists, by query.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="query">Represents the query that identifies an element by parameters such as type, text it contains or identifier.</param>
+        public static bool Exists(this IApp app, IQuery query)
+        {
+            try
+            {
+                return app.FindElement(query) != null;
+            }
+            catch (StaleElementReferenceException)
+            {
+                return false;
+            }
+            catch (NoSuchElementException)
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Returns a query for elements "marked" with the given value, like Xamarin.UITest's
+        /// Marked(): the element's AutomationId, its accessibility label or content description,
+        /// or its displayed text. The attributes searched are platform specific.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="marked">AutomationId or text to search for.</param>
+        /// <returns>The query, to be used with the methods taking an <see cref="IQuery"/>, e.g. Tap() or WaitForNoElement().</returns>
+        /// <exception cref="InvalidOperationException">Thrown when the app is not an AppiumApp.</exception>
+        public static IQuery Marked(this IApp app, string marked)
+        {
+            if (app is not AppiumApp appiumApp)
+            {
+                throw new InvalidOperationException($"Marked is only supported on AppiumApp");
+            }
+
+            return AppiumQuery.ByXPath(appiumApp.GetMarkedXPath(marked));
+        }
 
         /// <summary>
         /// For desktop, this will perform a mouse click on the target element.
@@ -20,9 +82,13 @@ namespace Plugin.Maui.UITestHelpers.Appium
         /// </summary>
         /// <param name="app">Represents the main gateway to interact with an app.</param>
         /// <param name="element">Target Element.</param>
+        /// <exception cref="InvalidOperationException">Thrown when the element can't be found.</exception>
         public static void Tap(this IApp app, string element)
         {
-            FindElement(app, element).Click();
+            var appElement = FindElement(app, element)
+                ?? throw new InvalidOperationException($"Could not find element '{element}' to tap");
+
+            appElement.Click();
         }
 
         /// <summary>
@@ -33,9 +99,13 @@ namespace Plugin.Maui.UITestHelpers.Appium
  		/// </summary>
  		/// <param name="app">Represents the main gateway to interact with an app.</param>
  		/// <param name="query">Represents the query that identify an element by parameters such as type, text it contains or identifier.</param>
+        /// <exception cref="InvalidOperationException">Thrown when the element can't be found.</exception>
  		public static void Tap(this IApp app, IQuery query)
         {
-            app.FindElement(query).Tap();
+            var appElement = app.FindElement(query)
+                ?? throw new InvalidOperationException($"Could not find element of the query to tap");
+
+            appElement.Tap();
         }
 
         /// <summary>
@@ -250,9 +320,11 @@ namespace Plugin.Maui.UITestHelpers.Appium
         /// <param name="app">Represents the main gateway to interact with an app.</param>
         /// <param name="element">Target Element.</param>
         /// <param name="text">The text to enter.</param>
+        /// <exception cref="InvalidOperationException">Thrown when the element can't be found.</exception>
         public static void EnterText(this IApp app, string element, string text)
         {
-            var appElement = FindElement(app, element);
+            var appElement = FindElement(app, element)
+                ?? throw new InvalidOperationException($"Could not find element '{element}' to enter text into");
 
             app.EnterText(appElement, text);
         }
@@ -263,22 +335,21 @@ namespace Plugin.Maui.UITestHelpers.Appium
         /// <param name="app">Represents the main gateway to interact with an app.</param>
         /// <param name="element">Target Element.</param>
         /// <param name="query">Represents the query that identify an element by parameters such as type, text it contains or identifier.</param>
+        /// <exception cref="InvalidOperationException">Thrown when the element can't be found.</exception>
         public static void EnterText(this IApp app, IQuery query, string text)
         {
-            var appElement = app.FindElement(query);
+            var appElement = app.FindElement(query)
+                ?? throw new InvalidOperationException("Could not find element of the query to enter text into");
 
             app.EnterText(appElement, text);
         }
 
-        internal static void EnterText(this IApp app, IUIElement? element, string text)
+        internal static void EnterText(this IApp app, IUIElement element, string text)
         {
-            if (element is not null)
+            element.SendKeys(text);
+            if (app.IsKeyboardShown())
             {
-                element.SendKeys(text);
-                if (app.IsKeyboardShown())
-                {
-                    app.DismissKeyboard();
-                }
+                app.DismissKeyboard();
             }
         }
 
@@ -337,9 +408,13 @@ namespace Plugin.Maui.UITestHelpers.Appium
         /// </summary>
         /// <param name="app">Represents the main gateway to interact with an app.</param>
         /// <param name="element">Target Element.</param>
+        /// <exception cref="InvalidOperationException">Thrown when the element can't be found.</exception>
         public static void ClearText(this IApp app, string element)
         {
-            FindElement(app, element).Clear();
+            var appElement = FindElement(app, element)
+                ?? throw new InvalidOperationException($"Could not find element '{element}' to clear text");
+
+            appElement.Clear();
         }
 
         /// <summary>
@@ -347,9 +422,13 @@ namespace Plugin.Maui.UITestHelpers.Appium
  		/// </summary>
  		/// <param name="app">Represents the main gateway to interact with an app.</param>
  		/// <param name="query">Represents the query that identify an element by parameters such as type, text it contains or identifier.</param>
+        /// <exception cref="InvalidOperationException">Thrown when the element can't be found.</exception>
  		public static void ClearText(this IApp app, IQuery query)
         {
-            app.FindElement(query).Clear();
+            var appElement = app.FindElement(query)
+                ?? throw new InvalidOperationException($"Could not find element of the query to clear text");
+
+            appElement.Clear();
         }
 
         /// <summary>
@@ -1181,6 +1260,13 @@ namespace Plugin.Maui.UITestHelpers.Appium
         {
             if (element is not null)
             {
+                // don't scroll when the element is already visible inside the scroll container;
+                // the scrollDownTo command scrolls before checking and could move it out of view
+                if (IsVisibleInContainer(app, element, toMarked))
+                {
+                    return;
+                }
+
                 app.CommandExecutor.Execute("scrollDownTo", new Dictionary<string, object>
                 {
                     { "marked", toMarked },
@@ -1190,6 +1276,43 @@ namespace Plugin.Maui.UITestHelpers.Appium
                     { "swipeSpeed", swipeSpeed },
                     { "withInertia", withInertia }
                 });
+            }
+        }
+
+        static bool IsVisibleInContainer(IApp app, IUIElement container, string marked)
+        {
+            if (app is not AppiumApp appiumApp || container is not AppiumDriverElement driverElement)
+            {
+                return false;   // can't check: scroll as before
+            }
+
+            try
+            {
+                // relative XPath (".//"): only descendants of the container
+                string xpath = $".{appiumApp.GetMarkedXPath(marked)}";
+
+                var candidates = AppiumQuery.ByXPath(xpath).FindElements(driverElement.AppiumElement, appiumApp);
+                if (candidates.Count == 0)
+                {
+                    return false;
+                }
+
+                Rectangle bounds = container.GetRect();
+
+                return candidates.Any(candidate =>
+                {
+                    if (!candidate.IsDisplayed())
+                    {
+                        return false;
+                    }
+
+                    Rectangle rect = candidate.GetRect();
+                    return bounds.Contains(rect.X + (rect.Width / 2), rect.Y + (rect.Height / 2));
+                });
+            }
+            catch (WebDriverException)
+            {
+                return false;   // e.g. a stale element: scroll to be sure
             }
         }
 
@@ -1325,6 +1448,13 @@ namespace Plugin.Maui.UITestHelpers.Appium
         {
             if (element is not null)
             {
+                // don't scroll when the element is already visible inside the scroll container;
+                // the scrollUpTo command scrolls before checking and could move it out of view
+                if (IsVisibleInContainer(app, element, toMarked))
+                {
+                    return;
+                }
+
                 app.CommandExecutor.Execute("scrollUpTo", new Dictionary<string, object>
                 {
                     { "marked", toMarked },
@@ -2385,7 +2515,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
         {
             var result = app.FindElements(element);
 
-            if (result is null)
+            if (result is null || result.Count == 0)
                 result = app.FindElementsByText(element);
 
             return result;

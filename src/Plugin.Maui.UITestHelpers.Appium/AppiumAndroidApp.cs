@@ -75,7 +75,9 @@ namespace Plugin.Maui.UITestHelpers.Appium
 		{
 			config.SetProperty("PlatformName", "Android");
 			config.SetProperty("AutomationName", "UIAutomator2");
+
 			var appId = config.GetProperty<string>("AppId");
+			var appActivity = config.GetProperty<string>("AppActivity");
 
 			var options = new AppiumOptions();
 
@@ -87,7 +89,17 @@ namespace Plugin.Maui.UITestHelpers.Appium
 					options.AddAdditionalAppiumOption(MobileCapabilityType.NoReset, "true");
 
 				options.AddAdditionalAppiumOption(AndroidMobileCapabilityType.AppPackage, appId);
-				options.AddAdditionalAppiumOption(AndroidMobileCapabilityType.AppActivity, $"{appId}.MainActivity");
+			}
+
+			if (!string.IsNullOrWhiteSpace(appActivity))
+			{
+				options.AddAdditionalAppiumOption(AndroidMobileCapabilityType.AppActivity, appActivity);
+			}
+
+			var deviceSerial = config.GetProperty<string>("DeviceSerial");
+			if (!string.IsNullOrWhiteSpace(deviceSerial))
+			{
+				options.AddAdditionalAppiumOption(MobileCapabilityType.Udid, deviceSerial);
 			}
 
 			return options;
