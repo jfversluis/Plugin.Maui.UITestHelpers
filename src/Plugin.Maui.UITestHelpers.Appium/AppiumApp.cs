@@ -1,7 +1,9 @@
 using OpenQA.Selenium;
 using OpenQA.Selenium.Appium;
+using OpenQA.Selenium.Appium.Android;
 using OpenQA.Selenium.Appium.Enums;
 using OpenQA.Selenium.Appium.iOS;
+using OpenQA.Selenium.Appium.Mac;
 using OpenQA.Selenium.Appium.Windows;
 using Plugin.Maui.UITestHelpers.Core;
 
@@ -136,6 +138,51 @@ namespace Plugin.Maui.UITestHelpers.Appium
                 WindowsDriver => $"//*[@Name={literal}]",
                 _ => $"//*[@text={literal}]",
             };
+        }
+
+        /// <summary>
+        /// Returns the XPath that finds elements "marked" with the given value, like
+        /// Xamarin.UITest's Marked(): elements whose AutomationId, accessibility label or
+        /// content description, or displayed text equals the value.
+        /// </summary>
+        /// <remarks>
+        /// The attributes searched depend on the platform:
+        /// <list type="bullet">
+        /// <item><description>Android (UiAutomator2): "resource-id" (as
+        /// "&lt;AppId&gt;:id/&lt;AutomationId&gt;", only when the AppId is configured),
+        /// "content-desc" and "text"</description></item>
+        /// <item><description>iOS (XCUITest): "name", "label" and "value"</description></item>
+        /// <item><description>Mac Catalyst (Mac2): "identifier", "label", "title" and "value"</description></item>
+        /// <item><description>Windows (UI Automation): "AutomationId" and "Name"</description></item>
+        /// <item><description>Other platforms: the displayed text, see <see cref="GetTextXPath"/></description></item>
+        /// </list>
+        /// The value is escaped, so it may contain single and double quotes. Override this
+        /// method to support further platforms or attributes.
+        /// </remarks>
+        /// <param name="marked">AutomationId or text to search for.</param>
+        /// <returns>XPath expression that searches the whole element tree.</returns>
+        protected internal virtual string GetMarkedXPath(string marked)
+        {
+            string literal = ToXPathLiteral(marked);
+
+            switch (_driver)
+            {
+                case AndroidDriver:
+                    // .NET MAUI exposes the AutomationId as resource-id "<package>:id/<AutomationId>"
+                    string? appId = Config.GetProperty<string>("AppId");
+                    string resourceId = string.IsNullOrWhiteSpace(appId)
+                        ? string.Empty
+                        : $"@resource-id={ToXPathLiteral($"{appId}:id/{marked}")} or ";
+                    return $"//*[{resourceId}@content-desc={literal} or @text={literal}]";
+                case IOSDriver:
+                    return $"//*[@name={literal} or @label={literal} or @value={literal}]";
+                case MacDriver:
+                    return $"//*[@identifier={literal} or @label={literal} or @title={literal} or @value={literal}]";
+                case WindowsDriver:
+                    return $"//*[@AutomationId={literal} or @Name={literal}]";
+                default:
+                    return GetTextXPath(marked);
+            }
         }
 
         /// <summary>

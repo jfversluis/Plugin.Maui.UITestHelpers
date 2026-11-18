@@ -56,6 +56,25 @@ namespace Plugin.Maui.UITestHelpers.Appium
         }
 
         /// <summary>
+        /// Returns a query for elements "marked" with the given value, like Xamarin.UITest's
+        /// Marked(): the element's AutomationId, its accessibility label or content description,
+        /// or its displayed text. The attributes searched are platform specific.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="marked">AutomationId or text to search for.</param>
+        /// <returns>The query, to be used with the methods taking an <see cref="IQuery"/>, e.g. Tap() or WaitForNoElement().</returns>
+        /// <exception cref="InvalidOperationException">Thrown when the app is not an AppiumApp.</exception>
+        public static IQuery Marked(this IApp app, string marked)
+        {
+            if (app is not AppiumApp appiumApp)
+            {
+                throw new InvalidOperationException($"Marked is only supported on AppiumApp");
+            }
+
+            return AppiumQuery.ByXPath(appiumApp.GetMarkedXPath(marked));
+        }
+
+        /// <summary>
         /// For desktop, this will perform a mouse click on the target element.
         /// For mobile, this will tap the element.
         /// This API works for all platforms whereas TapCoordinates currently doesn't work on Catalyst
