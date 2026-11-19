@@ -29,6 +29,44 @@
 		IEnumerable<string> GetLogEntries(string logType);
 	}
 
+	/// <summary>
+	/// An app that supports backdoors: methods in the app that UI tests can invoke directly,
+	/// like Xamarin.UITest's <c>app.Invoke</c>. The app has to expose the methods with the
+	/// Plugin.Maui.UITestHelpers.Backdoor package.
+	/// </summary>
+	public interface IBackdoorSupportedApp : IApp
+	{
+		/// <summary>
+		/// Invokes a backdoor method in the app.
+		/// </summary>
+		/// <param name="methodName">Name of the backdoor method.</param>
+		/// <param name="argument">Argument to pass, or <see langword="null"/> for no argument.</param>
+		/// <returns>The return value: a <see cref="string"/>, <see cref="bool"/>, <see cref="long"/>,
+		/// <see cref="double"/>, <see langword="null"/>, or a <see cref="System.Text.Json.JsonElement"/>
+		/// for objects and lists.</returns>
+		/// <exception cref="BackdoorException">The method could not be invoked or threw an exception.</exception>
+		object? Invoke(string methodName, object? argument = null);
+
+		/// <summary>
+		/// Invokes a backdoor method in the app with multiple arguments.
+		/// </summary>
+		/// <param name="methodName">Name of the backdoor method.</param>
+		/// <param name="arguments">Arguments to pass.</param>
+		/// <returns>The return value, see <see cref="Invoke(string, object?)"/>.</returns>
+		/// <exception cref="BackdoorException">The method could not be invoked or threw an exception.</exception>
+		object? Invoke(string methodName, object?[] arguments);
+
+		/// <summary>
+		/// Invokes a backdoor method in the app and converts its return value to <typeparamref name="T"/>.
+		/// </summary>
+		/// <typeparam name="T">Type of the return value.</typeparam>
+		/// <param name="methodName">Name of the backdoor method.</param>
+		/// <param name="arguments">Arguments to pass.</param>
+		/// <returns>The return value.</returns>
+		/// <exception cref="BackdoorException">The method could not be invoked or threw an exception.</exception>
+		T? Invoke<T>(string methodName, params object?[] arguments);
+	}
+
 	public static class AppExtensions
 	{
 		public static void Click(this IApp app, float x, float y)
@@ -67,5 +105,20 @@
 
 		public static IEnumerable<string> GetLogEntries(this IApp app, string logType) =>
 			app.As<ILogsSupportedApp>().GetLogEntries(logType);
+	}
+
+	public static class BackdoorSupportedAppExtensions
+	{
+		/// <inheritdoc cref="IBackdoorSupportedApp.Invoke(string, object?)"/>
+		public static object? Invoke(this IApp app, string methodName, object? argument = null) =>
+			app.As<IBackdoorSupportedApp>().Invoke(methodName, argument);
+
+		/// <inheritdoc cref="IBackdoorSupportedApp.Invoke(string, object?[])"/>
+		public static object? Invoke(this IApp app, string methodName, object?[] arguments) =>
+			app.As<IBackdoorSupportedApp>().Invoke(methodName, arguments);
+
+		/// <inheritdoc cref="IBackdoorSupportedApp.Invoke{T}(string, object?[])"/>
+		public static T? Invoke<T>(this IApp app, string methodName, params object?[] arguments) =>
+			app.As<IBackdoorSupportedApp>().Invoke<T>(methodName, arguments);
 	}
 }

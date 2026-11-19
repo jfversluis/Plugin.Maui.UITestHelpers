@@ -55,4 +55,8 @@
 	<ItemGroup>
 	  <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
 	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\..\src\Plugin.Maui.UITestHelpers.Backdoor\Plugin.Maui.UITestHelpers.Backdoor.csproj" />
+	</ItemGroup>
 </Project>

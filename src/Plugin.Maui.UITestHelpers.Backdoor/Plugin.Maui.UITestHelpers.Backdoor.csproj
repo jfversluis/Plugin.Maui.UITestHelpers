@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net11.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsTrimmable>true</IsTrimmable>
+    <IsAotCompatible>true</IsAotCompatible>
+
+    <!-- NuGet -->
+    <Authors>jfversluis</Authors>
+    <Copyright>Copyright © jfversluis and contributors</Copyright>
+    <IsPackable>True</IsPackable>
+    <PackageProjectUrl>https://github.com/jfversluis/Plugin.Maui.UITestHelpers</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/jfversluis/Plugin.Maui.UITestHelpers</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>dotnet-maui;maui;plugin;ui-test;appium;uitest;backdoor</PackageTags>
+    <IncludeSymbols>True</IncludeSymbols>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <Title>.NET MAUI UI Test Helpers Backdoor Plugin</Title>
+    <Description>Plugin.Maui.UITestHelpers.Backdoor is installed in your .NET MAUI app and lets UI tests that use Plugin.Maui.UITestHelpers.Appium invoke methods in the app directly (app.Invoke), like the backdoors of Xamarin.UITest. Only enable it in builds that you use for testing.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+    <DebugType>portable</DebugType>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Maui.Core" Version="11.0.0" />
+  </ItemGroup>
+
+  <!-- Package additions -->
+  <ItemGroup>
+    <None Include="..\..\nuget.png" PackagePath="icon.png" Pack="true" />
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>
