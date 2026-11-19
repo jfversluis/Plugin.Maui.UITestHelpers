@@ -245,8 +245,8 @@ namespace Plugin.Maui.UITestHelpers.Appium
 		/// <c>new Dictionary&lt;string, object&gt; { ["disableWindowAnimation"] = true }</c>.
 		/// Names without a vendor prefix get the "appium:" prefix. These capabilities are applied last, so they
 		/// override other values the library sets for the same capability, such as "newCommandTimeout".
-		/// Standard W3C capabilities and capabilities with a dedicated config property (like "app" or "deviceName")
-		/// can't be set this way.
+		/// Standard W3C capabilities, "automationName" and capabilities with a dedicated config property (like "app"
+		/// or "deviceName") can't be set this way.
 		/// </summary>
 		/// <param name="config">The test configuration.</param>
 		/// <param name="appiumOptions">The options to add the capabilities to.</param>

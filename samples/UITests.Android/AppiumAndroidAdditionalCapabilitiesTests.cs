@@ -54,6 +54,7 @@ public class AppiumAndroidAdditionalCapabilitiesTests
 
     [TestCase("deviceName")]
     [TestCase("appium:app")]
+    [TestCase("automationName")]
     [TestCase("platformName")]
     [TestCase("browserName")]
     public void AdditionalCapabilitiesRejectUnsupportedCapabilities(string name)

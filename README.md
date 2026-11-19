@@ -67,10 +67,12 @@ config.SetProperty("AdditionalCapabilities", new Dictionary<string, object>
 ```
 
 Names without a vendor prefix get the `appium:` prefix. These capabilities are applied last, so
-they also override values the library sets itself, such as `newCommandTimeout`. Standard W3C
-capabilities (like `platformName`) and capabilities that have their own config property (`app`,
-`deviceName` and `platformVersion`; use `AppPath`, `DeviceName` and `PlatformVersion`) can't be set
-this way. See the driver documentation for the available capabilities, for example the
+they also override values the library sets itself, such as `newCommandTimeout`. For capabilities
+that have their own config property, such as `AppId` (`appPackage`/`bundleId`), use that property:
+the library also relies on it after the session has started. Standard W3C capabilities (like
+`platformName`), `automationName` (set by the library for each platform) and `app`, `deviceName`
+and `platformVersion` (use `AppPath`, `DeviceName` and `PlatformVersion`) can't be set this way.
+See the driver documentation for the available capabilities, for example the
 [UiAutomator2 capabilities](https://github.com/appium/appium-uiautomator2-driver#capabilities).
 
 ## Testing webview content
