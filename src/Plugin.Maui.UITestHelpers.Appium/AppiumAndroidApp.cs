@@ -85,6 +85,9 @@ namespace Plugin.Maui.UITestHelpers.Appium
 			if (!string.IsNullOrWhiteSpace(Config.GetProperty<string>("BackdoorHost")))
 				return base.GetBackdoorAddress();
 
+			if (_backdoorForwardPort is int existingPort)
+				return new UriBuilder(Uri.UriSchemeHttp, "127.0.0.1", existingPort).Uri;
+
 			var serial = GetDeviceSerial();
 			var output = RunAdb(serial, "forward", "tcp:0", $"tcp:{BackdoorPort}");
 			if (!int.TryParse(output.Trim(), out var hostPort))

@@ -56,13 +56,22 @@
 	  <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
 	</ItemGroup>
 
-	<ItemGroup>
+	<!-- The UI test backdoor is only compiled in when EnableUITestBackdoor is true. This sample enables
+	     it by default because its UI tests also run against Release builds. In your own app, default it
+	     to false and only pass -p:EnableUITestBackdoor=true for the builds you run UI tests against,
+	     so it can never end up in a build you distribute. -->
+	<PropertyGroup>
+	  <EnableUITestBackdoor Condition="'$(EnableUITestBackdoor)' == ''">true</EnableUITestBackdoor>
+	  <DefineConstants Condition="'$(EnableUITestBackdoor)' == 'true'">$(DefineConstants);UITEST_BACKDOOR</DefineConstants>
+	</PropertyGroup>
+
+	<ItemGroup Condition="'$(EnableUITestBackdoor)' == 'true'">
 	  <ProjectReference Include="..\..\src\Plugin.Maui.UITestHelpers.Backdoor\Plugin.Maui.UITestHelpers.Backdoor.csproj" />
 	</ItemGroup>
 
 	<!-- Opt-in, LESS SECURE: build with -p:BackdoorAccessKey=<random key> to let UI tests reach the
 	     backdoor over the network, for example on a physical iOS device. The key isn't stored in source. -->
-	<ItemGroup Condition="'$(BackdoorAccessKey)' != ''">
+	<ItemGroup Condition="'$(EnableUITestBackdoor)' == 'true' And '$(BackdoorAccessKey)' != ''">
 	  <AssemblyMetadata Include="BackdoorAccessKey" Value="$(BackdoorAccessKey)" />
 	</ItemGroup>
 </Project>

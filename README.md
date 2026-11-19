@@ -117,7 +117,7 @@ using Plugin.Maui.UITestHelpers.Backdoor;
 var builder = MauiApp.CreateBuilder();
 builder.UseMauiApp<App>();
 
-#if DEBUG
+#if UITEST_BACKDOOR
 builder.UseUITestBackdoor(backdoor =>
 {
     // Methods marked with [BackdoorMethod] on App. For other types, the instance is
@@ -141,9 +141,25 @@ public async Task<int> GetCartItemCountAsync() => await _cartService.GetCountAsy
 ```
 
 > [!WARNING]
-> Any app on the device can call the backdoor methods while the backdoor is enabled. Only enable
-> it in builds that you use for UI testing, for example inside `#if DEBUG` or a custom build
-> configuration. Never ship it in a production build.
+> Unless you set `backdoor.AccessKey`, any app on the device can call the backdoor methods while
+> the backdoor is enabled. Never ship it in a build you distribute.
+
+Make sure the backdoor can't end up in a production build by only compiling it in when you ask for
+it, instead of relying on `#if DEBUG` alone (UI tests often run against Release builds). In your app
+project:
+
+```xml
+<PropertyGroup Condition="'$(EnableUITestBackdoor)' == 'true'">
+  <DefineConstants>$(DefineConstants);UITEST_BACKDOOR</DefineConstants>
+</PropertyGroup>
+
+<ItemGroup Condition="'$(EnableUITestBackdoor)' == 'true'">
+  <PackageReference Include="Plugin.Maui.UITestHelpers.Backdoor" Version="..." />
+</ItemGroup>
+```
+
+Then build the app you test with `-p:EnableUITestBackdoor=true`, and put the backdoor methods in a
+separate file inside `#if UITEST_BACKDOOR`, like the sample's `App.Backdoor.cs`.
 
 Backdoor methods run on the UI thread. They can be static or instance methods, have parameters
 (including optional parameters), and return a value. If they return a `Task`, it's awaited
@@ -172,6 +188,10 @@ var count = App.Invoke<int>("GetCartItemCountAsync");
 var result = App.Invoke("MyMethod", new object[] { "first", 2 });
 ```
 
+Like in Xamarin.UITest, an `object[]` is the list of arguments. Because of array covariance that
+also applies to other arrays of reference types, such as `string[]`. To pass an array as one
+argument, wrap it: `App.Invoke("SetTags", new object[] { tags })`.
+
 `Invoke` without a type argument returns a `string`, `bool`, `long`, `double` or `null`, or a
 `JsonElement` for objects and lists. `Invoke<T>` converts the result to `T`. If the method doesn't
 exist, its arguments can't be converted, or it throws, a `BackdoorException` is thrown. When the
@@ -189,6 +209,17 @@ way existing calls like `app.Invoke("myMethod:", arg)` still find `MyMethod`.
 | iOS simulators, Mac Catalyst and Windows | Directly on `127.0.0.1`, because the app runs on the same machine as the tests. |
 | Physical iOS devices (USB) | Forward the port yourself, for example with `iproxy 37265 37265`, and keep the default `BackdoorHost` (`127.0.0.1`). |
 | Devices over the network | Opt in to network access in the app and set `BackdoorHost` to the device's IP address, see [Network access](#network-access-less-secure). |
+
+Platform requirements:
+
+* **Android**: the app needs the `INTERNET` permission, also for the default loopback-only mode.
+* **Mac Catalyst**: sandboxed apps (with `com.apple.security.app-sandbox` in `Entitlements.plist`,
+  as in the .NET MAUI template) also need `com.apple.security.network.server`, even for loopback.
+* **Windows**: with network access, Windows Firewall may block the port or ask for permission;
+  on CI machines add an inbound rule for it.
+* Apps on the same machine (iOS simulators, Mac Catalyst, Windows) share `127.0.0.1`. If two apps
+  with a backdoor run at the same time, give them different ports. When `AppId` is configured, the
+  test checks that the backdoor belongs to the app under test.
 
 Without network access, the test project must run on the same machine as the emulator, simulator or
 device. Cloud device services aren't supported. You can configure the connection with these
@@ -230,7 +261,8 @@ config.SetProperty("BackdoorAccessKey", accessKey);
 > read the key and all arguments and return values.
 > * Only use it on networks you trust, never on public Wi-Fi.
 > * Use a long random key, for example from `openssl rand -hex 32`, and pass it in at build time
->   instead of committing it. The sample reads it from `-p:BackdoorAccessKey=...`.
+>   instead of committing it. The sample reads it from `-p:BackdoorAccessKey=...`. The key is then
+>   part of the app, so anyone who has the app package can read it: use a new key per test build.
 > * Never enable it in a build that you distribute, including TestFlight and internal app stores.
 
 You can also set `backdoor.AccessKey` without network access, so other apps on the device can't call

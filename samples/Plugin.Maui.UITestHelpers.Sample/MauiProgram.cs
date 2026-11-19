@@ -1,4 +1,6 @@
-﻿using Plugin.Maui.UITestHelpers.Backdoor;
+﻿#if UITEST_BACKDOOR
+using Plugin.Maui.UITestHelpers.Backdoor;
+#endif
 
 namespace Plugin.Maui.UITestHelpers.Sample;
 
@@ -15,9 +17,9 @@ public static class MauiProgram
 				fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
 			});
 
+#if UITEST_BACKDOOR
 		// The backdoor lets UI tests call methods in this app directly with app.Invoke(...).
-		// This sample always enables it because the UI tests also run against Release builds;
-		// in your own app only enable it in builds you use for UI testing, for example with #if DEBUG.
+		// It's only compiled in when the UITEST_BACKDOOR symbol is defined, see the .csproj.
 		builder.UseUITestBackdoor(backdoor =>
 		{
 			// All methods of App marked with [BackdoorMethod]
@@ -35,6 +37,7 @@ public static class MauiProgram
 			if (!string.IsNullOrEmpty(accessKey))
 				backdoor.EnableNetworkAccess(accessKey);
 		});
+#endif
 
 		// Webviews must be debuggable/inspectable for Appium to see them as a WEBVIEW context
 #if ANDROID

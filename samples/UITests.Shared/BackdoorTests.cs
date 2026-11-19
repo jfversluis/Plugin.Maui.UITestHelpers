@@ -120,6 +120,27 @@ public class BackdoorTests : BaseTest
     }
 
     [Test]
+    public void Invoke_EnumRoundTrip()
+    {
+        Assert.That(App.Invoke<DayOfWeek>("NextDay", DayOfWeek.Saturday), Is.EqualTo(DayOfWeek.Sunday));
+        Assert.That(App.Invoke("NextDay", DayOfWeek.Monday), Is.EqualTo("Tuesday"), "enums are returned as their names without a type argument");
+    }
+
+    [Test]
+    public void Invoke_ArrayArgument()
+    {
+        var tags = new[] { "a", "b", "c" };
+
+        // Like in Xamarin.UITest, an object[] (and, through array covariance, a string[]) is the
+        // list of arguments. To pass an array as one argument, wrap it in the arguments array.
+        Assert.That(App.Invoke("JoinTags", new object[] { tags }), Is.EqualTo("a,b,c"));
+        Assert.That(App.Invoke<string>("JoinTags", new object[] { tags }), Is.EqualTo("a,b,c"));
+
+        var exception = Assert.Throws<BackdoorException>(() => App.Invoke("JoinTags", tags));
+        Assert.That(exception!.Message, Does.Contain("accepts 3 argument(s)"));
+    }
+
+    [Test]
     public void Invoke_UnknownMethod_Throws()
     {
         var exception = Assert.Throws<BackdoorException>(() => App.Invoke("DoesNotExist"));

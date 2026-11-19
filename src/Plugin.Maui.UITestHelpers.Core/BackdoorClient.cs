@@ -14,7 +14,11 @@ namespace Plugin.Maui.UITestHelpers.Core
 		/// </summary>
 		public const int DefaultPort = 37265;
 
-		internal static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);
+		// The app returns enums as their names
+		internal static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web)
+		{
+			Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() },
+		};
 
 		/// <summary>
 		/// HTTP header that carries the access key.
@@ -69,11 +73,20 @@ namespace Plugin.Maui.UITestHelpers.Core
 		/// Returns the names of the backdoor methods that the app exposes.
 		/// </summary>
 		/// <exception cref="BackdoorException">The backdoor could not be reached.</exception>
-		public IReadOnlyList<string> GetMethodNames()
+		public IReadOnlyList<string> GetMethodNames() =>
+			Ping().GetProperty("methods").EnumerateArray().Select(e => e.GetString() ?? string.Empty).ToArray();
+
+		/// <summary>
+		/// Returns the package name or bundle identifier of the app the backdoor runs in.
+		/// </summary>
+		/// <exception cref="BackdoorException">The backdoor could not be reached.</exception>
+		public string? GetAppId() =>
+			Ping().TryGetProperty("appId", out var appId) ? appId.GetString() : null;
+
+		JsonElement Ping()
 		{
 			using var request = new HttpRequestMessage(HttpMethod.Get, "ping");
-			var result = Send(request, "reach the backdoor");
-			return result.EnumerateArray().Select(e => e.GetString() ?? string.Empty).ToArray();
+			return Send(request, "reach the backdoor");
 		}
 
 		/// <summary>

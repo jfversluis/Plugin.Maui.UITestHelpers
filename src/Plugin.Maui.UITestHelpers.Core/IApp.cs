@@ -50,6 +50,12 @@
 		/// <summary>
 		/// Invokes a backdoor method in the app with multiple arguments.
 		/// </summary>
+		/// <remarks>
+		/// Like in Xamarin.UITest, <paramref name="arguments"/> is the list of arguments. Because
+		/// of array covariance, an array of a reference type such as <c>string[]</c> is also used
+		/// as the list of arguments. To pass an array as a single argument, wrap it:
+		/// <c>app.Invoke("Method", new object[] { myArray })</c>.
+		/// </remarks>
 		/// <param name="methodName">Name of the backdoor method.</param>
 		/// <param name="arguments">Arguments to pass.</param>
 		/// <returns>The return value, see <see cref="Invoke(string, object?)"/>.</returns>
@@ -59,6 +65,9 @@
 		/// <summary>
 		/// Invokes a backdoor method in the app and converts its return value to <typeparamref name="T"/>.
 		/// </summary>
+		/// <remarks>
+		/// To pass an array as a single argument, wrap it: <c>app.Invoke&lt;T&gt;("Method", new object[] { myArray })</c>.
+		/// </remarks>
 		/// <typeparam name="T">Type of the return value.</typeparam>
 		/// <param name="methodName">Name of the backdoor method.</param>
 		/// <param name="arguments">Arguments to pass.</param>

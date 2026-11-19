@@ -1,4 +1,5 @@
 <Solution>
+  <Project Path="../tests/Plugin.Maui.UITestHelpers.Backdoor.Tests/Plugin.Maui.UITestHelpers.Backdoor.Tests.csproj" />
   <Project Path="Plugin.Maui.UITestHelpers.Appium/Plugin.Maui.UITestHelpers.Appium.csproj" />
   <Project Path="Plugin.Maui.UITestHelpers.Backdoor/Plugin.Maui.UITestHelpers.Backdoor.csproj" />
   <Project Path="Plugin.Maui.UITestHelpers.Core/Plugin.Maui.UITestHelpers.Core.csproj" />

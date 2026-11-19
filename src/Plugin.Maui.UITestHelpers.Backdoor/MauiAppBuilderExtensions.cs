@@ -13,9 +13,10 @@ public static class MauiAppBuilderExtensions
 {
 	/// <summary>
 	/// Starts the UI test backdoor when the app starts, so UI tests can call the configured
-	/// methods with <c>app.Invoke(...)</c>. The backdoor lets anything on the device invoke
-	/// the methods, so only enable it in builds you use for UI testing, for example inside
-	/// <c>#if DEBUG</c>.
+	/// methods with <c>app.Invoke(...)</c>. Unless you set <see cref="BackdoorOptions.AccessKey"/>,
+	/// any app on the device can invoke the methods, so only call this in builds you use for UI
+	/// testing, for example inside <c>#if DEBUG</c> or a custom compilation symbol, and never in
+	/// a build you distribute.
 	/// </summary>
 	/// <param name="builder">The app builder.</param>
 	/// <param name="configure">Registers the backdoor methods and other options.</param>
@@ -61,6 +62,8 @@ sealed class BackdoorInitializeService : IMauiInitializeService
 		{
 			server.Dispose();
 			var message = $"UI test backdoor could not listen on port {options.Port}: {ex.Message}";
+			if (OperatingSystem.IsMacCatalyst())
+				message += " Sandboxed Mac Catalyst apps need the com.apple.security.network.server entitlement.";
 			if (logger is not null)
 				logger.LogError(ex, "{Message}", message);
 			else

@@ -210,9 +210,20 @@ internal static class BackdoorJson
 			if (!property.CanRead || property.GetIndexParameters().Length > 0)
 				continue;
 
-			var name = options.PropertyNamingPolicy?.ConvertName(property.Name) ?? property.Name;
+			// Honor the System.Text.Json attributes, so properties hidden from JSON stay hidden
+			var ignore = property.GetCustomAttribute<System.Text.Json.Serialization.JsonIgnoreAttribute>();
+			if (ignore is not null && ignore.Condition == System.Text.Json.Serialization.JsonIgnoreCondition.Always)
+				continue;
+
+			var propertyValue = property.GetValue(value);
+			if (propertyValue is null && ignore?.Condition is System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull or System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)
+				continue;
+
+			var name = property.GetCustomAttribute<System.Text.Json.Serialization.JsonPropertyNameAttribute>()?.Name
+				?? options.PropertyNamingPolicy?.ConvertName(property.Name)
+				?? property.Name;
 			writer.WritePropertyName(name);
-			WriteValue(writer, property.GetValue(value), property.PropertyType, options, depth + 1);
+			WriteValue(writer, propertyValue, property.PropertyType, options, depth + 1);
 		}
 		writer.WriteEndObject();
 	}

@@ -319,7 +319,24 @@ namespace Plugin.Maui.UITestHelpers.Appium
 					var seconds => TimeSpan.FromSeconds(Convert.ToDouble(seconds, System.Globalization.CultureInfo.InvariantCulture)),
 				};
 
-				_backdoorClient = new BackdoorClient(GetBackdoorAddress(), timeout, Config.GetProperty<string>("BackdoorAccessKey"));
+				var client = new BackdoorClient(GetBackdoorAddress(), timeout, Config.GetProperty<string>("BackdoorAccessKey"));
+
+				// Apps on the same machine (simulators, Mac Catalyst, Windows) share 127.0.0.1, so make
+				// sure the backdoor belongs to the app under test and not to another running app
+				var expectedAppId = Config.GetProperty<string>("AppId");
+				if (!string.IsNullOrWhiteSpace(expectedAppId))
+				{
+					var actualAppId = client.GetAppId();
+					if (actualAppId is not null && !string.Equals(actualAppId, expectedAppId, StringComparison.OrdinalIgnoreCase))
+					{
+						client.Dispose();
+						throw new BackdoorException(
+							$"The backdoor at {client.BaseAddress} belongs to app '{actualAppId}', not to the app under test '{expectedAppId}'. " +
+							"Close the other app or give the apps different backdoor ports (BackdoorOptions.Port and the \"BackdoorPort\" configuration).");
+					}
+				}
+
+				_backdoorClient = client;
 			}
 
 			return _backdoorClient;

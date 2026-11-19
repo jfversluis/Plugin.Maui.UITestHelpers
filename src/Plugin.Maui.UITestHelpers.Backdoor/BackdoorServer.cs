@@ -22,7 +22,9 @@ internal sealed class BackdoorServer : IDisposable
 {
 	internal const string AccessKeyHeader = "X-Backdoor-Key";
 	const int MaxHeaderBytes = 64 * 1024;
-	const int MaxBodyBytes = 16 * 1024 * 1024;
+	const int MaxBodyBytes = 1024 * 1024;
+	const int MaxConcurrentConnections = 8;
+	internal TimeSpan RequestReadTimeout { get; init; } = TimeSpan.FromSeconds(15);
 
 	static readonly byte[] HeaderTerminator = "\r\n\r\n"u8.ToArray();
 
@@ -30,6 +32,7 @@ internal sealed class BackdoorServer : IDisposable
 	readonly Func<Func<Task<InvocationResult>>, Task<InvocationResult>> _dispatch;
 	readonly ILogger? _logger;
 	readonly CancellationTokenSource _cts = new();
+	readonly SemaphoreSlim _connections = new(MaxConcurrentConnections, MaxConcurrentConnections);
 	TcpListener? _listener;
 
 	public BackdoorServer(BackdoorOptions options, Func<Func<Task<InvocationResult>>, Task<InvocationResult>> dispatch, ILogger? logger = null)
@@ -45,9 +48,8 @@ internal sealed class BackdoorServer : IDisposable
 	{
 		_options.Validate();
 
-		_listener = new TcpListener(_options.NetworkAccessEnabled ? IPAddress.Any : IPAddress.Loopback, _options.Port);
-		_listener.Start();
-		_ = AcceptLoopAsync(_listener, _cts.Token);
+		_listener = CreateListener();
+		_ = AcceptLoopAsync(_cts.Token);
 
 		if (_options.NetworkAccessEnabled)
 			Log(LogLevel.Warning, $"UI test backdoor listening on ALL network interfaces, port {Port}, with {_options.Methods.Count} method(s). Anyone on the network with the access key can invoke them; never enable this in a build you distribute.");
@@ -62,22 +64,89 @@ internal sealed class BackdoorServer : IDisposable
 		_listener = null;
 	}
 
-	async Task AcceptLoopAsync(TcpListener listener, CancellationToken cancellationToken)
+	TcpListener CreateListener()
 	{
+		if (!_options.NetworkAccessEnabled)
+		{
+			var loopback = new TcpListener(IPAddress.Loopback, _options.Port);
+			loopback.Start();
+			return loopback;
+		}
+
+		if (Socket.OSSupportsIPv6)
+		{
+			// Dual mode accepts both IPv4 and IPv6 connections
+			var dualMode = new TcpListener(IPAddress.IPv6Any, _options.Port);
+			try
+			{
+				dualMode.Server.DualMode = true;
+				dualMode.Start();
+				return dualMode;
+			}
+			catch (SocketException)
+			{
+				dualMode.Stop();
+			}
+		}
+
+		var any = new TcpListener(IPAddress.Any, _options.Port);
+		any.Start();
+		return any;
+	}
+
+	async Task AcceptLoopAsync(CancellationToken cancellationToken)
+	{
+		var failures = 0;
 		while (!cancellationToken.IsCancellationRequested)
 		{
 			TcpClient client;
 			try
 			{
+				var listener = _listener ?? throw new ObjectDisposedException(nameof(BackdoorServer));
 				client = await listener.AcceptTcpClientAsync(cancellationToken).ConfigureAwait(false);
+				failures = 0;
 			}
-			catch (Exception ex) when (ex is OperationCanceledException or ObjectDisposedException)
+			catch (Exception ex) when (ex is OperationCanceledException || cancellationToken.IsCancellationRequested)
 			{
 				return;
 			}
-			catch (SocketException ex)
+			catch (Exception ex) when (ex is SocketException or ObjectDisposedException or InvalidOperationException)
 			{
+				// The listening socket can become unusable, for example when iOS reclaims it while the
+				// app is suspended. Back off instead of spinning, and recreate the listener.
+				failures++;
 				Log(LogLevel.Warning, $"UI test backdoor failed to accept a connection: {ex.Message}");
+
+				try
+				{
+					await Task.Delay(TimeSpan.FromMilliseconds(Math.Min(1000, 10 * Math.Pow(2, failures))), cancellationToken).ConfigureAwait(false);
+				}
+				catch (OperationCanceledException)
+				{
+					return;
+				}
+
+				if (failures >= 3)
+				{
+					try
+					{
+						_listener?.Stop();
+						_listener = CreateListener();
+						Log(LogLevel.Information, $"UI test backdoor recreated its listener on port {Port}.");
+					}
+					catch (SocketException restartError)
+					{
+						Log(LogLevel.Warning, $"UI test backdoor could not recreate its listener: {restartError.Message}");
+					}
+				}
+
+				continue;
+			}
+
+			if (!_connections.Wait(0))
+			{
+				// Too many connections at once; drop this one instead of using more memory
+				client.Dispose();
 				continue;
 			}
 
@@ -92,20 +161,46 @@ internal sealed class BackdoorServer : IDisposable
 			try
 			{
 				var stream = client.GetStream();
-				var (method, path, headers, body) = await ReadRequestAsync(stream, cancellationToken).ConfigureAwait(false);
-				var (status, response) = await HandleRequestAsync(method, path, headers, body).ConfigureAwait(false);
-				await WriteResponseAsync(stream, status, response, cancellationToken).ConfigureAwait(false);
+				(int Status, byte[] Body) response;
+
+				// Reading must finish in time, so clients can't hold on to connections (and memory)
+				using (var readTimeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
+				{
+					readTimeout.CancelAfter(RequestReadTimeout);
+					var (method, path, headers, received) = await ReadHeadersAsync(stream, readTimeout.Token).ConfigureAwait(false);
+
+					// Reject requests before reading their body, so unauthenticated clients can't make the app allocate memory
+					var rejection = CheckRequest(path, headers, out var contentLength);
+					if (rejection is not null)
+					{
+						response = rejection.Value;
+					}
+					else
+					{
+						var body = await ReadBodyAsync(stream, received, contentLength, readTimeout.Token).ConfigureAwait(false);
+						response = await HandleRequestAsync(method, path, headers, body).ConfigureAwait(false);
+					}
+				}
+
+				await WriteResponseAsync(stream, response.Status, response.Body, cancellationToken).ConfigureAwait(false);
 			}
-			catch (Exception ex) when (ex is not OperationCanceledException)
+			catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
 			{
 				Log(LogLevel.Warning, $"UI test backdoor failed to handle a request: {ex.Message}");
+			}
+			catch (OperationCanceledException)
+			{
+			}
+			finally
+			{
+				_connections.Release();
 			}
 		}
 	}
 
-	internal async Task<(int Status, byte[] Body)> HandleRequestAsync(string method, string path, IReadOnlyDictionary<string, string> headers, byte[] body)
+	(int Status, byte[] Body)? CheckRequest(string path, IReadOnlyDictionary<string, string> headers, out int contentLength)
 	{
-		var route = path.Split('?')[0].TrimEnd('/');
+		contentLength = 0;
 
 		// Web pages in a browser on the same machine or device can send requests to 127.0.0.1 too.
 		// Browsers always send Origin for those and can't send a JSON content type without a
@@ -113,13 +208,60 @@ internal sealed class BackdoorServer : IDisposable
 		if (headers.ContainsKey("Origin"))
 			return (403, Error("Requests from web pages are not allowed."));
 
+		// Protects against DNS rebinding, where a web page uses its own host name for 127.0.0.1
+		if (!_options.NetworkAccessEnabled && !IsLoopbackHost(headers))
+			return (403, Error("Only requests to 127.0.0.1 or localhost are allowed."));
+
 		if (!string.IsNullOrEmpty(_options.AccessKey) && !IsValidAccessKey(headers))
 			return (401, Error("Missing or invalid access key. Set the \"BackdoorAccessKey\" property of the UI test configuration to the AccessKey of the app."));
+
+		if (headers.ContainsKey("Transfer-Encoding"))
+			return (400, Error("Transfer-Encoding is not supported; send a Content-Length."));
+
+		if (headers.TryGetValue("Content-Length", out var length) &&
+			(!int.TryParse(length, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out contentLength) || contentLength > MaxBodyBytes))
+			return (413, Error($"The request body must be at most {MaxBodyBytes} bytes."));
+
+		return null;
+	}
+
+	static bool IsLoopbackHost(IReadOnlyDictionary<string, string> headers)
+	{
+		if (!headers.TryGetValue("Host", out var host))
+			return true;
+
+		if (host.StartsWith('['))
+		{
+			var end = host.IndexOf(']');
+			host = end > 0 ? host[1..end] : host;
+		}
+		else
+		{
+			var colon = host.IndexOf(':');
+			host = colon >= 0 ? host[..colon] : host;
+		}
+
+		return host.Equals("localhost", StringComparison.OrdinalIgnoreCase) ||
+			(IPAddress.TryParse(host, out var address) && IPAddress.IsLoopback(address));
+	}
+
+	internal async Task<(int Status, byte[] Body)> HandleRequestAsync(string method, string path, IReadOnlyDictionary<string, string> headers, byte[] body)
+	{
+		var route = path.Split('?')[0].TrimEnd('/');
+
+		var rejection = CheckRequest(path, headers, out _);
+		if (rejection is not null)
+			return rejection.Value;
 
 		if (method == "GET" && (route is "" or "/ping"))
 		{
 			var names = _options.Methods.Select(m => m.Name).Distinct().ToArray();
-			return (200, Success(names, typeof(string[])));
+			var identity = new Dictionary<string, object?>
+			{
+				["appId"] = GetAppId(),
+				["methods"] = names,
+			};
+			return (200, Success(identity, typeof(Dictionary<string, object?>)));
 		}
 
 		if (method == "POST" && route == "/backdoor")
@@ -151,6 +293,19 @@ internal sealed class BackdoorServer : IDisposable
 		}
 
 		return (404, Error($"Unknown endpoint '{method} {path}'."));
+	}
+
+	static string? GetAppId()
+	{
+		try
+		{
+			return Microsoft.Maui.ApplicationModel.AppInfo.Current.PackageName;
+		}
+		catch (Exception)
+		{
+			// AppInfo isn't available outside an app, for example in unit tests
+			return null;
+		}
 	}
 
 	bool IsValidAccessKey(IReadOnlyDictionary<string, string> headers)
@@ -339,10 +494,10 @@ internal sealed class BackdoorServer : IDisposable
 		return buffer.ToArray();
 	}
 
-	static async Task<(string Method, string Path, IReadOnlyDictionary<string, string> Headers, byte[] Body)> ReadRequestAsync(Stream stream, CancellationToken cancellationToken)
+	static async Task<(string Method, string Path, IReadOnlyDictionary<string, string> Headers, ArraySegment<byte> Received)> ReadHeadersAsync(Stream stream, CancellationToken cancellationToken)
 	{
 		var buffer = new byte[8192];
-		using var received = new MemoryStream();
+		var received = new MemoryStream();
 		int headerEnd;
 
 		while (true)
@@ -361,8 +516,7 @@ internal sealed class BackdoorServer : IDisposable
 		}
 
 		var data = received.GetBuffer();
-		var headerText = Encoding.ASCII.GetString(data, 0, headerEnd);
-		var lines = headerText.Split("\r\n");
+		var lines = Encoding.ASCII.GetString(data, 0, headerEnd).Split("\r\n");
 		var requestLine = lines[0].Split(' ');
 		if (requestLine.Length < 2)
 			throw new InvalidDataException($"Invalid request line '{lines[0]}'.");
@@ -371,21 +525,31 @@ internal sealed class BackdoorServer : IDisposable
 		foreach (var line in lines.Skip(1))
 		{
 			var separator = line.IndexOf(':');
-			if (separator > 0)
-				headers[line[..separator].Trim()] = line[(separator + 1)..].Trim();
+			if (separator <= 0)
+				continue;
+
+			var name = line[..separator].Trim();
+			var value = line[(separator + 1)..].Trim();
+
+			// Conflicting duplicates of these headers could make requests ambiguous
+			if (headers.TryGetValue(name, out var existing) && existing != value &&
+				(name.Equals("Content-Length", StringComparison.OrdinalIgnoreCase) ||
+				 name.Equals("Host", StringComparison.OrdinalIgnoreCase) ||
+				 name.Equals(AccessKeyHeader, StringComparison.OrdinalIgnoreCase)))
+				throw new InvalidDataException($"Conflicting '{name}' headers.");
+
+			headers[name] = value;
 		}
 
-		var contentLength = headers.TryGetValue("Content-Length", out var length)
-			? int.Parse(length, System.Globalization.CultureInfo.InvariantCulture)
-			: 0;
-
-		if (contentLength < 0 || contentLength > MaxBodyBytes)
-			throw new InvalidDataException("Request body is too large.");
-
-		var body = new byte[contentLength];
 		var bodyStart = headerEnd + HeaderTerminator.Length;
-		var alreadyReceived = Math.Min((int)received.Length - bodyStart, contentLength);
-		Array.Copy(data, bodyStart, body, 0, alreadyReceived);
+		return (requestLine[0].ToUpperInvariant(), requestLine[1], headers, new ArraySegment<byte>(data, bodyStart, (int)received.Length - bodyStart));
+	}
+
+	static async Task<byte[]> ReadBodyAsync(Stream stream, ArraySegment<byte> received, int contentLength, CancellationToken cancellationToken)
+	{
+		var body = new byte[contentLength];
+		var alreadyReceived = Math.Min(received.Count, contentLength);
+		received.AsSpan(0, alreadyReceived).CopyTo(body);
 
 		var offset = alreadyReceived;
 		while (offset < contentLength)
@@ -396,7 +560,7 @@ internal sealed class BackdoorServer : IDisposable
 			offset += read;
 		}
 
-		return (requestLine[0].ToUpperInvariant(), requestLine[1], headers, body);
+		return body;
 	}
 
 	static async Task WriteResponseAsync(Stream stream, int status, byte[] body, CancellationToken cancellationToken)
@@ -409,6 +573,7 @@ internal sealed class BackdoorServer : IDisposable
 			403 => "Forbidden",
 			404 => "Not Found",
 			409 => "Conflict",
+			413 => "Content Too Large",
 			415 => "Unsupported Media Type",
 			_ => "Internal Server Error",
 		};
