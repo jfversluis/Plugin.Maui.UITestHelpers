@@ -33,6 +33,7 @@ internal sealed class BackdoorServer : IDisposable
 	readonly ILogger? _logger;
 	readonly CancellationTokenSource _cts = new();
 	readonly SemaphoreSlim _connections = new(MaxConcurrentConnections, MaxConcurrentConnections);
+	readonly object _listenerLock = new();
 	TcpListener? _listener;
 
 	public BackdoorServer(BackdoorOptions options, Func<Func<Task<InvocationResult>>, Task<InvocationResult>> dispatch, ILogger? logger = null)
@@ -59,9 +60,12 @@ internal sealed class BackdoorServer : IDisposable
 
 	public void Dispose()
 	{
-		_cts.Cancel();
-		_listener?.Stop();
-		_listener = null;
+		lock (_listenerLock)
+		{
+			_cts.Cancel();
+			_listener?.Stop();
+			_listener = null;
+		}
 	}
 
 	TcpListener CreateListener()
@@ -130,8 +134,16 @@ internal sealed class BackdoorServer : IDisposable
 				{
 					try
 					{
-						_listener?.Stop();
-						_listener = CreateListener();
+						lock (_listenerLock)
+						{
+							// Don't publish a new listener after Dispose, it would keep the port in use
+							if (cancellationToken.IsCancellationRequested)
+								return;
+
+							_listener?.Stop();
+							_listener = CreateListener();
+						}
+
 						Log(LogLevel.Information, $"UI test backdoor recreated its listener on port {Port}.");
 					}
 					catch (SocketException restartError)
