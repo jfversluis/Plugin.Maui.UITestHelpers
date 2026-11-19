@@ -18,6 +18,23 @@ public class MainPageTests : BaseTest
     }
 
     [Test]
+    public void ExistsTest()
+    {
+        const string elementId = "CounterBtn";
+
+        // Arrange
+        App.WaitForElement("MainPage");
+
+        // Act
+        bool elementExistsById = App.Exists(elementId);
+        bool elementExistsByText = App.Exists("Hello, World!");
+
+        // Assert
+        Assert.That(elementExistsById, Is.True, "element must have been found by AutomationId");
+        Assert.That(elementExistsByText, Is.True, "element must have been found by text");
+    }
+
+    [Test]
     public void ClickCounterTest()
     {
         const string elementId = "CounterBtn";
@@ -102,5 +119,59 @@ public class MainPageTests : BaseTest
         // Assert
         App.Screenshot($"{nameof(RadioButton_RadioButtonNotChecked_IsCheckedReturnsFalse)}.png");
         ClassicAssert.IsFalse(isChecked);
+    }
+
+    [Test]
+    public void Marked_AutomationId_FindsElement()
+    {
+        const string elementId = "CounterBtn";
+
+        // Arrange
+        App.WaitForElement(elementId);
+
+        // Act
+        var element = App.FindElement(App.Marked(elementId));
+
+        // Assert
+        Assert.That(element, Is.Not.Null, "element must have been found by AutomationId");
+    }
+
+    [Test]
+    public void Marked_Text_FindsElement()
+    {
+        // Arrange
+        App.WaitForElement("CounterBtn");
+
+        // Act
+        var element = App.FindElement(App.Marked("Hello, World!"));
+
+        // Assert
+        Assert.That(element, Is.Not.Null, "element must have been found by text");
+    }
+
+    [Test]
+    public void Marked_UnknownValue_FindsNoElement()
+    {
+        // Arrange
+        App.WaitForElement("CounterBtn");
+
+        // Act
+        var elements = App.FindElements(App.Marked("DoesNotExist"));
+
+        // Assert
+        Assert.That(elements, Is.Empty, "no element must have been found");
+    }
+
+    [Test]
+    public void Marked_WaitForElement_FindsElement()
+    {
+        const string elementId = "CB1";
+
+        // Act
+        var element = App.WaitForElement(App.Marked(elementId));
+
+        // Assert
+        Assert.That(element, Is.Not.Null, "WaitForElement must have found the element via Marked()");
+        Assert.That(element.IsChecked(App.GetTestDevice()), Is.True, "the found element must be the checked check box");
     }
 }

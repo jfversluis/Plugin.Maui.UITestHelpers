@@ -1,16 +1,78 @@
+using OpenQA.Selenium;
+using OpenQA.Selenium.Appium;
+using OpenQA.Selenium.Appium.Interfaces;
+using Plugin.Maui.UITestHelpers.Core;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
-using OpenQA.Selenium.Appium;
-using OpenQA.Selenium.Appium.Interfaces;
-using Plugin.Maui.UITestHelpers.Core;
 
 namespace Plugin.Maui.UITestHelpers.Appium
 {
     public static class HelperExtensions
     {
         static TimeSpan DefaultTimeout = TimeSpan.FromSeconds(15);
+
+        /// <summary>
+        /// Checks if an element currently exists, by marked text.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="marked">AutomationId or text to search element.</param>
+        public static bool Exists(this IApp app, string marked)
+        {
+            try
+            {
+                return FindElement(app, marked) != null;
+            }
+            catch (StaleElementReferenceException)
+            {
+                return false;
+            }
+            catch (NoSuchElementException)
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Checks if an element currently exists, by query.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="query">Represents the query that identifies an element by parameters such as type, text it contains or identifier.</param>
+        public static bool Exists(this IApp app, IQuery query)
+        {
+            try
+            {
+                return app.FindElement(query) != null;
+            }
+            catch (StaleElementReferenceException)
+            {
+                return false;
+            }
+            catch (NoSuchElementException)
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Returns a query for elements "marked" with the given value, like Xamarin.UITest's
+        /// Marked(): the element's AutomationId, its accessibility label or content description,
+        /// or its displayed text. The attributes searched are platform specific.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="marked">AutomationId or text to search for.</param>
+        /// <returns>The query, to be used with the methods taking an <see cref="IQuery"/>, e.g. Tap() or WaitForNoElement().</returns>
+        /// <exception cref="InvalidOperationException">Thrown when the app is not an AppiumApp.</exception>
+        public static IQuery Marked(this IApp app, string marked)
+        {
+            if (app is not AppiumApp appiumApp)
+            {
+                throw new InvalidOperationException($"Marked is only supported on AppiumApp");
+            }
+
+            return AppiumQuery.ByXPath(appiumApp.GetMarkedXPath(marked));
+        }
 
         /// <summary>
         /// For desktop, this will perform a mouse click on the target element.
@@ -20,9 +82,13 @@ namespace Plugin.Maui.UITestHelpers.Appium
         /// </summary>
         /// <param name="app">Represents the main gateway to interact with an app.</param>
         /// <param name="element">Target Element.</param>
+        /// <exception cref="InvalidOperationException">Thrown when the element can't be found.</exception>
         public static void Tap(this IApp app, string element)
         {
-            FindElement(app, element).Click();
+            var appElement = FindElement(app, element)
+                ?? throw new InvalidOperationException($"Could not find element '{element}' to tap");
+
+            appElement.Click();
         }
 
         /// <summary>
@@ -33,9 +99,13 @@ namespace Plugin.Maui.UITestHelpers.Appium
  		/// </summary>
  		/// <param name="app">Represents the main gateway to interact with an app.</param>
  		/// <param name="query">Represents the query that identify an element by parameters such as type, text it contains or identifier.</param>
+        /// <exception cref="InvalidOperationException">Thrown when the element can't be found.</exception>
  		public static void Tap(this IApp app, IQuery query)
         {
-            app.FindElement(query).Tap();
+            var appElement = app.FindElement(query)
+                ?? throw new InvalidOperationException($"Could not find element of the query to tap");
+
+            appElement.Tap();
         }
 
         /// <summary>
@@ -250,9 +320,11 @@ namespace Plugin.Maui.UITestHelpers.Appium
         /// <param name="app">Represents the main gateway to interact with an app.</param>
         /// <param name="element">Target Element.</param>
         /// <param name="text">The text to enter.</param>
+        /// <exception cref="InvalidOperationException">Thrown when the element can't be found.</exception>
         public static void EnterText(this IApp app, string element, string text)
         {
-            var appElement = FindElement(app, element);
+            var appElement = FindElement(app, element)
+                ?? throw new InvalidOperationException($"Could not find element '{element}' to enter text into");
 
             app.EnterText(appElement, text);
         }
@@ -263,22 +335,21 @@ namespace Plugin.Maui.UITestHelpers.Appium
         /// <param name="app">Represents the main gateway to interact with an app.</param>
         /// <param name="element">Target Element.</param>
         /// <param name="query">Represents the query that identify an element by parameters such as type, text it contains or identifier.</param>
+        /// <exception cref="InvalidOperationException">Thrown when the element can't be found.</exception>
         public static void EnterText(this IApp app, IQuery query, string text)
         {
-            var appElement = app.FindElement(query);
+            var appElement = app.FindElement(query)
+                ?? throw new InvalidOperationException("Could not find element of the query to enter text into");
 
             app.EnterText(appElement, text);
         }
 
-        internal static void EnterText(this IApp app, IUIElement? element, string text)
+        internal static void EnterText(this IApp app, IUIElement element, string text)
         {
-            if (element is not null)
+            element.SendKeys(text);
+            if (app.IsKeyboardShown())
             {
-                element.SendKeys(text);
-                if (app.IsKeyboardShown())
-                {
-                    app.DismissKeyboard();
-                }
+                app.DismissKeyboard();
             }
         }
 
@@ -337,9 +408,13 @@ namespace Plugin.Maui.UITestHelpers.Appium
         /// </summary>
         /// <param name="app">Represents the main gateway to interact with an app.</param>
         /// <param name="element">Target Element.</param>
+        /// <exception cref="InvalidOperationException">Thrown when the element can't be found.</exception>
         public static void ClearText(this IApp app, string element)
         {
-            FindElement(app, element).Clear();
+            var appElement = FindElement(app, element)
+                ?? throw new InvalidOperationException($"Could not find element '{element}' to clear text");
+
+            appElement.Clear();
         }
 
         /// <summary>
@@ -347,9 +422,13 @@ namespace Plugin.Maui.UITestHelpers.Appium
  		/// </summary>
  		/// <param name="app">Represents the main gateway to interact with an app.</param>
  		/// <param name="query">Represents the query that identify an element by parameters such as type, text it contains or identifier.</param>
+        /// <exception cref="InvalidOperationException">Thrown when the element can't be found.</exception>
  		public static void ClearText(this IApp app, IQuery query)
         {
-            app.FindElement(query).Clear();
+            var appElement = app.FindElement(query)
+                ?? throw new InvalidOperationException($"Could not find element of the query to clear text");
+
+            appElement.Clear();
         }
 
         /// <summary>
@@ -1181,6 +1260,13 @@ namespace Plugin.Maui.UITestHelpers.Appium
         {
             if (element is not null)
             {
+                // don't scroll when the element is already visible inside the scroll container;
+                // the scrollDownTo command scrolls before checking and could move it out of view
+                if (IsVisibleInContainer(app, element, toMarked))
+                {
+                    return;
+                }
+
                 app.CommandExecutor.Execute("scrollDownTo", new Dictionary<string, object>
                 {
                     { "marked", toMarked },
@@ -1190,6 +1276,43 @@ namespace Plugin.Maui.UITestHelpers.Appium
                     { "swipeSpeed", swipeSpeed },
                     { "withInertia", withInertia }
                 });
+            }
+        }
+
+        static bool IsVisibleInContainer(IApp app, IUIElement container, string marked)
+        {
+            if (app is not AppiumApp appiumApp || container is not AppiumDriverElement driverElement)
+            {
+                return false;   // can't check: scroll as before
+            }
+
+            try
+            {
+                // relative XPath (".//"): only descendants of the container
+                string xpath = $".{appiumApp.GetMarkedXPath(marked)}";
+
+                var candidates = AppiumQuery.ByXPath(xpath).FindElements(driverElement.AppiumElement, appiumApp);
+                if (candidates.Count == 0)
+                {
+                    return false;
+                }
+
+                Rectangle bounds = container.GetRect();
+
+                return candidates.Any(candidate =>
+                {
+                    if (!candidate.IsDisplayed())
+                    {
+                        return false;
+                    }
+
+                    Rectangle rect = candidate.GetRect();
+                    return bounds.Contains(rect.X + (rect.Width / 2), rect.Y + (rect.Height / 2));
+                });
+            }
+            catch (WebDriverException)
+            {
+                return false;   // e.g. a stale element: scroll to be sure
             }
         }
 
@@ -1325,6 +1448,13 @@ namespace Plugin.Maui.UITestHelpers.Appium
         {
             if (element is not null)
             {
+                // don't scroll when the element is already visible inside the scroll container;
+                // the scrollUpTo command scrolls before checking and could move it out of view
+                if (IsVisibleInContainer(app, element, toMarked))
+                {
+                    return;
+                }
+
                 app.CommandExecutor.Execute("scrollUpTo", new Dictionary<string, object>
                 {
                     { "marked", toMarked },
@@ -2330,6 +2460,163 @@ namespace Plugin.Maui.UITestHelpers.Appium
             return IsElementVisible(app, elementToWaitFor);
         }
 
+        /// <summary>
+        /// Switches the Appium context to the app's webview, so webview content can be queried and interacted with.
+        /// On Android the webview must be debuggable (<c>Android.Webkit.WebView.SetWebContentsDebuggingEnabled(true)</c>)
+        /// and Appium needs a Chromedriver that matches the device's WebView version.
+        /// On iOS 16.4 and later the webview must be inspectable (<c>WKWebView.Inspectable = true</c>).
+        /// </summary>
+        /// <remarks>
+        /// When there are multiple webview contexts, the one belonging to the configured AppId is preferred
+        /// (e.g. <c>WEBVIEW_com.mycompany.myapp</c> on Android), otherwise the first webview context is used.
+        /// Use <see cref="SwitchContextToNative"/> to switch back to the native context.
+        /// </remarks>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="timeout">How long to wait for a webview context to become available. Defaults to 15 seconds.</param>
+        /// <returns><c>true</c> when switched to a webview context; <c>false</c> when no webview context was found within the timeout.</returns>
+        public static bool SwitchContextToWebview(this IApp app, TimeSpan? timeout = null)
+        {
+            if (app is not AppiumApp appiumApp)
+            {
+                return false;
+            }
+
+            var driver = appiumApp.Driver;
+            var appId = app.Config.GetProperty<string>("AppId");
+            var deadline = DateTime.Now + (timeout ?? DefaultTimeout);
+
+            while (true)
+            {
+                var webviewContext = SelectWebviewContext(driver.Contexts, appId);
+                if (webviewContext is not null)
+                {
+                    driver.Context = webviewContext;
+                    return true;
+                }
+
+                if (DateTime.Now >= deadline)
+                {
+                    return false;
+                }
+
+                Task.Delay(500).Wait();
+            }
+        }
+
+        internal static string? SelectWebviewContext(IEnumerable<string>? contexts, string? appId)
+        {
+            var webviewContexts = contexts?
+                .Where(c => c.StartsWith("WEBVIEW", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            if (webviewContexts is null || webviewContexts.Count == 0)
+            {
+                return null;
+            }
+
+            if (!string.IsNullOrWhiteSpace(appId))
+            {
+                var appWebview = webviewContexts.FirstOrDefault(c => c.Equals($"WEBVIEW_{appId}", StringComparison.OrdinalIgnoreCase));
+                if (appWebview is not null)
+                {
+                    return appWebview;
+                }
+            }
+
+            return webviewContexts[0];
+        }
+
+        /// <summary>
+        /// Switches the Appium context back to the native app, e.g. after using <see cref="SwitchContextToWebview"/>.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <returns><c>true</c> when switched to the native context; otherwise <c>false</c>.</returns>
+        public static bool SwitchContextToNative(this IApp app)
+        {
+            if (app is not AppiumApp appiumApp)
+            {
+                return false;
+            }
+
+            var driver = appiumApp.Driver;
+            var nativeContext = driver.Contexts?.FirstOrDefault(c => c.Equals("NATIVE_APP", StringComparison.OrdinalIgnoreCase));
+
+            if (nativeContext is null)
+            {
+                return false;
+            }
+
+            driver.Context = nativeContext;
+            return true;
+        }
+
+        /// <summary>
+        /// Taps a button in the webview by its text. Matches <c>button</c> elements, <c>input</c> elements of type
+        /// button, submit or reset, and elements with <c>role="button"</c>. An exact (whitespace-trimmed) text match is
+        /// preferred; when there is none, the first button that contains the text is used.
+        /// Requires the webview context, see <see cref="SwitchContextToWebview"/>.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="buttonText">The text of the button to tap.</param>
+        /// <returns><c>true</c> when a matching button was found and tapped; otherwise <c>false</c>.</returns>
+        public static bool TapWebviewButtonByText(this IApp app, string buttonText)
+        {
+            if (app is not AppiumApp appiumApp)
+            {
+                return false;
+            }
+
+            const string script = @"
+                var text = arguments[0].trim();
+                var buttons = Array.from(document.querySelectorAll(
+                    'button, input[type=button], input[type=submit], input[type=reset], [role=button]'));
+                var label = function (b) { return ((b.tagName === 'INPUT' ? b.value : b.textContent) || '').trim(); };
+                return buttons.find(function (b) { return label(b) === text; })
+                    || buttons.find(function (b) { return label(b).includes(text); })
+                    || null;";
+
+            if (appiumApp.Driver.ExecuteScript(script, buttonText) is not IWebElement button)
+            {
+                return false;
+            }
+
+            button.Click();
+            return true;
+        }
+
+        /// <summary>
+        /// Scrolls the webview content to the bottom or to the top.
+        /// Requires the webview context, see <see cref="SwitchContextToWebview"/>.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="down"><c>true</c> to scroll to the bottom; <c>false</c> to scroll to the top.</param>
+        /// <returns><c>true</c> when the scroll script was executed; otherwise <c>false</c>.</returns>
+        public static bool ScrollWebview(this IApp app, bool down)
+        {
+            if (app is not AppiumApp appiumApp)
+            {
+                return false;
+            }
+
+            const string script = @"
+                var scroller = document.scrollingElement || document.documentElement;
+                window.scrollTo(0, arguments[0] ? scroller.scrollHeight : 0);
+                return true;";
+
+            return appiumApp.Driver.ExecuteScript(script, down) is true;
+        }
+
+        /// <summary>
+        /// Gets the URL of the page that is currently loaded in the webview.
+        /// Requires the webview context, see <see cref="SwitchContextToWebview"/>.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <returns>The current URL, or <c>null</c> when it can't be determined.</returns>
+        public static string? GetCurrentUri(this IApp app)
+        {
+            return (app as AppiumApp)?.Driver.Url;
+        }
+
         static IUIElement Wait(Func<IUIElement?> query,
             Func<IUIElement?, bool> satisfactory,
             string? timeoutMessage = null,
@@ -2385,7 +2672,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
         {
             var result = app.FindElements(element);
 
-            if (result is null)
+            if (result is null || result.Count == 0)
                 result = app.FindElementsByText(element);
 
             return result;

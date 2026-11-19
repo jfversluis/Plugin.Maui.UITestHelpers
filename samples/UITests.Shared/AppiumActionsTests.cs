@@ -38,11 +38,6 @@ public class AppiumActionsTests : BaseTest
             Assert.Ignore("Clipboard operations are only supported on Android and iOS");
         }
 
-        if (App is AppiumAndroidApp)
-        {
-            Assert.Ignore("Newer Appium versions (3.x) don't support clipboard - skip test for now");
-        }
-
         // Arrange
         const string testText = "Test clipboard content";
 

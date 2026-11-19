@@ -1,7 +1,9 @@
 using OpenQA.Selenium;
 using OpenQA.Selenium.Appium;
+using OpenQA.Selenium.Appium.Android;
 using OpenQA.Selenium.Appium.Enums;
 using OpenQA.Selenium.Appium.iOS;
+using OpenQA.Selenium.Appium.Mac;
 using OpenQA.Selenium.Appium.Windows;
 using Plugin.Maui.UITestHelpers.Core;
 
@@ -139,6 +141,51 @@ namespace Plugin.Maui.UITestHelpers.Appium
         }
 
         /// <summary>
+        /// Returns the XPath that finds elements "marked" with the given value, like
+        /// Xamarin.UITest's Marked(): elements whose AutomationId, accessibility label or
+        /// content description, or displayed text equals the value.
+        /// </summary>
+        /// <remarks>
+        /// The attributes searched depend on the platform:
+        /// <list type="bullet">
+        /// <item><description>Android (UiAutomator2): "resource-id" (as
+        /// "&lt;AppId&gt;:id/&lt;AutomationId&gt;", only when the AppId is configured),
+        /// "content-desc" and "text"</description></item>
+        /// <item><description>iOS (XCUITest): "name", "label" and "value"</description></item>
+        /// <item><description>Mac Catalyst (Mac2): "identifier", "label", "title" and "value"</description></item>
+        /// <item><description>Windows (UI Automation): "AutomationId" and "Name"</description></item>
+        /// <item><description>Other platforms: the displayed text, see <see cref="GetTextXPath"/></description></item>
+        /// </list>
+        /// The value is escaped, so it may contain single and double quotes. Override this
+        /// method to support further platforms or attributes.
+        /// </remarks>
+        /// <param name="marked">AutomationId or text to search for.</param>
+        /// <returns>XPath expression that searches the whole element tree.</returns>
+        protected internal virtual string GetMarkedXPath(string marked)
+        {
+            string literal = ToXPathLiteral(marked);
+
+            switch (_driver)
+            {
+                case AndroidDriver:
+                    // .NET MAUI exposes the AutomationId as resource-id "<package>:id/<AutomationId>"
+                    string? appId = Config.GetProperty<string>("AppId");
+                    string resourceId = string.IsNullOrWhiteSpace(appId)
+                        ? string.Empty
+                        : $"@resource-id={ToXPathLiteral($"{appId}:id/{marked}")} or ";
+                    return $"//*[{resourceId}@content-desc={literal} or @text={literal}]";
+                case IOSDriver:
+                    return $"//*[@name={literal} or @label={literal} or @value={literal}]";
+                case MacDriver:
+                    return $"//*[@identifier={literal} or @label={literal} or @title={literal} or @value={literal}]";
+                case WindowsDriver:
+                    return $"//*[@AutomationId={literal} or @Name={literal}]";
+                default:
+                    return GetTextXPath(marked);
+            }
+        }
+
+        /// <summary>
         /// Converts a string to an XPath 1.0 string literal; texts containing both kinds of
         /// quotes are combined with concat().
         /// </summary>
@@ -191,6 +238,59 @@ namespace Plugin.Maui.UITestHelpers.Appium
 
 			appiumOptions.AddAdditionalAppiumOption(MobileCapabilityType.NewCommandTimeout, 3000);
 		}
+
+		/// <summary>
+		/// Adds the capabilities from the "AdditionalCapabilities" config property, for Appium options that don't have
+		/// a dedicated config property. The value must be a dictionary with capability names as keys, for example
+		/// <c>new Dictionary&lt;string, object&gt; { ["disableWindowAnimation"] = true }</c>.
+		/// Names without a vendor prefix get the "appium:" prefix. These capabilities are applied last, so they
+		/// override other values the library sets for the same capability, such as "newCommandTimeout".
+		/// Standard W3C capabilities, "automationName" and capabilities with a dedicated config property (like "app"
+		/// or "deviceName") can't be set this way.
+		/// </summary>
+		/// <param name="config">The test configuration.</param>
+		/// <param name="appiumOptions">The options to add the capabilities to.</param>
+		/// <exception cref="InvalidOperationException">Thrown when the value isn't a dictionary with capability names as keys, or contains a capability that can't be set this way.</exception>
+		protected static void SetAdditionalAppiumOptions(IConfig config, AppiumOptions appiumOptions)
+		{
+			var additionalCapabilities = config.GetProperty<object>("AdditionalCapabilities");
+			if (additionalCapabilities is null)
+				return;
+
+			if (additionalCapabilities is not System.Collections.IDictionary capabilities)
+				throw new InvalidOperationException("The AdditionalCapabilities config property must be a dictionary with capability names as keys.");
+
+			foreach (System.Collections.DictionaryEntry capability in capabilities)
+			{
+				if (capability.Key is not string name || string.IsNullOrWhiteSpace(name))
+					throw new InvalidOperationException("The AdditionalCapabilities config property must have capability names as keys.");
+
+				var unprefixedName = name.StartsWith("appium:", StringComparison.Ordinal) ? name["appium:".Length..] : name;
+				if (UnsupportedAdditionalCapabilities.TryGetValue(unprefixedName, out var reason))
+					throw new InvalidOperationException($"The '{name}' capability can't be set through AdditionalCapabilities: {reason}.");
+
+				if (unprefixedName == name && StandardW3CCapabilities.Contains(name))
+					throw new InvalidOperationException($"The '{name}' capability can't be set through AdditionalCapabilities: it is a standard W3C capability.");
+
+				appiumOptions.AddAdditionalAppiumOption(name, capability.Value);
+			}
+		}
+
+		// AppiumOptions manages these through dedicated properties and throws when they're added as additional options
+		static readonly Dictionary<string, string> UnsupportedAdditionalCapabilities = new(StringComparer.Ordinal)
+		{
+			["app"] = "use the AppPath config property instead",
+			["deviceName"] = "use the DeviceName config property instead",
+			["platformVersion"] = "use the PlatformVersion config property instead",
+			["automationName"] = "it is set by the library for each platform",
+		};
+
+		// Without a vendor prefix these would get the "appium:" prefix and no longer be the standard capability
+		static readonly HashSet<string> StandardW3CCapabilities = new(StringComparer.Ordinal)
+		{
+			"platformName", "browserName", "browserVersion", "acceptInsecureCerts", "pageLoadStrategy", "proxy",
+			"setWindowRect", "timeouts", "strictFileInteractability", "unhandledPromptBehavior", "webSocketUrl",
+		};
 
 		public void Dispose()
 		{
