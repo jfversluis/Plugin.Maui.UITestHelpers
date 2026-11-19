@@ -1,0 +1,59 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- An executable assembly on purpose: the REPL window is started with 'dotnet exec' on this same assembly,
+         so no separate tool or host has to be installed. It's still referenced as a regular library. -->
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net11.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <StartupObject>Plugin.Maui.UITestHelpers.Repl.Client.ReplClientProgram</StartupObject>
+    <UseAppHost>false</UseAppHost>
+    <RollForward>LatestMajor</RollForward>
+    <!-- The window gets a runtime configuration that matches the test process, see TerminalLauncher -->
+    <GenerateRuntimeConfigurationFiles>false</GenerateRuntimeConfigurationFiles>
+
+    <!-- NuGet -->
+    <Authors>jfversluis</Authors>
+    <Copyright>Copyright © jfversluis and contributors</Copyright>
+    <IsPackable>True</IsPackable>
+    <PackageProjectUrl>https://github.com/jfversluis/Plugin.Maui.UITestHelpers</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/jfversluis/Plugin.Maui.UITestHelpers</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>dotnet-maui;maui;plugin;ui-test;appium;uitest;repl</PackageTags>
+    <IncludeSymbols>True</IncludeSymbols>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <Title>.NET MAUI UI Test Helpers REPL Plugin</Title>
+    <Description>Plugin.Maui.UITestHelpers.Repl adds an interactive REPL (read-eval-print loop) to your .NET MAUI UI tests, like the one Xamarin.UITest had. Call app.Repl() from a test to explore the running app and try out UI test code live.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+    <DebugType>portable</DebugType>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="5.12.0" />
+    <PackageReference Include="PrettyPrompt" Version="6.0.5" />
+    <PackageReference Include="Spectre.Console" Version="0.57.2" />
+    <PackageReference Include="TextCopy" Version="6.2.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Plugin.Maui.UITestHelpers.Appium\Plugin.Maui.UITestHelpers.Appium.csproj" />
+    <ProjectReference Include="..\Plugin.Maui.UITestHelpers.Core\Plugin.Maui.UITestHelpers.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Plugin.Maui.UITestHelpers.Repl.Tests" />
+  </ItemGroup>
+
+  <!-- Package additions -->
+  <ItemGroup>
+    <None Include="..\..\nuget.png" PackagePath="icon.png" Pack="true" />
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>

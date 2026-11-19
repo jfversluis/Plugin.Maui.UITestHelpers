@@ -25,6 +25,7 @@
 	<ItemGroup>
 		<ProjectReference Include="..\..\src\Plugin.Maui.UITestHelpers.NUnit\Plugin.Maui.UITestHelpers.NUnit.csproj" />
 		<ProjectReference Include="..\..\src\Plugin.Maui.UITestHelpers.Appium\Plugin.Maui.UITestHelpers.Appium.csproj" />
+		<ProjectReference Include="..\..\src\Plugin.Maui.UITestHelpers.Repl\Plugin.Maui.UITestHelpers.Repl.csproj" />
 	</ItemGroup>
 
 </Project>

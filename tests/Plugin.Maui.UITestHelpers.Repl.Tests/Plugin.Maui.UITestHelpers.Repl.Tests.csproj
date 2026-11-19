@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net11.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<IsPackable>false</IsPackable>
+		<IsTestProject>true</IsTestProject>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.12.0" />
+		<PackageReference Include="NUnit" Version="5.0.0" />
+		<PackageReference Include="NUnit3TestAdapter" Version="6.3.1" />
+		<PackageReference Include="Spectre.Console.Testing" Version="0.57.2" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\src\Plugin.Maui.UITestHelpers.Repl\Plugin.Maui.UITestHelpers.Repl.csproj" />
+	</ItemGroup>
+
+</Project>
