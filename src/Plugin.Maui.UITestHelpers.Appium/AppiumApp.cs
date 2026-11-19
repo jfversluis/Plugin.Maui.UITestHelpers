@@ -374,9 +374,19 @@ namespace Plugin.Maui.UITestHelpers.Appium
 
 		protected virtual void Dispose(bool disposing)
 		{
-			if (disposing)
+			if (!disposing)
+				return;
+
+			try
 			{
 				_backdoorClient?.Dispose();
+			}
+			catch (Exception)
+			{
+				// Cleaning up the backdoor must never keep the Appium session from closing
+			}
+			finally
+			{
 				_backdoorClient = null;
 				_driver?.Dispose();
 			}

@@ -32,8 +32,16 @@ public class BackdoorTests : BaseTest
     [OneTimeTearDown]
     public void LeaveCounterReset()
     {
-        // Other test fixtures share the same app session and expect the counter to be at 0
-        App.Invoke("ResetCounter");
+        // Other test fixtures share the same app session and expect the counter to be at 0. If the
+        // backdoor doesn't work, restart the app instead, so these tests can't affect the others.
+        try
+        {
+            App.Invoke("ResetCounter");
+        }
+        catch (BackdoorException)
+        {
+            App.ResetApp();
+        }
     }
 
     [Test]

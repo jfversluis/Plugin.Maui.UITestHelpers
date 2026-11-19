@@ -101,6 +101,11 @@ Backdoors let UI tests call methods in your app directly, without going through 
 to set up test data, change app state, or read internal state to assert on. This works like
 `app.Invoke` in Xamarin.UITest.
 
+Backdoors are optional and independent of the rest of the library. Nothing changes for tests that
+don't call `Invoke`: no connection is made and on Android no `adb` command runs. In the app, a
+problem with the backdoor (for example a configuration error or a port that's in use) is logged
+and turns the backdoor off, but never keeps the app from starting.
+
 Appium has no way to call into a .NET MAUI app, so the app has to expose the methods itself with
 the `Plugin.Maui.UITestHelpers.Backdoor` package. It runs a small HTTP server inside your app that
 only accepts connections from the device itself, and rejects requests from web pages. The UI tests

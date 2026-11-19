@@ -121,7 +121,7 @@ namespace Plugin.Maui.UITestHelpers.Core
 				throw new BackdoorException(
 					$"Could not {action}: the backdoor at {BaseAddress} could not be reached ({ex.Message}). " +
 					"Make sure the app is running and calls builder.UseUITestBackdoor(...) from the Plugin.Maui.UITestHelpers.Backdoor package, " +
-					"and that the \"BackdoorPort\" configuration matches the port of the app.", ex);
+					"and that the \"BackdoorPort\" configuration matches the port of the app. If it does, the app's log has a 'UI test backdoor' message with the reason.", ex);
 			}
 			catch (TaskCanceledException ex)
 			{

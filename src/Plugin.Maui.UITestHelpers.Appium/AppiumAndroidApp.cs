@@ -107,9 +107,10 @@ namespace Plugin.Maui.UITestHelpers.Appium
 				{
 					RunAdb(_backdoorForwardSerial, "forward", "--remove", $"tcp:{port}");
 				}
-				catch (BackdoorException)
+				catch (Exception)
 				{
-					// The device may be gone already; nothing left to clean up then
+					// The device may be gone already. Cleaning up the backdoor must never keep
+					// the Appium session from closing.
 				}
 
 				_backdoorForwardPort = null;

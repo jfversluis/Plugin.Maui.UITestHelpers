@@ -26,23 +26,61 @@ public static class MauiAppBuilderExtensions
 		ArgumentNullException.ThrowIfNull(builder);
 		ArgumentNullException.ThrowIfNull(configure);
 
+		// A problem with the backdoor must never keep the app from starting: the error is logged
+		// when the app starts, the backdoor stays off and the UI tests that use it fail
 		var options = new BackdoorOptions();
-		configure(options);
+		Exception? configurationError = null;
+		try
+		{
+			configure(options);
+		}
+		catch (Exception ex)
+		{
+			configurationError = ex;
+		}
 
-		builder.Services.AddSingleton(options);
+		builder.Services.AddSingleton(new BackdoorStartup(options, configurationError));
 		builder.Services.AddSingleton<IMauiInitializeService, BackdoorInitializeService>();
 
 		return builder;
 	}
 }
 
+sealed record BackdoorStartup(BackdoorOptions Options, Exception? ConfigurationError);
+
 sealed class BackdoorInitializeService : IMauiInitializeService
 {
 	public void Initialize(IServiceProvider services)
 	{
-		var options = services.GetRequiredService<BackdoorOptions>();
-		var logger = services.GetService<ILoggerFactory>()?.CreateLogger("Plugin.Maui.UITestHelpers.Backdoor");
+		ILogger? logger = null;
+		try
+		{
+			logger = services.GetService<ILoggerFactory>()?.CreateLogger("Plugin.Maui.UITestHelpers.Backdoor");
+			var startup = services.GetRequiredService<BackdoorStartup>();
+			if (startup.ConfigurationError is not null)
+			{
+				Log(logger, startup.ConfigurationError, $"UI test backdoor is off because UseUITestBackdoor failed: {startup.ConfigurationError.Message}");
+				return;
+			}
 
+			Start(startup.Options, logger);
+		}
+		catch (Exception ex)
+		{
+			Log(logger, ex, $"UI test backdoor is off because it failed to start: {ex.Message}");
+		}
+	}
+
+	static void Log(ILogger? logger, Exception exception, string message)
+	{
+		if (logger is not null)
+			logger.LogError(exception, "{Message}", message);
+		else
+			System.Diagnostics.Debug.WriteLine(message);
+	}
+
+	static void Start(BackdoorOptions options, ILogger? logger)
+	{
 		// Initialize runs on the UI thread, so this is the dispatcher that backdoor methods run on
 		var dispatcher = Dispatcher.GetForCurrentThread();
 
@@ -64,10 +102,7 @@ sealed class BackdoorInitializeService : IMauiInitializeService
 			var message = $"UI test backdoor could not listen on port {options.Port}: {ex.Message}";
 			if (OperatingSystem.IsMacCatalyst())
 				message += " Sandboxed Mac Catalyst apps need the com.apple.security.network.server entitlement.";
-			if (logger is not null)
-				logger.LogError(ex, "{Message}", message);
-			else
-				System.Diagnostics.Debug.WriteLine(message);
+			Log(logger, ex, message);
 		}
 	}
 
