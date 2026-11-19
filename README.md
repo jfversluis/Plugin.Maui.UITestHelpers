@@ -53,6 +53,28 @@ public void RestartApp() => App.ResetApp();
 of a test: if the app is closed when the test finishes, `UITestBase` treats it as a crash and fails
 the test.
 
+## Passing other Appium capabilities
+
+To set an Appium capability that doesn't have its own config property, add it to the
+`AdditionalCapabilities` dictionary in your test config:
+
+```csharp
+config.SetProperty("AdditionalCapabilities", new Dictionary<string, object>
+{
+    ["systemPort"] = 8201,
+    ["disableWindowAnimation"] = true,
+});
+```
+
+Names without a vendor prefix get the `appium:` prefix. These capabilities are applied last, so
+they also override values the library sets itself, such as `newCommandTimeout`. For capabilities
+that have their own config property, such as `AppId` (`appPackage`/`bundleId`), use that property:
+the library also relies on it after the session has started. Standard W3C capabilities (like
+`platformName`), `automationName` (set by the library for each platform) and `app`, `deviceName`
+and `platformVersion` (use `AppPath`, `DeviceName` and `PlatformVersion`) can't be set this way.
+See the driver documentation for the available capabilities, for example the
+[UiAutomator2 capabilities](https://github.com/appium/appium-uiautomator2-driver#capabilities).
+
 ## Testing webview content
 
 On Android and iOS you can interact with the content of a `WebView` (or a Blazor Hybrid
