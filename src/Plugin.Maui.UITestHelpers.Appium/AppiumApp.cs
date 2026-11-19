@@ -123,8 +123,10 @@ namespace Plugin.Maui.UITestHelpers.Appium
 
         /// <summary>
         /// Returns the XPath that finds elements by their displayed text. The attribute that
-        /// contains the text differs per platform: Android (UiAutomator2) uses "text", iOS
-        /// (XCUITest) uses "label" and "value", Windows (UI Automation) uses "Name".
+        // contains the text differs per platform: Android (UiAutomator2) uses "text" and the
+        /// content description ("content-desc", e.g. of toolbar items and image buttons), iOS
+        /// (XCUITest) uses "label" and "value", Windows (UI Automation) uses "Name". Like on iOS,
+        /// the accessibility label is included.
         /// </summary>
         /// <param name="text">Text to search for.</param>
         /// <returns>XPath expression.</returns>
@@ -134,6 +136,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
 
             return _driver switch
             {
+                AndroidDriver => $"//*[@text={literal} or @content-desc={literal}]",
                 IOSDriver => $"//*[@label={literal} or @value={literal}]",
                 WindowsDriver => $"//*[@Name={literal}]",
                 _ => $"//*[@text={literal}]",
