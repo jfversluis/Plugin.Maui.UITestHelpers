@@ -53,6 +53,18 @@ Run it like any other test, for example `dotnet test --filter ExploreTheApp`. A 
 > [!TIP]
 > Since the REPL starts wherever you call it, you can use your tests to get the app to the screen you're working on, and explore from there.
 
+### While debugging
+
+To use the REPL while debugging a test, call `Repl()` from code. Add an `App.Repl();` line where you want to explore, or stop at a breakpoint just before an existing one and step over it. The REPL window opens and the debugger waits on that line until you close it with `exit`.
+
+In Visual Studio, typing `App.Repl()` in the **Immediate Window** fails with *"Cannot evaluate expression since the function evaluation requires all threads to run"*. The debugger keeps all other threads frozen while it evaluates an expression, and the REPL needs them, as does every call to the app (Appium talks to the device on another thread). You can ask Visual Studio to let the other threads run by adding `, run_all_threads`:
+
+```text
+App.Repl(), run_all_threads
+```
+
+The debugger may still time out an evaluation that runs for a long time, so for longer sessions, start the REPL from code instead.
+
 ## Using the REPL
 
 Anything you type is C#. `app` (and `App`, as in your tests) is the running app, and `driver` is the Appium driver. All the helpers you use in tests are there: `Tap`, `EnterText`, `WaitForElement`, `FindElements`, `Screenshot`, and so on. Variables you declare stay around, and a missing semicolon is added for you.
