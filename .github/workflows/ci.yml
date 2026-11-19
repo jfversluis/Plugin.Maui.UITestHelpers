@@ -23,3 +23,12 @@ jobs:
 
     - name: Build
       run: dotnet build src\Plugin.Maui.UITestHelpers.slnx -c Release
+
+    - name: Pack
+      run: dotnet pack src\Plugin.Maui.UITestHelpers.slnx -c Release --no-build -p:PackageVersion=1.0.0-ci.${{ github.run_number }} -o ${{ github.workspace }}\packages
+
+    - name: Upload NuGet packages
+      uses: actions/upload-artifact@v7
+      with:
+        name: nuget-packages
+        path: ${{ github.workspace }}\packages\*.nupkg

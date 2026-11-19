@@ -2491,6 +2491,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
                 if (webviewContext is not null)
                 {
                     driver.Context = webviewContext;
+                    SwitchToOpenWindow(driver);
                     return true;
                 }
 
@@ -2501,6 +2502,46 @@ namespace Plugin.Maui.UITestHelpers.Appium
 
                 Task.Delay(500).Wait();
             }
+        }
+
+        /// <summary>
+        /// Makes sure the webview context's current window (page) still exists. The webview context keeps
+        /// its current window when the app destroys the webview, e.g. after navigating back, and creates a
+        /// new one; commands then fail with "no such window: target window already closed". In that case
+        /// this switches to an open window (the most recently listed one).
+        /// </summary>
+        /// <param name="driver">The driver, already in the webview context.</param>
+        static void SwitchToOpenWindow(AppiumDriver driver)
+        {
+            IReadOnlyCollection<string> windowHandles;
+            try
+            {
+                windowHandles = driver.WindowHandles;
+            }
+            catch (WebDriverException)
+            {
+                // window handles aren't supported in this context
+                return;
+            }
+
+            if (windowHandles.Count == 0)
+            {
+                return;
+            }
+
+            try
+            {
+                if (windowHandles.Contains(driver.CurrentWindowHandle))
+                {
+                    return;
+                }
+            }
+            catch (NoSuchWindowException)
+            {
+                // the current window was closed
+            }
+
+            driver.SwitchTo().Window(windowHandles.Last());
         }
 
         internal static string? SelectWebviewContext(IEnumerable<string>? contexts, string? appId)
@@ -2523,7 +2564,32 @@ namespace Plugin.Maui.UITestHelpers.Appium
                 }
             }
 
-            return webviewContexts[0];
+            // iOS lists one context per webview page, numbered in creation order, e.g. WEBVIEW_501.1 and
+            // WEBVIEW_501.2. Pages of webviews that were already closed, e.g. after navigating back, can
+            // still be listed until they're released; they don't execute scripts anymore. So prefer the
+            // most recently created page.
+            var newestPage = webviewContexts
+                .Select(c => (Context: c, PageNumber: GetWebviewPageNumber(c)))
+                .Where(c => c.PageNumber is not null)
+                .OrderByDescending(c => c.PageNumber)
+                .FirstOrDefault();
+
+            return newestPage.Context ?? webviewContexts[0];
+        }
+
+        /// <summary>
+        /// Returns the page number of a webview context, i.e. the number after the last '.' or '_',
+        /// e.g. 2 for WEBVIEW_501.2, or null when the context has no page number.
+        /// </summary>
+        /// <param name="context">The webview context.</param>
+        /// <returns>The page number, or null.</returns>
+        static long? GetWebviewPageNumber(string context)
+        {
+            int separatorIndex = Math.Max(context.LastIndexOf('.'), context.LastIndexOf('_'));
+
+            return separatorIndex >= 0 && long.TryParse(context.AsSpan(separatorIndex + 1), out long pageNumber)
+                ? pageNumber
+                : null;
         }
 
         /// <summary>
@@ -2615,6 +2681,195 @@ namespace Plugin.Maui.UITestHelpers.Appium
         public static string? GetCurrentUri(this IApp app)
         {
             return (app as AppiumApp)?.Driver.Url;
+        }
+
+        /// <summary>
+        /// Returns a query for the native webview control (<c>WebView</c>, <c>BlazorWebView</c>),
+        /// e.g. to wait until a webview is shown: <c>app.WaitForElement(app.WebView())</c>.
+        /// </summary>
+        /// <remarks>
+        /// The query matches the platform's webview class: <c>android.webkit.WebView</c> on Android,
+        /// <c>XCUIElementTypeWebView</c> on iOS and Mac Catalyst, and the <c>WebView2</c> control on
+        /// Windows. Use it instead of the webview's AutomationId, which isn't exposed on Android.
+        /// </remarks>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <returns>The query, to be used with the methods taking an <see cref="IQuery"/>.</returns>
+        public static IQuery WebView(this IApp app)
+        {
+            return app switch
+            {
+                AppiumAndroidApp => AppiumQuery.ByXPath("//android.webkit.WebView"),
+                AppiumIOSApp or AppiumCatalystApp => AppiumQuery.ByXPath("//XCUIElementTypeWebView"),
+                AppiumWindowsApp => AppiumQuery.ByXPath("//*[@ClassName='WebView2']"),
+                _ => throw new InvalidOperationException($"WebView is only supported on AppiumApp"),
+            };
+        }
+
+        /// <summary>
+        /// Returns the HTML elements in the webview that match the CSS selector, with their text and
+        /// their bounds in device coordinates, e.g. to tap an element with
+        /// <c>app.TapCoordinates(element.CenterX, element.CenterY)</c>. Equivalent of Xamarin.UITest's
+        /// <c>app.Query(x => x.WebView().Css(cssSelector))</c>.
+        /// </summary>
+        /// <remarks>
+        /// The method switches to the webview context (see <see cref="SwitchContextToWebview"/>) and
+        /// restores the previous context afterwards, so it can be called from the native context.
+        /// Elements that aren't rendered (e.g. inside an element with <c>display: none</c>, or with
+        /// <c>visibility: hidden</c>) are skipped, unless <paramref name="includeHidden"/> is set.
+        /// Supported on Android and iOS; the webview must be debuggable, see
+        /// <see cref="SwitchContextToWebview"/>.
+        /// </remarks>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="cssSelector">CSS selector of the elements, e.g. <c>"button"</c> or <c>"#result"</c>.</param>
+        /// <param name="webView">Query of the native webview whose bounds are used to calculate the
+        /// device coordinates; defaults to <see cref="WebView"/>.</param>
+        /// <param name="includeHidden">Whether to also return elements that aren't rendered; their
+        /// bounds are empty.</param>
+        /// <returns>The matching elements in document order; an empty list when there's no webview
+        /// or no webview context.</returns>
+        /// <exception cref="NotSupportedException">Thrown on platforms other than Android and iOS.</exception>
+        public static IReadOnlyList<WebViewElement> QueryWebViewCss(this IApp app, string cssSelector, IQuery? webView = null, bool includeHidden = false)
+        {
+            return QueryWebView(app, cssSelector, isXPath: false, webView, includeHidden);
+        }
+
+        /// <summary>
+        /// Returns the HTML elements in the webview that match the XPath expression, with their text
+        /// and their bounds in device coordinates, e.g. to tap an element with
+        /// <c>app.TapCoordinates(element.CenterX, element.CenterY)</c>. Equivalent of Xamarin.UITest's
+        /// <c>app.Query(x => x.WebView().XPath(xpath))</c>.
+        /// </summary>
+        /// <remarks>
+        /// Works like <see cref="QueryWebViewCss"/>; nodes that aren't elements (e.g. text or
+        /// attribute nodes) are skipped.
+        /// </remarks>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="xpath">XPath expression, e.g. <c>"//button[@id='plainButton']"</c>.</param>
+        /// <param name="webView">Query of the native webview whose bounds are used to calculate the
+        /// device coordinates; defaults to <see cref="WebView"/>.</param>
+        /// <param name="includeHidden">Whether to also return elements that aren't rendered; their
+        /// bounds are empty.</param>
+        /// <returns>The matching elements in document order; an empty list when there's no webview
+        /// or no webview context.</returns>
+        /// <exception cref="NotSupportedException">Thrown on platforms other than Android and iOS.</exception>
+        public static IReadOnlyList<WebViewElement> QueryWebViewXPath(this IApp app, string xpath, IQuery? webView = null, bool includeHidden = false)
+        {
+            return QueryWebView(app, xpath, isXPath: true, webView, includeHidden);
+        }
+
+        // Returns the matching elements with their bounds relative to the viewport (CSS pixels), plus
+        // the values needed to convert them to device coordinates. Arguments: selector, isXPath,
+        // includeHidden.
+        const string QueryWebViewScript = @"
+            var selector = arguments[0], isXPath = arguments[1], includeHidden = arguments[2];
+            var nodes = [];
+            if (isXPath) {
+                var snapshot = document.evaluate(selector, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+                for (var i = 0; i < snapshot.snapshotLength; i++) {
+                    nodes.push(snapshot.snapshotItem(i));
+                }
+            } else {
+                nodes = Array.prototype.slice.call(document.querySelectorAll(selector));
+            }
+            var vv = window.visualViewport;
+            var result = {
+                dpr: window.devicePixelRatio || 1,
+                scale: vv ? vv.scale : 1,
+                offsetX: vv ? vv.offsetLeft : 0,
+                offsetY: vv ? vv.offsetTop : 0,
+                items: []
+            };
+            nodes.forEach(function (n) {
+                if (n.nodeType !== 1) {
+                    return;
+                }
+                var r = n.getBoundingClientRect();
+                if (!includeHidden && (r.width === 0 || r.height === 0 || window.getComputedStyle(n).visibility === 'hidden')) {
+                    return;
+                }
+                result.items.push({ id: n.id || '', text: n.textContent || '', x: r.left, y: r.top, w: r.width, h: r.height });
+            });
+            return JSON.stringify(result);";
+
+        static IReadOnlyList<WebViewElement> QueryWebView(IApp app, string selector, bool isXPath, IQuery? webView, bool includeHidden)
+        {
+            if (app is not AppiumApp appiumApp)
+            {
+                throw new InvalidOperationException($"QueryWebView is only supported on AppiumApp");
+            }
+
+            if (app is not (AppiumAndroidApp or AppiumIOSApp))
+            {
+                throw new NotSupportedException("Querying webview content is only supported on Android and iOS");
+            }
+
+            var driver = appiumApp.Driver;
+            string previousContext = driver.Context;
+
+            try
+            {
+                // the webview's bounds are only available in the native context
+                if (!previousContext.Equals("NATIVE_APP", StringComparison.OrdinalIgnoreCase))
+                {
+                    app.SwitchContextToNative();
+                }
+
+                var nativeWebView = app.FindElement(webView ?? app.WebView());
+                if (nativeWebView is null)
+                {
+                    return Array.Empty<WebViewElement>();
+                }
+
+                Rectangle webViewRect = nativeWebView.GetRect();
+
+                if (!app.SwitchContextToWebview(TimeSpan.Zero))
+                {
+                    return Array.Empty<WebViewElement>();
+                }
+
+                if (driver.ExecuteScript(QueryWebViewScript, selector, isXPath, includeHidden) is not string json)
+                {
+                    return Array.Empty<WebViewElement>();
+                }
+
+                return ToDeviceCoordinates(json, webViewRect, isIOS: app is AppiumIOSApp);
+            }
+            finally
+            {
+                if (driver.Context != previousContext)
+                {
+                    driver.Context = previousContext;
+                }
+            }
+        }
+
+        static List<WebViewElement> ToDeviceCoordinates(string json, Rectangle webViewRect, bool isIOS)
+        {
+            using var document = System.Text.Json.JsonDocument.Parse(json);
+            var root = document.RootElement;
+
+            // Android uses device pixels, iOS uses points, which equal CSS pixels at zoom scale 1
+            double scale = root.GetProperty("scale").GetDouble();
+            double factor = (isIOS ? 1.0 : root.GetProperty("dpr").GetDouble()) * scale;
+            double offsetX = root.GetProperty("offsetX").GetDouble();
+            double offsetY = root.GetProperty("offsetY").GetDouble();
+
+            var elements = new List<WebViewElement>();
+            foreach (var item in root.GetProperty("items").EnumerateArray())
+            {
+                var rect = new Rectangle(
+                    (int)Math.Round(webViewRect.X + ((item.GetProperty("x").GetDouble() - offsetX) * factor)),
+                    (int)Math.Round(webViewRect.Y + ((item.GetProperty("y").GetDouble() - offsetY) * factor)),
+                    (int)Math.Round(item.GetProperty("w").GetDouble() * factor),
+                    (int)Math.Round(item.GetProperty("h").GetDouble() * factor));
+
+                elements.Add(new WebViewElement(
+                    item.GetProperty("id").GetString() ?? string.Empty,
+                    item.GetProperty("text").GetString() ?? string.Empty,
+                    rect));
+            }
+
+            return elements;
         }
 
         static IUIElement Wait(Func<IUIElement?> query,

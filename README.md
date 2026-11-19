@@ -94,6 +94,26 @@ builds you test, not in production builds. On Android, Appium also needs a Chrom
 matches the WebView version on the device, for example by starting Appium with
 `--allow-insecure uiautomator2:chromedriver_autodownload`.
 
+To find HTML elements and their position on the screen, use `QueryWebViewCss()` or
+`QueryWebViewXPath()`. They switch to the webview context and back themselves, and return the
+matching elements with their `Id`, `Text` and bounds (`Rect`, `CenterX`, `CenterY`) in device
+coordinates, so you can tap them like native elements. Elements that aren't rendered, e.g. with
+`display: none`, are skipped unless you pass `includeHidden: true`:
+
+```csharp
+App.WaitForElement(App.WebView());
+
+var button = App.QueryWebViewCss("button#signIn").Single();
+App.TapCoordinates(button.CenterX, button.CenterY);
+
+string version = App.QueryWebViewXPath("//div[@id='version']").First().Text;
+```
+
+These replace Xamarin.UITest's `app.Query(x => x.WebView().Css(...))` and
+`app.Query(x => x.WebView().XPath(...))`. `App.WebView()` returns a query for the native
+webview control, which you can use instead of the webview's AutomationId (not exposed on
+Android).
+
 # Related resources
 
 To make it easier to add UI test projects to your existing solution, I also have a template that you can use: https://github.com/jfversluis/Template.Maui.UITesting/
