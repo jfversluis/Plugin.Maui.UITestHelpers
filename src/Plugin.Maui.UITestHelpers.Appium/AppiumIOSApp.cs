@@ -68,6 +68,8 @@ namespace Plugin.Maui.UITestHelpers.Appium
 				options.AddAdditionalAppiumOption("appium:isHeadless", true);
 			}
 
+			SetAdditionalAppiumOptions(config, options);
+
 			return options;
 		}
 	}

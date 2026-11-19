@@ -50,6 +50,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
 
 			var options = new AppiumOptions();
 			SetGeneralAppiumOptions(config, options);
+			SetAdditionalAppiumOptions(config, options);
 			return options;
 		}
 	}

@@ -239,6 +239,59 @@ namespace Plugin.Maui.UITestHelpers.Appium
 			appiumOptions.AddAdditionalAppiumOption(MobileCapabilityType.NewCommandTimeout, 3000);
 		}
 
+		/// <summary>
+		/// Adds the capabilities from the "AdditionalCapabilities" config property, for Appium options that don't have
+		/// a dedicated config property. The value must be a dictionary with capability names as keys, for example
+		/// <c>new Dictionary&lt;string, object&gt; { ["disableWindowAnimation"] = true }</c>.
+		/// Names without a vendor prefix get the "appium:" prefix. These capabilities are applied last, so they
+		/// override other values the library sets for the same capability, such as "newCommandTimeout".
+		/// Standard W3C capabilities and capabilities with a dedicated config property (like "app" or "deviceName")
+		/// can't be set this way.
+		/// </summary>
+		/// <param name="config">The test configuration.</param>
+		/// <param name="appiumOptions">The options to add the capabilities to.</param>
+		/// <exception cref="InvalidOperationException">Thrown when the value isn't a dictionary with capability names as keys, or contains a capability that can't be set this way.</exception>
+		protected static void SetAdditionalAppiumOptions(IConfig config, AppiumOptions appiumOptions)
+		{
+			var additionalCapabilities = config.GetProperty<object>("AdditionalCapabilities");
+			if (additionalCapabilities is null)
+				return;
+
+			if (additionalCapabilities is not System.Collections.IDictionary capabilities)
+				throw new InvalidOperationException("The AdditionalCapabilities config property must be a dictionary with capability names as keys.");
+
+			foreach (System.Collections.DictionaryEntry capability in capabilities)
+			{
+				if (capability.Key is not string name || string.IsNullOrWhiteSpace(name))
+					throw new InvalidOperationException("The AdditionalCapabilities config property must have capability names as keys.");
+
+				var unprefixedName = name.StartsWith("appium:", StringComparison.Ordinal) ? name["appium:".Length..] : name;
+				if (UnsupportedAdditionalCapabilities.TryGetValue(unprefixedName, out var reason))
+					throw new InvalidOperationException($"The '{name}' capability can't be set through AdditionalCapabilities: {reason}.");
+
+				if (unprefixedName == name && StandardW3CCapabilities.Contains(name))
+					throw new InvalidOperationException($"The '{name}' capability can't be set through AdditionalCapabilities: it is a standard W3C capability.");
+
+				appiumOptions.AddAdditionalAppiumOption(name, capability.Value);
+			}
+		}
+
+		// AppiumOptions manages these through dedicated properties and throws when they're added as additional options
+		static readonly Dictionary<string, string> UnsupportedAdditionalCapabilities = new(StringComparer.Ordinal)
+		{
+			["app"] = "use the AppPath config property instead",
+			["deviceName"] = "use the DeviceName config property instead",
+			["platformVersion"] = "use the PlatformVersion config property instead",
+			["automationName"] = "it is set by the library for each platform",
+		};
+
+		// Without a vendor prefix these would get the "appium:" prefix and no longer be the standard capability
+		static readonly HashSet<string> StandardW3CCapabilities = new(StringComparer.Ordinal)
+		{
+			"platformName", "browserName", "browserVersion", "acceptInsecureCerts", "pageLoadStrategy", "proxy",
+			"setWindowRect", "timeouts", "strictFileInteractability", "unhandledPromptBehavior", "webSocketUrl",
+		};
+
 		public void Dispose()
 		{
 			_driver?.Dispose();

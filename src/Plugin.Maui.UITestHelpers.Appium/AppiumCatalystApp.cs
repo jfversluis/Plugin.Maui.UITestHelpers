@@ -54,6 +54,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
 			}
 
 			options.AddAdditionalAppiumOption("showServerLogs", true);
+			SetAdditionalAppiumOptions(config, options);
 			return options;
 		}
 	}

@@ -102,6 +102,8 @@ namespace Plugin.Maui.UITestHelpers.Appium
 				options.AddAdditionalAppiumOption(MobileCapabilityType.Udid, deviceSerial);
 			}
 
+			SetAdditionalAppiumOptions(config, options);
+
 			return options;
 		}
 	}
