@@ -2564,7 +2564,32 @@ namespace Plugin.Maui.UITestHelpers.Appium
                 }
             }
 
-            return webviewContexts[0];
+            // iOS lists one context per webview page, numbered in creation order, e.g. WEBVIEW_501.1 and
+            // WEBVIEW_501.2. Pages of webviews that were already closed, e.g. after navigating back, can
+            // still be listed until they're released; they don't execute scripts anymore. So prefer the
+            // most recently created page.
+            var newestPage = webviewContexts
+                .Select(c => (Context: c, PageNumber: GetWebviewPageNumber(c)))
+                .Where(c => c.PageNumber is not null)
+                .OrderByDescending(c => c.PageNumber)
+                .FirstOrDefault();
+
+            return newestPage.Context ?? webviewContexts[0];
+        }
+
+        /// <summary>
+        /// Returns the page number of a webview context, i.e. the number after the last '.' or '_',
+        /// e.g. 2 for WEBVIEW_501.2, or null when the context has no page number.
+        /// </summary>
+        /// <param name="context">The webview context.</param>
+        /// <returns>The page number, or null.</returns>
+        static long? GetWebviewPageNumber(string context)
+        {
+            int separatorIndex = Math.Max(context.LastIndexOf('.'), context.LastIndexOf('_'));
+
+            return separatorIndex >= 0 && long.TryParse(context.AsSpan(separatorIndex + 1), out long pageNumber)
+                ? pageNumber
+                : null;
         }
 
         /// <summary>
