@@ -88,7 +88,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
             var appElement = FindElement(app, element)
                 ?? throw new InvalidOperationException($"Could not find element '{element}' to tap");
 
-            appElement.Click();
+            appElement.Tap();
         }
 
         /// <summary>
