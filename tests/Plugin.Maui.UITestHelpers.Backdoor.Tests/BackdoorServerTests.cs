@@ -29,6 +29,75 @@ public class BackdoorServerTests
 		public int Value { get; set; } = 42;
 	}
 
+	public record Address(string City, string Zip = "0000");
+
+	public record Customer(string Name, int Age, Address Address, List<string> Tags);
+
+	public class Order
+	{
+		public int Id { get; set; }
+
+		[JsonPropertyName("lines")]
+		public Line[] Items { get; set; } = Array.Empty<Line>();
+
+		public Dictionary<string, int> Stock { get; set; } = new();
+
+		public IReadOnlyList<DayOfWeek> Days { get; set; } = Array.Empty<DayOfWeek>();
+
+		public Customer? Customer { get; set; }
+	}
+
+	public class Line
+	{
+		public string Product { get; set; } = "";
+
+		public decimal Price { get; set; }
+	}
+
+	public record Note(string Name, string? Text);
+
+	public record Renamed([property: JsonPropertyName("customer_name")] string Name);
+
+	public record Settings(string Theme, [property: JsonIgnore] string Secret = "safe");
+
+	public class TwoConstructors
+	{
+		public TwoConstructors()
+		{
+		}
+
+		public TwoConstructors(string value) => Value = -1;
+
+		public int Value { get; set; }
+	}
+
+	public class Ambiguous
+	{
+		public Ambiguous(int a) { }
+
+		public Ambiguous(string b) { }
+	}
+
+	public class WithRequired
+	{
+		public required string Name { get; init; }
+
+		public int Age { get; init; }
+	}
+
+	public record Validated
+	{
+		public Validated(int quantity) =>
+			Quantity = quantity > 0 ? quantity : throw new ArgumentOutOfRangeException(nameof(quantity), "Quantity must be positive.");
+
+		public int Quantity { get; }
+	}
+
+	public class Stats
+	{
+		public int OrderCount { get; set; }
+	}
+
 	BackdoorServer Start(Action<BackdoorOptions>? configure = null, TimeSpan? readTimeout = null)
 	{
 		var options = new BackdoorOptions { Port = 0 };
@@ -43,6 +112,19 @@ public class BackdoorServerTests
 		options.AddMethod("Dto", () => new Dto());
 		options.AddMethod("Anonymous", () => new { Name = "x", Items = new[] { 1, 2 } });
 		options.AddMethod("Throw", new Action(() => throw new InvalidOperationException("boom")));
+		options.AddMethod("Describe", (Customer c) => $"{c.Name} ({c.Age}) {c.Address.City} {c.Address.Zip} [{string.Join(",", c.Tags)}]");
+		options.AddMethod("Total", (Order o) => $"{o.Id}: {o.Items.Sum(l => l.Price)} {string.Join(",", o.Stock.Select(kv => $"{kv.Key}={kv.Value}"))} {string.Join(",", o.Days)} {o.Customer?.Name ?? "-"}");
+		options.AddMethod("Many", (IEnumerable<Address> addresses) => string.Join(";", addresses.Select(a => a.City)));
+		options.AddMethod("Disposable", (IDisposable d) => "never");
+		options.AddMethod("AddToList", (IList<string> list) => { list.Add("added"); return string.Join(",", list); });
+		options.AddMethod("Unique", (HashSet<int> set) => set.Count);
+		options.AddMethod("ReadNote", (Note n) => $"{n.Name}|{n.Text ?? "null"}");
+		options.AddMethod("ReadRenamed", (Renamed r) => r.Name);
+		options.AddMethod("ReadSettings", (Settings s) => $"{s.Theme}|{s.Secret}");
+		options.AddMethod("ReadTwo", (TwoConstructors t) => t.Value);
+		options.AddMethod("ReadAmbiguous", (Ambiguous a) => "never");
+		options.AddMethod("ReadRequired", (WithRequired w) => $"{w.Name}|{w.Age}");
+		options.AddMethod("ReadValidated", (Validated v) => v.Quantity);
 		configure?.Invoke(options);
 
 		_server = new BackdoorServer(options, invoke => invoke()) { RequestReadTimeout = readTimeout ?? TimeSpan.FromSeconds(15) };
@@ -116,6 +198,69 @@ public class BackdoorServerTests
 
 		Assert.That(status, Is.EqualTo(200), body.ToString());
 		Assert.That(body.GetProperty("result").GetRawText(), Is.EqualTo(expectedResult));
+	}
+
+	[TestCase("{\"method\":\"Describe\",\"arguments\":[{\"name\":\"Ann\",\"age\":30,\"address\":{\"city\":\"Delft\"},\"tags\":[\"vip\",\"new\"]}]}", "Ann (30) Delft 0000 [vip,new]")]
+	[TestCase("{\"method\":\"Total\",\"arguments\":[{\"id\":7,\"lines\":[{\"product\":\"a\",\"price\":1.5},{\"product\":\"b\",\"price\":2}],\"stock\":{\"a\":3},\"days\":[\"Monday\",\"Friday\"],\"customer\":{\"name\":\"Bo\",\"age\":1,\"address\":{\"city\":\"X\",\"zip\":\"1\"},\"tags\":[]}}]}", "7: 3.5 a=3 Monday,Friday Bo")]
+	[TestCase("{\"method\":\"Total\",\"arguments\":[{\"id\":1}]}", "1: 0   -")]
+	[TestCase("{\"method\":\"AddToList\",\"arguments\":[[\"a\"]]}", "a,added")]
+	[TestCase("{\"method\":\"ReadNote\",\"arguments\":[{\"name\":\"n\"}]}", "n|null")]
+	[TestCase("{\"method\":\"ReadRenamed\",\"arguments\":[{\"customer_name\":\"Ann\"}]}", "Ann")]
+	[TestCase("{\"method\":\"ReadSettings\",\"arguments\":[{\"theme\":\"dark\",\"secret\":\"injected\"}]}", "dark|safe")]
+	[TestCase("{\"method\":\"ReadRequired\",\"arguments\":[{\"name\":\"Bo\",\"age\":3}]}", "Bo|3")]
+	[TestCase("{\"method\":\"Many\",\"arguments\":[[{\"city\":\"A\"},{\"city\":\"B\"}]]}", "A;B")]
+	public async Task Invoke_ObjectArguments_WorkWithoutJsonMetadata(string request, string expectedResult)
+	{
+		Assert.That(JsonSerializer.IsReflectionEnabledByDefault, Is.False, "this test needs reflection-based JSON to be disabled");
+		var server = Start();
+
+		var (status, body) = await InvokeAsync(server, request);
+
+		Assert.That(status, Is.EqualTo(200), body.ToString());
+		Assert.That(body.GetProperty("result").GetString(), Is.EqualTo(expectedResult));
+	}
+
+	[TestCase("{\"method\":\"ReadAmbiguous\",\"arguments\":[{\"a\":1}]}", "constructor")]
+	[TestCase("{\"method\":\"ReadRequired\",\"arguments\":[{\"age\":3}]}", "missing required properties")]
+	[TestCase("{\"method\":\"ReadValidated\",\"arguments\":[{\"quantity\":0}]}", "Quantity must be positive.")]
+	[TestCase("{\"method\":\"Describe\",\"arguments\":[{\"name\":\"Ann\",\"age\":\"old\",\"address\":{\"city\":\"D\"},\"tags\":[]}]}", "cannot be converted")]
+	[TestCase("{\"method\":\"Describe\",\"arguments\":[[1,2]]}", "cannot be converted")]
+	[TestCase("{\"method\":\"Disposable\",\"arguments\":[{}]}", "interface")]
+	public async Task Invoke_InvalidObjectArguments_AreRejected(string request, string expectedReason)
+	{
+		var server = Start();
+
+		var (status, body) = await InvokeAsync(server, request);
+
+		Assert.That(status, Is.EqualTo(400));
+		Assert.That(Reason(body), Does.Contain(expectedReason));
+	}
+
+	[TestCase("{\"method\":\"Unique\",\"arguments\":[[1,2,2]]}", 2)]
+	[TestCase("{\"method\":\"ReadTwo\",\"arguments\":[{\"value\":7}]}", 7)]
+	public async Task Invoke_ObjectArguments_FollowSystemTextJsonRules(string request, int expected)
+	{
+		var server = Start();
+
+		var (status, body) = await InvokeAsync(server, request);
+
+		Assert.That(status, Is.EqualTo(200), body.ToString());
+		Assert.That(body.GetProperty("result").GetInt32(), Is.EqualTo(expected));
+	}
+
+	[Test]
+	public async Task Invoke_ObjectArguments_UseNamingPolicy()
+	{
+		var server = Start(o =>
+		{
+			o.JsonSerializerOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower };
+			o.AddMethod("ReadStats", (Stats s) => s.OrderCount);
+		});
+
+		var (status, body) = await InvokeAsync(server, "{\"method\":\"ReadStats\",\"arguments\":[{\"order_count\":7}]}");
+
+		Assert.That(status, Is.EqualTo(200), body.ToString());
+		Assert.That(body.GetProperty("result").GetInt32(), Is.EqualTo(7));
 	}
 
 	[Test]

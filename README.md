@@ -168,11 +168,15 @@ before the result is returned. Supported parameter and return types:
 * Strings, numbers, booleans, enums, `char`, `Guid`, `DateTime`, `DateTimeOffset`, `TimeSpan` and
   `Uri`, and nullable versions of them.
 * `JsonElement`, `JsonNode` and `object`.
-* Return values can also be lists, dictionaries and objects, including anonymous types.
-* Other parameter types are converted with `System.Text.Json`. In trimmed apps, like Android
-  Release builds, reflection-based serialization can be disabled. Then set a source-generated
-  `JsonSerializerContext` as `backdoor.JsonSerializerOptions.TypeInfoResolver`. Also do that for
-  returned objects when you trim the app assembly itself (`TrimMode=full` or NativeAOT).
+* Objects (classes and records, also nested), arrays, lists and dictionaries with string keys,
+  for example `SeedOrders(Order[] orders)`. Return values can also be anonymous types.
+* Objects are converted with `System.Text.Json`, so its attributes such as `[JsonIgnore]` and
+  `[JsonPropertyName]` apply. When reflection-based serialization is disabled
+  (`JsonSerializerIsReflectionEnabledByDefault=false`, which NativeAOT also sets), the backdoor
+  creates objects itself through their public constructor and settable properties. That works as
+  long as the app assembly itself isn't fully trimmed, which is the .NET MAUI default
+  (`TrimMode=partial`). With `TrimMode=full` or NativeAOT, set a source-generated
+  `JsonSerializerContext` as `backdoor.JsonSerializerOptions.TypeInfoResolver` for these types.
 
 Arguments are converted strictly: a number isn't converted to a `string` parameter, and `2.5`
 isn't rounded for an `int` parameter. If you overload a backdoor method, at most one overload may

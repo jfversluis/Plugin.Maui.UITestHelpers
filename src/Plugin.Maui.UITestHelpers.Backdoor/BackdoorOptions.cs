@@ -81,14 +81,21 @@ public sealed class BackdoorOptions
 
 	/// <summary>
 	/// Options used to convert arguments and return values that aren't simple values
-	/// (strings, numbers, booleans, enums, dates, lists and dictionaries). When your app
-	/// is trimmed, reflection-based serialization may be disabled. Returned objects then fall
-	/// back to reading their public properties, which works as long as the app assembly itself
-	/// isn't trimmed (the default for .NET MAUI). With full trimming or NativeAOT, and for
-	/// parameters of other types, set a <see cref="JsonSerializerOptions.TypeInfoResolver"/>
-	/// (for example a source-generated <c>JsonSerializerContext</c>).
+	/// (strings, numbers, booleans, enums and dates). When reflection-based serialization is
+	/// disabled (for example with NativeAOT), objects fall back to their public constructors and
+	/// properties, which works as long as the app assembly itself isn't fully trimmed (the
+	/// .NET MAUI default). With <c>TrimMode=full</c> or NativeAOT, set a
+	/// <see cref="JsonSerializerOptions.TypeInfoResolver"/> (for example a source-generated
+	/// <c>JsonSerializerContext</c>).
 	/// </summary>
-	public JsonSerializerOptions JsonSerializerOptions { get; set; } = new(JsonSerializerDefaults.Web);
+	public JsonSerializerOptions JsonSerializerOptions { get; set; } = CreateDefaultJsonSerializerOptions();
+
+	// Enums are sent and returned as their names, also inside objects, like the UI test side does
+	[System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("AOT", "IL3050", Justification = "Only used with reflection-based serialization; with a TypeInfoResolver its own converters apply.")]
+	static JsonSerializerOptions CreateDefaultJsonSerializerOptions() => new(JsonSerializerDefaults.Web)
+	{
+		Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() },
+	};
 
 	internal IReadOnlyList<BackdoorMethod> Methods => _methods;
 

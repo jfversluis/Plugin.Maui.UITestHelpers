@@ -15,6 +15,11 @@ public class BackdoorTests : BaseTest
 
     record AppInfo(string Name, string PackageName, int Counter, string CurrentPage);
 
+    // The test project doesn't reference the app, so it uses its own types with the same shape
+    record OrderLine(string Product, int Quantity, decimal Price);
+    record Order(string Customer, List<OrderLine> Lines, DateTime OrderedAt, string? Note = null, DayOfWeek? DeliveryDay = null);
+    record OrderSummary(string Customer, int Orders, int Items, decimal Total, DateTime? Latest, List<string> Notes, List<DayOfWeek> DeliveryDays);
+
     [SetUp]
     public void ResetAppState()
     {
@@ -93,6 +98,33 @@ public class BackdoorTests : BaseTest
         Assert.That(count, Is.EqualTo(3));
         Assert.That(App.FindElement(CounterButton).GetText(), Is.EqualTo("Clicked 3 times"));
         Assert.That(App.Invoke<string>("GoToMainPageAsync"), Is.EqualTo("MainPage"));
+    }
+
+    [Test]
+    public void Invoke_ObjectArgumentsOnServiceFromDependencyInjection()
+    {
+        App.Invoke("ClearOrders");
+        var orders = new[]
+        {
+            new Order("Ann", new() { new("Coffee", 2, 3.5m), new("Cake", 1, 4.25m) }, new DateTime(2026, 11, 18, 9, 30, 0, DateTimeKind.Utc)),
+            new Order("Ann", new() { new("Tea", 3, 2m) }, new DateTime(2026, 11, 19, 8, 0, 0, DateTimeKind.Utc), "Extra hot", DayOfWeek.Friday),
+            new Order("Bob", new() { new("Water", 1, 1m) }, new DateTime(2026, 11, 17, 12, 0, 0, DateTimeKind.Utc)),
+        };
+
+        // The array is one argument, so wrap it
+        var count = App.Invoke<int>("SeedOrders", new object[] { orders });
+        var summary = App.Invoke<OrderSummary>("GetOrderSummary", "Ann");
+
+        Assert.That(count, Is.EqualTo(3));
+        Assert.That(summary, Is.Not.Null);
+        Assert.That(summary!.Orders, Is.EqualTo(2));
+        Assert.That(summary.Items, Is.EqualTo(6));
+        Assert.That(summary.Total, Is.EqualTo(17.25m));
+        Assert.That(summary.Latest, Is.EqualTo(new DateTime(2026, 11, 19, 8, 0, 0, DateTimeKind.Utc)));
+        Assert.That(summary.Notes, Is.EqualTo(new[] { "Extra hot" }));
+        Assert.That(summary.DeliveryDays, Is.EqualTo(new[] { DayOfWeek.Friday }), "enums inside objects round-trip as names");
+
+        App.Invoke("ClearOrders");
     }
 
     [Test]

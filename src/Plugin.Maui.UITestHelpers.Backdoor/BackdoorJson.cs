@@ -178,17 +178,180 @@ internal static class BackdoorJson
 	[UnconditionalSuppressMessage("AOT", "IL3050", Justification = "See above.")]
 	static object? Deserialize(JsonElement element, Type type, JsonSerializerOptions options)
 	{
-		try
-		{
+		if (options.TypeInfoResolver is not null || JsonSerializer.IsReflectionEnabledByDefault)
 			return element.Deserialize(type, options);
-		}
-		catch (InvalidOperationException ex) when (!JsonSerializer.IsReflectionEnabledByDefault && options.TypeInfoResolver is null)
-		{
-			throw new InvalidOperationException(
-				$"Cannot convert the argument to '{type.FullName}' because reflection-based JSON serialization is disabled in this app. " +
-				$"Use simple parameter types, or set a TypeInfoResolver on {nameof(BackdoorOptions)}.{nameof(BackdoorOptions.JsonSerializerOptions)}.", ex);
-		}
+
+		// Reflection-based serialization is disabled (trimmed app); build the value ourselves
+		return ReadValue(element, type, options);
 	}
+
+	[UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "Only used when the app assembly isn't fully trimmed; with full trimming or NativeAOT a TypeInfoResolver is required, as documented on BackdoorOptions.JsonSerializerOptions.")]
+	[UnconditionalSuppressMessage("AOT", "IL3050", Justification = "See above.")]
+	[UnconditionalSuppressMessage("Trimming", "IL2055", Justification = "See above.")]
+	[UnconditionalSuppressMessage("Trimming", "IL2062", Justification = "See above.")]
+	[UnconditionalSuppressMessage("Trimming", "IL2067", Justification = "See above.")]
+	[UnconditionalSuppressMessage("Trimming", "IL2070", Justification = "See above.")]
+	[UnconditionalSuppressMessage("Trimming", "IL2072", Justification = "See above.")]
+	[UnconditionalSuppressMessage("Trimming", "IL2075", Justification = "See above.")]
+	static object? ReadValue(JsonElement element, Type type, JsonSerializerOptions options)
+	{
+		// Arrays and collections: T[], List<T>, HashSet<T>, IEnumerable<T>, IList<T> and so on
+		var elementType = type.IsArray ? type.GetElementType() : GetEnumerableElementType(type);
+		if (elementType is not null && !IsDictionary(type))
+		{
+			if (element.ValueKind != JsonValueKind.Array)
+				throw Mismatch(element, type);
+
+			var items = element.EnumerateArray().Select(e => ConvertArgument(e, elementType, options)).ToList();
+
+			// Read-only interfaces get an array, like System.Text.Json; other interfaces a List<T>
+			if (type.IsArray || IsReadOnlyEnumerable(type))
+			{
+				var array = Array.CreateInstance(elementType, items.Count);
+				for (var i = 0; i < items.Count; i++)
+					array.SetValue(items[i], i);
+				return array;
+			}
+
+			var collectionType = type.IsInterface || type.IsAbstract ? typeof(List<>).MakeGenericType(elementType) : type;
+			if (!type.IsAssignableFrom(collectionType))
+				throw new ArgumentException($"Collection type '{type.Name}' is not supported; use an array, List<T> or IList<T>.");
+
+			var collection = Activator.CreateInstance(collectionType)
+				?? throw new ArgumentException($"Cannot create collection type '{type.Name}'.");
+			var add = collectionType.GetMethod("Add", new[] { elementType })
+				?? throw new ArgumentException($"Collection type '{type.Name}' has no Add method.");
+			foreach (var item in items)
+				add.Invoke(collection, BindingFlags.DoNotWrapExceptions, null, new[] { item }, null);
+			return collection;
+		}
+
+		if (element.ValueKind != JsonValueKind.Object)
+			throw Mismatch(element, type);
+
+		var lookup = new Dictionary<string, JsonElement>(StringComparer.OrdinalIgnoreCase);
+		foreach (var property in element.EnumerateObject())
+			lookup.TryAdd(property.Name, property.Value);
+
+		// Dictionaries with string keys
+		if (IsDictionary(type))
+		{
+			var arguments = type.GetGenericArguments();
+			if (arguments.Length != 2 || arguments[0] != typeof(string))
+				throw new ArgumentException($"Only dictionaries with string keys are supported, not '{type.Name}'.");
+
+			var dictionaryType = type.IsInterface ? typeof(Dictionary<,>).MakeGenericType(arguments) : type;
+			var dictionary = (IDictionary)Activator.CreateInstance(dictionaryType)!;
+			foreach (var property in element.EnumerateObject())
+				dictionary[property.Name] = ConvertArgument(property.Value, arguments[1], options);
+			return dictionary;
+		}
+
+		if (type.IsInterface || type.IsAbstract)
+			throw new ArgumentException($"Cannot create an instance of '{type.Name}' because it is an interface or abstract class.");
+
+		var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+			.Where(p => p.GetIndexParameters().Length == 0)
+			.ToList();
+
+		string JsonName(PropertyInfo property) =>
+			property.GetCustomAttribute<System.Text.Json.Serialization.JsonPropertyNameAttribute>()?.Name
+			?? options.PropertyNamingPolicy?.ConvertName(property.Name)
+			?? property.Name;
+
+		static bool IsIgnored(PropertyInfo property) =>
+			property.GetCustomAttribute<System.Text.Json.Serialization.JsonIgnoreAttribute>()?.Condition == System.Text.Json.Serialization.JsonIgnoreCondition.Always;
+
+		JsonElement? Find(PropertyInfo property) =>
+			!IsIgnored(property) && (lookup.TryGetValue(JsonName(property), out var value) || lookup.TryGetValue(property.Name, out value))
+				? value
+				: null;
+
+		// Constructor selection like System.Text.Json: [JsonConstructor], else the public
+		// parameterless constructor, else the only public constructor (records)
+		var constructors = type.GetConstructors(BindingFlags.Public | BindingFlags.Instance);
+		var constructor = constructors.FirstOrDefault(c => c.GetCustomAttribute<System.Text.Json.Serialization.JsonConstructorAttribute>() is not null)
+			?? constructors.FirstOrDefault(c => c.GetParameters().Length == 0)
+			?? (constructors.Length == 1 ? constructors[0] : null);
+
+		if (constructor is null && !type.IsValueType)
+			throw new ArgumentException($"Cannot create '{type.Name}': it needs a public parameterless constructor, a single public constructor, or one marked with [JsonConstructor].");
+
+		var populated = new HashSet<PropertyInfo>();
+		object instance;
+		if (constructor is null)
+		{
+			instance = Activator.CreateInstance(type)!;
+		}
+		else
+		{
+			var values = constructor.GetParameters().Select(parameter =>
+			{
+				// Constructor parameters bind to the property with the same name, and use its JSON name
+				var property = properties.FirstOrDefault(p => string.Equals(p.Name, parameter.Name, StringComparison.OrdinalIgnoreCase));
+				JsonElement? value = property is not null
+					? Find(property)
+					: lookup.TryGetValue(parameter.Name ?? string.Empty, out var raw) ? raw : null;
+
+				if (value is null)
+				{
+					if (parameter.HasDefaultValue)
+						return parameter.DefaultValue;
+					return parameter.ParameterType.IsValueType ? Activator.CreateInstance(parameter.ParameterType) : null;
+				}
+
+				if (property is not null)
+					populated.Add(property);
+				return ConvertArgument(value.Value, parameter.ParameterType, options);
+			}).ToArray();
+
+			instance = constructor.Invoke(BindingFlags.DoNotWrapExceptions, null, values, null);
+		}
+
+		foreach (var property in properties)
+		{
+			if (populated.Contains(property) || property.GetSetMethod() is null)
+				continue;
+
+			if (Find(property) is JsonElement value)
+			{
+				property.SetValue(instance, ConvertArgument(value, property.PropertyType, options), BindingFlags.DoNotWrapExceptions, null, null, null);
+				populated.Add(property);
+			}
+		}
+
+		var missing = properties
+			.Where(p => !populated.Contains(p) &&
+				(p.GetCustomAttribute<System.Runtime.CompilerServices.RequiredMemberAttribute>() is not null ||
+				 p.GetCustomAttribute<System.Text.Json.Serialization.JsonRequiredAttribute>() is not null))
+			.Select(JsonName)
+			.ToList();
+		if (missing.Count > 0)
+			throw new ArgumentException($"'{type.Name}' is missing required properties: {string.Join(", ", missing.Select(m => $"'{m}'"))}.");
+
+		return instance;
+	}
+
+	static bool IsReadOnlyEnumerable(Type type) =>
+		type.IsGenericType && type.GetGenericTypeDefinition() is var definition &&
+		(definition == typeof(IEnumerable<>) || definition == typeof(IReadOnlyList<>) || definition == typeof(IReadOnlyCollection<>));
+
+	[UnconditionalSuppressMessage("Trimming", "IL2070", Justification = "Interfaces of argument types; see ReadValue.")]
+	static Type? GetEnumerableElementType(Type type)
+	{
+		if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+			return type.GetGenericArguments()[0];
+
+		return type.GetInterfaces()
+			.FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+			?.GetGenericArguments()[0];
+	}
+
+	[UnconditionalSuppressMessage("Trimming", "IL2070", Justification = "Interfaces of argument types; see ReadValue.")]
+	static bool IsDictionary(Type type) =>
+		typeof(IDictionary).IsAssignableFrom(type) ||
+		(type.IsGenericType && type.GetGenericTypeDefinition() is var definition &&
+			(definition == typeof(IDictionary<,>) || definition == typeof(IReadOnlyDictionary<,>)));
 
 	[UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "Falls back to reflection; documented on BackdoorOptions.JsonSerializerOptions.")]
 	[UnconditionalSuppressMessage("AOT", "IL3050", Justification = "See above.")]

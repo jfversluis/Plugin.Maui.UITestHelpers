@@ -20,10 +20,14 @@ public static class MauiProgram
 #if UITEST_BACKDOOR
 		// The backdoor lets UI tests call methods in this app directly with app.Invoke(...).
 		// It's only compiled in when the UITEST_BACKDOOR symbol is defined, see the .csproj.
+		builder.Services.AddSingleton<TestDataBackdoor>();
 		builder.UseUITestBackdoor(backdoor =>
 		{
 			// All methods of App marked with [BackdoorMethod]
 			backdoor.AddMethods<App>();
+
+			// Services are resolved from the app's dependency injection container
+			backdoor.AddMethods<TestDataBackdoor>();
 
 			// Delegates work as well
 			backdoor.AddMethod("GetPlatform", () => DeviceInfo.Current.Platform.ToString());
