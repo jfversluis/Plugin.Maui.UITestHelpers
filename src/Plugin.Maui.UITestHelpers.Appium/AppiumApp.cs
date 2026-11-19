@@ -319,7 +319,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
 					var seconds => TimeSpan.FromSeconds(Convert.ToDouble(seconds, System.Globalization.CultureInfo.InvariantCulture)),
 				};
 
-				_backdoorClient = new BackdoorClient(GetBackdoorAddress(), timeout);
+				_backdoorClient = new BackdoorClient(GetBackdoorAddress(), timeout, Config.GetProperty<string>("BackdoorAccessKey"));
 			}
 
 			return _backdoorClient;

@@ -28,6 +28,58 @@ public sealed class BackdoorOptions
 	public int Port { get; set; } = DefaultPort;
 
 	/// <summary>
+	/// Minimum length of <see cref="AccessKey"/> when network access is enabled.
+	/// </summary>
+	public const int MinimumNetworkAccessKeyLength = 16;
+
+	/// <summary>
+	/// Optional secret that UI tests must send with every request (the "BackdoorAccessKey"
+	/// property of the UI test configuration). Without it, any app on the same device can call
+	/// the backdoor. Required when <see cref="NetworkAccessEnabled"/> is <see langword="true"/>.
+	/// </summary>
+	public string? AccessKey { get; set; }
+
+	/// <summary>
+	/// Whether the backdoor listens on all network interfaces instead of only on the device
+	/// itself. See <see cref="EnableNetworkAccess(string)"/>.
+	/// </summary>
+	public bool NetworkAccessEnabled { get; private set; }
+
+	/// <summary>
+	/// <para>
+	/// LESS SECURE: lets the backdoor accept connections from other machines on the network,
+	/// for example to run UI tests against a physical iOS device over Wi-Fi (like
+	/// <c>DeviceIp</c> in Xamarin.UITest). By default the backdoor only accepts connections
+	/// from the device itself.
+	/// </para>
+	/// <para>
+	/// Anyone on the same network who knows the access key can then invoke the backdoor
+	/// methods. Traffic is not encrypted, so the key and all arguments and results can be read
+	/// by anyone who can see the network traffic. Only use this on trusted networks, with a
+	/// random key that you don't commit to source control, and never in a build that you
+	/// distribute.
+	/// </para>
+	/// </summary>
+	/// <param name="accessKey">Secret of at least <see cref="MinimumNetworkAccessKeyLength"/>
+	/// characters that the UI tests send with every request.</param>
+	/// <returns>The options, to chain calls.</returns>
+	public BackdoorOptions EnableNetworkAccess(string accessKey)
+	{
+		if (string.IsNullOrWhiteSpace(accessKey) || accessKey.Length < MinimumNetworkAccessKeyLength)
+			throw new ArgumentException($"Network access requires an access key of at least {MinimumNetworkAccessKeyLength} characters.", nameof(accessKey));
+
+		AccessKey = accessKey;
+		NetworkAccessEnabled = true;
+		return this;
+	}
+
+	internal void Validate()
+	{
+		if (NetworkAccessEnabled && (string.IsNullOrWhiteSpace(AccessKey) || AccessKey.Length < MinimumNetworkAccessKeyLength))
+			throw new InvalidOperationException($"Network access requires an {nameof(AccessKey)} of at least {MinimumNetworkAccessKeyLength} characters.");
+	}
+
+	/// <summary>
 	/// Options used to convert arguments and return values that aren't simple values
 	/// (strings, numbers, booleans, enums, dates, lists and dictionaries). When your app
 	/// is trimmed, reflection-based serialization may be disabled. Returned objects then fall

@@ -20,6 +20,7 @@ namespace Plugin.Maui.UITestHelpers.Backdoor;
 /// </summary>
 internal sealed class BackdoorServer : IDisposable
 {
+	internal const string AccessKeyHeader = "X-Backdoor-Key";
 	const int MaxHeaderBytes = 64 * 1024;
 	const int MaxBodyBytes = 16 * 1024 * 1024;
 
@@ -42,11 +43,16 @@ internal sealed class BackdoorServer : IDisposable
 
 	public void Start()
 	{
-		_listener = new TcpListener(IPAddress.Loopback, _options.Port);
+		_options.Validate();
+
+		_listener = new TcpListener(_options.NetworkAccessEnabled ? IPAddress.Any : IPAddress.Loopback, _options.Port);
 		_listener.Start();
 		_ = AcceptLoopAsync(_listener, _cts.Token);
 
-		Log(LogLevel.Information, $"UI test backdoor listening on 127.0.0.1:{Port} with {_options.Methods.Count} method(s).");
+		if (_options.NetworkAccessEnabled)
+			Log(LogLevel.Warning, $"UI test backdoor listening on ALL network interfaces, port {Port}, with {_options.Methods.Count} method(s). Anyone on the network with the access key can invoke them; never enable this in a build you distribute.");
+		else
+			Log(LogLevel.Information, $"UI test backdoor listening on 127.0.0.1:{Port} with {_options.Methods.Count} method(s).");
 	}
 
 	public void Dispose()
@@ -107,6 +113,9 @@ internal sealed class BackdoorServer : IDisposable
 		if (headers.ContainsKey("Origin"))
 			return (403, Error("Requests from web pages are not allowed."));
 
+		if (!string.IsNullOrEmpty(_options.AccessKey) && !IsValidAccessKey(headers))
+			return (401, Error("Missing or invalid access key. Set the \"BackdoorAccessKey\" property of the UI test configuration to the AccessKey of the app."));
+
 		if (method == "GET" && (route is "" or "/ping"))
 		{
 			var names = _options.Methods.Select(m => m.Name).Distinct().ToArray();
@@ -142,6 +151,16 @@ internal sealed class BackdoorServer : IDisposable
 		}
 
 		return (404, Error($"Unknown endpoint '{method} {path}'."));
+	}
+
+	bool IsValidAccessKey(IReadOnlyDictionary<string, string> headers)
+	{
+		if (!headers.TryGetValue(AccessKeyHeader, out var provided))
+			return false;
+
+		// Constant-time comparison, so the key can't be guessed from response times
+		return System.Security.Cryptography.CryptographicOperations.FixedTimeEquals(
+			Encoding.UTF8.GetBytes(provided), Encoding.UTF8.GetBytes(_options.AccessKey!));
 	}
 
 	async Task<(int Status, byte[] Body)> InvokeAsync(string methodName, JsonElement[] arguments)
@@ -386,6 +405,7 @@ internal sealed class BackdoorServer : IDisposable
 		{
 			200 => "OK",
 			400 => "Bad Request",
+			401 => "Unauthorized",
 			403 => "Forbidden",
 			404 => "Not Found",
 			409 => "Conflict",

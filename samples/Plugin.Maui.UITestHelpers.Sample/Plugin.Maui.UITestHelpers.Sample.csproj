@@ -59,4 +59,10 @@
 	<ItemGroup>
 	  <ProjectReference Include="..\..\src\Plugin.Maui.UITestHelpers.Backdoor\Plugin.Maui.UITestHelpers.Backdoor.csproj" />
 	</ItemGroup>
+
+	<!-- Opt-in, LESS SECURE: build with -p:BackdoorAccessKey=<random key> to let UI tests reach the
+	     backdoor over the network, for example on a physical iOS device. The key isn't stored in source. -->
+	<ItemGroup Condition="'$(BackdoorAccessKey)' != ''">
+	  <AssemblyMetadata Include="BackdoorAccessKey" Value="$(BackdoorAccessKey)" />
+	</ItemGroup>
 </Project>

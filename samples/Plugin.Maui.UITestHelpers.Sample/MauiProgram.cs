@@ -25,6 +25,15 @@ public static class MauiProgram
 
 			// Delegates work as well
 			backdoor.AddMethod("GetPlatform", () => DeviceInfo.Current.Platform.ToString());
+
+			// LESS SECURE, opt-in: only when built with -p:BackdoorAccessKey=<key> (see the .csproj),
+			// the backdoor accepts connections from the network, for example for physical iOS devices
+			var accessKey = typeof(MauiProgram).Assembly
+				.GetCustomAttributes(typeof(System.Reflection.AssemblyMetadataAttribute), false)
+				.OfType<System.Reflection.AssemblyMetadataAttribute>()
+				.FirstOrDefault(a => a.Key == "BackdoorAccessKey")?.Value;
+			if (!string.IsNullOrEmpty(accessKey))
+				backdoor.EnableNetworkAccess(accessKey);
 		});
 
 		// Webviews must be debuggable/inspectable for Appium to see them as a WEBVIEW context

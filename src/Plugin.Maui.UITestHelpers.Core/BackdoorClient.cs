@@ -16,6 +16,11 @@ namespace Plugin.Maui.UITestHelpers.Core
 
 		internal static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);
 
+		/// <summary>
+		/// HTTP header that carries the access key.
+		/// </summary>
+		public const string AccessKeyHeader = "X-Backdoor-Key";
+
 		readonly HttpClient _httpClient;
 
 		/// <summary>
@@ -23,7 +28,8 @@ namespace Plugin.Maui.UITestHelpers.Core
 		/// </summary>
 		/// <param name="baseAddress">Address of the backdoor, for example http://127.0.0.1:37265/.</param>
 		/// <param name="timeout">Maximum time a backdoor call may take.</param>
-		public BackdoorClient(Uri baseAddress, TimeSpan timeout)
+		/// <param name="accessKey">Access key of the backdoor, if the app sets one.</param>
+		public BackdoorClient(Uri baseAddress, TimeSpan timeout, string? accessKey = null)
 		{
 			BaseAddress = baseAddress ?? throw new ArgumentNullException(nameof(baseAddress));
 			_httpClient = new HttpClient(new SocketsHttpHandler { UseProxy = false })
@@ -31,6 +37,9 @@ namespace Plugin.Maui.UITestHelpers.Core
 				BaseAddress = baseAddress,
 				Timeout = timeout,
 			};
+
+			if (!string.IsNullOrEmpty(accessKey))
+				_httpClient.DefaultRequestHeaders.Add(AccessKeyHeader, accessKey);
 		}
 
 		public Uri BaseAddress { get; }

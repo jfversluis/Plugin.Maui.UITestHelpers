@@ -46,6 +46,12 @@ public abstract class BaseTest : UITestBase
 
         config.SetProperty(appIdentifierKey, appIdentifier);
 
+        // Only needed when the app was built with network access for the backdoor, see MauiProgram.cs
+        if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("BACKDOOR_HOST")))
+            config.SetProperty("BackdoorHost", Environment.GetEnvironmentVariable("BACKDOOR_HOST"));
+        if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("BACKDOOR_ACCESS_KEY")))
+            config.SetProperty("BackdoorAccessKey", Environment.GetEnvironmentVariable("BACKDOOR_ACCESS_KEY"));
+
         if (_testDevice == TestDevice.iOS)
         {
             // Note: this is passed down from the GitHub Action. If nothing is set, fall back to a default value below

@@ -187,9 +187,10 @@ way existing calls like `app.Invoke("myMethod:", arg)` still find `MyMethod`.
 |----------|------------------------------|
 | Android emulators and devices | The Appium helpers run `adb forward` automatically. adb is found through the `AdbPath` configuration property, `ANDROID_HOME`, `ANDROID_SDK_ROOT` or `PATH`. |
 | iOS simulators, Mac Catalyst and Windows | Directly on `127.0.0.1`, because the app runs on the same machine as the tests. |
-| Physical iOS devices | Forward the port yourself, for example with `iproxy 37265 37265`, and keep the default `BackdoorHost` (`127.0.0.1`). |
+| Physical iOS devices (USB) | Forward the port yourself, for example with `iproxy 37265 37265`, and keep the default `BackdoorHost` (`127.0.0.1`). |
+| Devices over the network | Opt in to network access in the app and set `BackdoorHost` to the device's IP address, see [Network access](#network-access-less-secure). |
 
-The test project and the Appium server must run on the same machine as the emulator, simulator or
+Without network access, the test project must run on the same machine as the emulator, simulator or
 device. Cloud device services aren't supported. You can configure the connection with these
 `IConfig` properties:
 
@@ -198,7 +199,42 @@ device. Cloud device services aren't supported. You can configure the connection
 | `BackdoorPort` | `37265` | Port the app listens on. If you change it, also set `backdoor.Port` in the app. |
 | `BackdoorHost` | `127.0.0.1` | Host to connect to. On Android, setting this turns off the automatic `adb forward`. |
 | `BackdoorTimeout` | 30 seconds | Maximum duration of a call, as a `TimeSpan` or a number of seconds. |
+| `BackdoorAccessKey` | | Access key, when the app sets `AccessKey` or enables network access. |
 | `AdbPath` | | Path to adb, Android only. |
+
+### Network access (less secure)
+
+By default the backdoor only accepts connections from the device itself. To reach it from another
+machine, for example a physical iOS device over Wi-Fi like `DeviceIp` in Xamarin.UITest, opt in:
+
+```csharp
+#if UITEST_NETWORK
+builder.UseUITestBackdoor(backdoor =>
+{
+    backdoor.AddMethods<App>();
+    backdoor.EnableNetworkAccess(accessKey); // at least 16 characters
+});
+#endif
+```
+
+and in the tests:
+
+```csharp
+config.SetProperty("BackdoorHost", "192.168.1.42"); // IP address of the device
+config.SetProperty("BackdoorAccessKey", accessKey);
+```
+
+> [!CAUTION]
+> Network access makes your app **less secure**. Anyone on the same network who has the access key
+> can call your backdoor methods, and the traffic isn't encrypted, so anyone who can see it can
+> read the key and all arguments and return values.
+> * Only use it on networks you trust, never on public Wi-Fi.
+> * Use a long random key, for example from `openssl rand -hex 32`, and pass it in at build time
+>   instead of committing it. The sample reads it from `-p:BackdoorAccessKey=...`.
+> * Never enable it in a build that you distribute, including TestFlight and internal app stores.
+
+You can also set `backdoor.AccessKey` without network access, so other apps on the device can't call
+the backdoor either.
 
 The sample app exposes several backdoor methods in `App.xaml.cs`, and `BackdoorTests.cs` in the
 sample UI tests shows how to use them.
