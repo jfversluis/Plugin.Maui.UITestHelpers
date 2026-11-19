@@ -9,11 +9,12 @@ using Plugin.Maui.UITestHelpers.Core;
 
 namespace Plugin.Maui.UITestHelpers.Appium
 {
-	public abstract class AppiumApp : IApp, IScreenshotSupportedApp, ILogsSupportedApp
+	public abstract class AppiumApp : IApp, IScreenshotSupportedApp, ILogsSupportedApp, IBackdoorSupportedApp
 	{
 		protected readonly AppiumDriver _driver;
 		protected readonly IConfig _config;
 		protected readonly AppiumCommandExecutor _commandExecutor;
+		BackdoorClient? _backdoorClient;
 
 		public AppiumApp(AppiumDriver driver, IConfig config)
 		{
@@ -292,9 +293,103 @@ namespace Plugin.Maui.UITestHelpers.Appium
 			"setWindowRect", "timeouts", "strictFileInteractability", "unhandledPromptBehavior", "webSocketUrl",
 		};
 
+		/// <inheritdoc/>
+		public object? Invoke(string methodName, object? argument = null) =>
+			BackdoorClient.ToObject(GetBackdoorClient().Invoke(methodName, argument is null ? null : new[] { argument }));
+
+		/// <inheritdoc/>
+		public object? Invoke(string methodName, object?[] arguments) =>
+			BackdoorClient.ToObject(GetBackdoorClient().Invoke(methodName, arguments));
+
+		/// <inheritdoc/>
+		public T? Invoke<T>(string methodName, params object?[] arguments) =>
+			BackdoorClient.ToObject<T>(GetBackdoorClient().Invoke(methodName, arguments));
+
+		/// <summary>
+		/// Returns the client used for <see cref="Invoke(string, object?)"/>, created on first use.
+		/// </summary>
+		protected BackdoorClient GetBackdoorClient()
+		{
+			if (_backdoorClient is null)
+			{
+				var timeout = Config.GetProperty<object>("BackdoorTimeout") switch
+				{
+					TimeSpan t => t,
+					null => TimeSpan.FromSeconds(30),
+					var seconds => TimeSpan.FromSeconds(Convert.ToDouble(seconds, System.Globalization.CultureInfo.InvariantCulture)),
+				};
+
+				var client = new BackdoorClient(GetBackdoorAddress(), timeout, Config.GetProperty<string>("BackdoorAccessKey"));
+
+				// Apps on the same machine (simulators, Mac Catalyst, Windows) share 127.0.0.1, so make
+				// sure the backdoor belongs to the app under test and not to another running app
+				var expectedAppId = Config.GetProperty<string>("AppId");
+				if (!string.IsNullOrWhiteSpace(expectedAppId))
+				{
+					var actualAppId = client.GetAppId();
+					if (actualAppId is not null && !string.Equals(actualAppId, expectedAppId, StringComparison.OrdinalIgnoreCase))
+					{
+						client.Dispose();
+						throw new BackdoorException(
+							$"The backdoor at {client.BaseAddress} belongs to app '{actualAppId}', not to the app under test '{expectedAppId}'. " +
+							"Close the other app or give the apps different backdoor ports (BackdoorOptions.Port and the \"BackdoorPort\" configuration).");
+					}
+				}
+
+				_backdoorClient = client;
+			}
+
+			return _backdoorClient;
+		}
+
+		/// <summary>
+		/// Port of the backdoor in the app: the "BackdoorPort" configuration property, or
+		/// <see cref="BackdoorClient.DefaultPort"/>.
+		/// </summary>
+		protected int BackdoorPort
+		{
+			get
+			{
+				var port = Config.GetProperty<object>("BackdoorPort");
+				return port is null ? BackdoorClient.DefaultPort : Convert.ToInt32(port, System.Globalization.CultureInfo.InvariantCulture);
+			}
+		}
+
+		/// <summary>
+		/// Returns the address the backdoor of the app can be reached at from the test machine.
+		/// By default this is the "BackdoorHost" configuration property (or 127.0.0.1, which works
+		/// for iOS simulators, Mac Catalyst and Windows) and <see cref="BackdoorPort"/>.
+		/// </summary>
+		protected virtual Uri GetBackdoorAddress()
+		{
+			var host = Config.GetProperty<string>("BackdoorHost");
+			return new UriBuilder(Uri.UriSchemeHttp, string.IsNullOrWhiteSpace(host) ? "127.0.0.1" : host, BackdoorPort).Uri;
+		}
+
 		public void Dispose()
 		{
-			_driver?.Dispose();
+			Dispose(true);
+			GC.SuppressFinalize(this);
+		}
+
+		protected virtual void Dispose(bool disposing)
+		{
+			if (!disposing)
+				return;
+
+			try
+			{
+				_backdoorClient?.Dispose();
+			}
+			catch (Exception)
+			{
+				// Cleaning up the backdoor must never keep the Appium session from closing
+			}
+			finally
+			{
+				_backdoorClient = null;
+				_driver?.Dispose();
+			}
 		}
 	}
 }

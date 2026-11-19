@@ -10,6 +10,7 @@
   </Folder>
   <Folder Name="/Plugin Projects/">
     <Project Path="../src/Plugin.Maui.UITestHelpers.Appium/Plugin.Maui.UITestHelpers.Appium.csproj" />
+    <Project Path="../src/Plugin.Maui.UITestHelpers.Backdoor/Plugin.Maui.UITestHelpers.Backdoor.csproj" />
     <Project Path="../src/Plugin.Maui.UITestHelpers.Core/Plugin.Maui.UITestHelpers.Core.csproj" />
     <Project Path="../src/Plugin.Maui.UITestHelpers.NUnit/Plugin.Maui.UITestHelpers.NUnit.csproj" />
   </Folder>
