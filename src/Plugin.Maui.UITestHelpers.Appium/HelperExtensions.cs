@@ -2491,6 +2491,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
                 if (webviewContext is not null)
                 {
                     driver.Context = webviewContext;
+                    SwitchToOpenWindow(driver);
                     return true;
                 }
 
@@ -2501,6 +2502,46 @@ namespace Plugin.Maui.UITestHelpers.Appium
 
                 Task.Delay(500).Wait();
             }
+        }
+
+        /// <summary>
+        /// Makes sure the webview context's current window (page) still exists. The webview context keeps
+        /// its current window when the app destroys the webview, e.g. after navigating back, and creates a
+        /// new one; commands then fail with "no such window: target window already closed". In that case
+        /// this switches to an open window (the most recently listed one).
+        /// </summary>
+        /// <param name="driver">The driver, already in the webview context.</param>
+        static void SwitchToOpenWindow(AppiumDriver driver)
+        {
+            IReadOnlyCollection<string> windowHandles;
+            try
+            {
+                windowHandles = driver.WindowHandles;
+            }
+            catch (WebDriverException)
+            {
+                // window handles aren't supported in this context
+                return;
+            }
+
+            if (windowHandles.Count == 0)
+            {
+                return;
+            }
+
+            try
+            {
+                if (windowHandles.Contains(driver.CurrentWindowHandle))
+                {
+                    return;
+                }
+            }
+            catch (NoSuchWindowException)
+            {
+                // the current window was closed
+            }
+
+            driver.SwitchTo().Window(windowHandles.Last());
         }
 
         internal static string? SelectWebviewContext(IEnumerable<string>? contexts, string? appId)
