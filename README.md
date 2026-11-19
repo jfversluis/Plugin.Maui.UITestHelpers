@@ -53,6 +53,25 @@ public void RestartApp() => App.ResetApp();
 of a test: if the app is closed when the test finishes, `UITestBase` treats it as a crash and fails
 the test.
 
+## Testing webview content
+
+On Android and iOS you can interact with the content of a `WebView` (or a Blazor Hybrid
+`BlazorWebView`) by switching to its webview context:
+
+```csharp
+App.SwitchContextToWebview();
+App.TapWebviewButtonByText("Sign in");
+App.ScrollWebview(down: true);
+App.SwitchContextToNative();
+```
+
+For Appium to find the webview, your app has to make it debuggable: on Android call
+`Android.Webkit.WebView.SetWebContentsDebuggingEnabled(true)`, on iOS 16.4 and later set
+`Inspectable = true` on the `WKWebView` (see the sample's `MauiProgram.cs`). Only do this in
+builds you test, not in production builds. On Android, Appium also needs a Chromedriver that
+matches the WebView version on the device, for example by starting Appium with
+`--allow-insecure uiautomator2:chromedriver_autodownload`.
+
 # Related resources
 
 To make it easier to add UI test projects to your existing solution, I also have a template that you can use: https://github.com/jfversluis/Template.Maui.UITesting/

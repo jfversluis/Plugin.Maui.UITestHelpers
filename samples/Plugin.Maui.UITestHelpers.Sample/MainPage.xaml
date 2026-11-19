@@ -4,6 +4,13 @@
              x:Class="Plugin.Maui.UITestHelpers.Sample.MainPage"
              AutomationId="MainPage">
 
+    <ContentPage.ToolbarItems>
+        <ToolbarItem
+            AutomationId="OpenWebViewBtn"
+            Text="Open WebView"
+            Clicked="OnOpenWebViewClicked" />
+    </ContentPage.ToolbarItems>
+
     <ScrollView>
         <VerticalStackLayout
             Padding="30,0"

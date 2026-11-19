@@ -2460,6 +2460,163 @@ namespace Plugin.Maui.UITestHelpers.Appium
             return IsElementVisible(app, elementToWaitFor);
         }
 
+        /// <summary>
+        /// Switches the Appium context to the app's webview, so webview content can be queried and interacted with.
+        /// On Android the webview must be debuggable (<c>Android.Webkit.WebView.SetWebContentsDebuggingEnabled(true)</c>)
+        /// and Appium needs a Chromedriver that matches the device's WebView version.
+        /// On iOS 16.4 and later the webview must be inspectable (<c>WKWebView.Inspectable = true</c>).
+        /// </summary>
+        /// <remarks>
+        /// When there are multiple webview contexts, the one belonging to the configured AppId is preferred
+        /// (e.g. <c>WEBVIEW_com.mycompany.myapp</c> on Android), otherwise the first webview context is used.
+        /// Use <see cref="SwitchContextToNative"/> to switch back to the native context.
+        /// </remarks>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="timeout">How long to wait for a webview context to become available. Defaults to 15 seconds.</param>
+        /// <returns><c>true</c> when switched to a webview context; <c>false</c> when no webview context was found within the timeout.</returns>
+        public static bool SwitchContextToWebview(this IApp app, TimeSpan? timeout = null)
+        {
+            if (app is not AppiumApp appiumApp)
+            {
+                return false;
+            }
+
+            var driver = appiumApp.Driver;
+            var appId = app.Config.GetProperty<string>("AppId");
+            var deadline = DateTime.Now + (timeout ?? DefaultTimeout);
+
+            while (true)
+            {
+                var webviewContext = SelectWebviewContext(driver.Contexts, appId);
+                if (webviewContext is not null)
+                {
+                    driver.Context = webviewContext;
+                    return true;
+                }
+
+                if (DateTime.Now >= deadline)
+                {
+                    return false;
+                }
+
+                Task.Delay(500).Wait();
+            }
+        }
+
+        internal static string? SelectWebviewContext(IEnumerable<string>? contexts, string? appId)
+        {
+            var webviewContexts = contexts?
+                .Where(c => c.StartsWith("WEBVIEW", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            if (webviewContexts is null || webviewContexts.Count == 0)
+            {
+                return null;
+            }
+
+            if (!string.IsNullOrWhiteSpace(appId))
+            {
+                var appWebview = webviewContexts.FirstOrDefault(c => c.Equals($"WEBVIEW_{appId}", StringComparison.OrdinalIgnoreCase));
+                if (appWebview is not null)
+                {
+                    return appWebview;
+                }
+            }
+
+            return webviewContexts[0];
+        }
+
+        /// <summary>
+        /// Switches the Appium context back to the native app, e.g. after using <see cref="SwitchContextToWebview"/>.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <returns><c>true</c> when switched to the native context; otherwise <c>false</c>.</returns>
+        public static bool SwitchContextToNative(this IApp app)
+        {
+            if (app is not AppiumApp appiumApp)
+            {
+                return false;
+            }
+
+            var driver = appiumApp.Driver;
+            var nativeContext = driver.Contexts?.FirstOrDefault(c => c.Equals("NATIVE_APP", StringComparison.OrdinalIgnoreCase));
+
+            if (nativeContext is null)
+            {
+                return false;
+            }
+
+            driver.Context = nativeContext;
+            return true;
+        }
+
+        /// <summary>
+        /// Taps a button in the webview by its text. Matches <c>button</c> elements, <c>input</c> elements of type
+        /// button, submit or reset, and elements with <c>role="button"</c>. An exact (whitespace-trimmed) text match is
+        /// preferred; when there is none, the first button that contains the text is used.
+        /// Requires the webview context, see <see cref="SwitchContextToWebview"/>.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="buttonText">The text of the button to tap.</param>
+        /// <returns><c>true</c> when a matching button was found and tapped; otherwise <c>false</c>.</returns>
+        public static bool TapWebviewButtonByText(this IApp app, string buttonText)
+        {
+            if (app is not AppiumApp appiumApp)
+            {
+                return false;
+            }
+
+            const string script = @"
+                var text = arguments[0].trim();
+                var buttons = Array.from(document.querySelectorAll(
+                    'button, input[type=button], input[type=submit], input[type=reset], [role=button]'));
+                var label = function (b) { return ((b.tagName === 'INPUT' ? b.value : b.textContent) || '').trim(); };
+                return buttons.find(function (b) { return label(b) === text; })
+                    || buttons.find(function (b) { return label(b).includes(text); })
+                    || null;";
+
+            if (appiumApp.Driver.ExecuteScript(script, buttonText) is not IWebElement button)
+            {
+                return false;
+            }
+
+            button.Click();
+            return true;
+        }
+
+        /// <summary>
+        /// Scrolls the webview content to the bottom or to the top.
+        /// Requires the webview context, see <see cref="SwitchContextToWebview"/>.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <param name="down"><c>true</c> to scroll to the bottom; <c>false</c> to scroll to the top.</param>
+        /// <returns><c>true</c> when the scroll script was executed; otherwise <c>false</c>.</returns>
+        public static bool ScrollWebview(this IApp app, bool down)
+        {
+            if (app is not AppiumApp appiumApp)
+            {
+                return false;
+            }
+
+            const string script = @"
+                var scroller = document.scrollingElement || document.documentElement;
+                window.scrollTo(0, arguments[0] ? scroller.scrollHeight : 0);
+                return true;";
+
+            return appiumApp.Driver.ExecuteScript(script, down) is true;
+        }
+
+        /// <summary>
+        /// Gets the URL of the page that is currently loaded in the webview.
+        /// Requires the webview context, see <see cref="SwitchContextToWebview"/>.
+        /// </summary>
+        /// <param name="app">Represents the main gateway to interact with an app.</param>
+        /// <returns>The current URL, or <c>null</c> when it can't be determined.</returns>
+        public static string? GetCurrentUri(this IApp app)
+        {
+            return (app as AppiumApp)?.Driver.Url;
+        }
+
         static IUIElement Wait(Func<IUIElement?> query,
             Func<IUIElement?, bool> satisfactory,
             string? timeoutMessage = null,

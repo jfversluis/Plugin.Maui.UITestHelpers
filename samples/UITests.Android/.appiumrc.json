@@ -1,0 +1,5 @@
+{
+  "server": {
+    "allow-insecure": ["uiautomator2:chromedriver_autodownload"]
+  }
+}
