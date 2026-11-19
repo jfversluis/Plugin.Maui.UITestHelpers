@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Appium.Service;
 using Plugin.Maui.UITestHelpers.Core;
@@ -11,6 +12,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
 		readonly int _serverStartWaitDelay = 1000;
 		readonly List<AppiumUIClientContext> _contexts = new(); // Since tests don't know when they are done, we need to keep track of all the contexts we create so we can dispose them
 		readonly TimeSpan _maxServerWaitTime = TimeSpan.FromSeconds(15);
+		readonly TimeSpan _maxServerShutdownTime = TimeSpan.FromSeconds(15);
 		readonly object _serverLock = new object();
 		AppiumLocalService? _server;
 
@@ -74,7 +76,8 @@ namespace Plugin.Maui.UITestHelpers.Appium
 		{
 			lock (_serverLock)
 			{
-				_server?.Dispose();
+				StopServer(_server);
+				_server = null;
 
 				var arguments = new OpenQA.Selenium.Appium.Service.Options.OptionCollector();
 				arguments.AddArguments(new KeyValuePair<string, string>("--base-path", "/wd/hub"));
@@ -119,9 +122,55 @@ namespace Plugin.Maui.UITestHelpers.Appium
 
 			lock (_serverLock)
 			{
-				_server?.Dispose();
+				StopServer(_server);
 				_server = null;
 			}
 		}
+
+		// On non-Windows platforms AppiumLocalService.Dispose() hard-kills (SIGKILL) the Appium Node.js process.
+		// That skips Appium's shutdown logic, so processes started by drivers are orphaned. For example the
+		// Mac2 driver keeps its WebDriverAgentMac host (xcodebuild) running between sessions and only stops it
+		// when the Appium server exits gracefully, which leaves macOS in the "Automation Running" state.
+		// Ask the server to shut down with SIGTERM first and only fall back to the hard kill if needed.
+		// This can be removed once the Appium .NET client shuts down gracefully on non-Windows platforms itself,
+		// see https://github.com/appium/dotnet-client/issues/625 (only fixed for Windows so far).
+		void StopServer(AppiumLocalService? server)
+		{
+			if (server is null)
+			{
+				return;
+			}
+
+			try
+			{
+				if (!OperatingSystem.IsWindows() && GetServerProcess(server) is { HasExited: false } process)
+				{
+					using var kill = Process.Start(new ProcessStartInfo("/bin/kill")
+					{
+						ArgumentList = { "-TERM", process.Id.ToString() },
+						UseShellExecute = false,
+						CreateNoWindow = true,
+					});
+					kill?.WaitForExit(TimeSpan.FromSeconds(5));
+
+					if (!process.WaitForExit(_maxServerShutdownTime))
+					{
+						Debug.WriteLine($">>>>> Appium server did not exit within {_maxServerShutdownTime.TotalSeconds}s after SIGTERM, killing it");
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				Debug.WriteLine($">>>>> Graceful Appium server shutdown failed, killing it: {ex.Message}");
+			}
+			finally
+			{
+				server.Dispose();
+			}
+		}
+
+		// AppiumLocalService does not expose the Appium server process it starts
+		[UnsafeAccessor(UnsafeAccessorKind.Field, Name = "Service")]
+		static extern ref Process? GetServerProcess(AppiumLocalService server);
 	}
 }
