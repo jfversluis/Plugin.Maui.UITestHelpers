@@ -71,6 +71,8 @@ public void ExploreTheApp()
 
 Install `Plugin.Maui.UITestHelpers.Repl` to use it. See the [REPL guide](https://github.com/jfversluis/Plugin.Maui.UITestHelpers/blob/main/docs/REPL.md) for everything it can do.
 
+While debugging, call `App.Repl()` from code (or step over that line) rather than from Visual Studio's Immediate Window, where the debugger freezes the threads the REPL needs. See [While debugging](https://github.com/jfversluis/Plugin.Maui.UITestHelpers/blob/main/docs/REPL.md#while-debugging).
+
 ## Passing other Appium capabilities
 
 To set an Appium capability that doesn't have its own config property, add it to the

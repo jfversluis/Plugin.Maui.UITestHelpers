@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using Plugin.Maui.UITestHelpers.Repl;
 using Plugin.Maui.UITestHelpers.Repl.Engine;
 using Plugin.Maui.UITestHelpers.Repl.Hosting;
@@ -39,13 +38,6 @@ namespace Plugin.Maui.UITestHelpers.Core
 			{
 				ReplHost.Notify("[REPL] Skipped, because this looks like a continuous integration run. Set ReplOptions.RunInContinuousIntegration to start it anyway.");
 				return;
-			}
-
-			// When called from a debugger expression evaluation (e.g. the Immediate Window) with other threads frozen,
-			// this aborts the evaluation before a terminal window is opened that would never be connected to.
-			if (Debugger.IsAttached)
-			{
-				Debugger.NotifyOfCrossThreadDependency();
 			}
 
 			var session = new ReplSession(app, options);
