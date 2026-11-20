@@ -154,6 +154,13 @@ namespace Plugin.Maui.UITestHelpers.Appium
             return AppiumQuery.ByXPath($"({xpath})/*[{index + 1}]");
         }
 
+        /// <summary>
+        /// Returns the XPath of the query, made relative to the context node (<c>//x</c> becomes <c>.//x</c>), to
+        /// combine it into relational queries. The Mac2 driver evaluates queries against the root element instead of
+        /// a document, where absolute paths fail with "XQueryError:6 - invalid type"; it only makes a leading
+        /// <c>/</c> of the whole query relative, but a sibling query contains the path twice. On the other platforms,
+        /// the queries are evaluated against the document, where <c>.//x</c> finds the same elements as <c>//x</c>.
+        /// </summary>
         static string GetXPath(IQuery query, string methodName)
         {
             if (query is not AppiumQuery appiumQuery || !appiumQuery.TryGetXPath(out string? xpath))
@@ -161,7 +168,17 @@ namespace Plugin.Maui.UITestHelpers.Appium
                 throw new NotSupportedException($"{methodName} is only supported for XPath queries, e.g. from Marked() or AppiumQuery.ByXPath()");
             }
 
-            return xpath;
+            // the same rewrite the Mac2 driver applies to the start of a query: skip leading opening parentheses,
+            // then make a leading "/" relative
+            int start = 0;
+            while (start < xpath.Length && xpath[start] == '(')
+            {
+                start++;
+            }
+
+            return start < xpath.Length && xpath[start] == '/'
+                ? xpath.Insert(start, ".")
+                : xpath;
         }
 
         /// <summary>

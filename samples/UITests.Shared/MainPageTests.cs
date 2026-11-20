@@ -76,6 +76,7 @@ public class MainPageTests : BaseTest
         {
             AppiumAndroidApp => element.GetAttribute<string>("resource-id")?.Split(":id/").Last(),
             AppiumWindowsApp => element.GetAttribute<string>("AutomationId"),
+            AppiumCatalystApp => element.GetAttribute<string>("identifier"),
             _ => element.GetAttribute<string>("name"),
         };
     }
