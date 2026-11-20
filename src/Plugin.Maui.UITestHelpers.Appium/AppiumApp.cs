@@ -123,7 +123,7 @@ namespace Plugin.Maui.UITestHelpers.Appium
 
         /// <summary>
         /// Returns the XPath that finds elements by their displayed text. The attribute that
-        // contains the text differs per platform: Android (UiAutomator2) uses "text" and the
+        /// contains the text differs per platform: Android (UiAutomator2) uses "text" and the
         /// content description ("content-desc", e.g. of toolbar items and image buttons), iOS
         /// (XCUITest) uses "label" and "value", Windows (UI Automation) uses "Name". Like on iOS,
         /// the accessibility label is included.
