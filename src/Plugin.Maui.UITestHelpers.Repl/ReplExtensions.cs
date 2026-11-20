@@ -23,6 +23,11 @@ namespace Plugin.Maui.UITestHelpers.Core
 			ArgumentNullException.ThrowIfNull(app);
 			options ??= new ReplOptions();
 
+			if (ReplEngine.IsEvaluating)
+			{
+				throw new InvalidOperationException("The REPL is already running. Type 'exit' to close it and continue the test.");
+			}
+
 			var mode = options.ResolveMode(out bool disabled);
 			if (disabled)
 			{

@@ -78,6 +78,18 @@ public class ReplEngineTests
         Assert.That(next.Value, Is.EqualTo(1));
     }
 
+    [TestCase("app.Repl()")]
+    [TestCase("App.Repl();")]
+    public async Task ReplInsideTheReplIsAnError(string code)
+    {
+        var result = await _engine.EvaluateAsync(code, default);
+
+        Assert.That(result.Outcome, Is.EqualTo(ReplOutcome.Exception));
+        Assert.That(result.Exception, Is.TypeOf<InvalidOperationException>());
+        Assert.That(result.Exception!.Message, Does.Contain("already running"));
+        Assert.That(ReplEngine.IsEvaluating, Is.False);
+    }
+
     [Test]
     public async Task AppIsAvailableWithItsActualTypeAndUiHelpers()
     {

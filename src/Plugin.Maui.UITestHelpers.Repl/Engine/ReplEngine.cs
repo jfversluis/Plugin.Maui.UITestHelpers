@@ -60,6 +60,13 @@ namespace Plugin.Maui.UITestHelpers.Repl.Engine
 			"Plugin.Maui.UITestHelpers.Appium",
 		};
 
+		static readonly AsyncLocal<bool> s_isEvaluating = new();
+
+		/// <summary>
+		/// Gets whether the current code runs as a REPL submission, for example <c>app.Repl()</c> typed into the REPL.
+		/// </summary>
+		public static bool IsEvaluating => s_isEvaluating.Value;
+
 		readonly object _gate = new();
 		readonly ReplGlobals _globals;
 		readonly ScriptOptions _options;
@@ -214,11 +221,16 @@ namespace Plugin.Maui.UITestHelpers.Repl.Engine
 			ScriptState<object> next;
 			try
 			{
+				s_isEvaluating.Value = true;
 				next = await script.RunFromAsync(state!, _ => true, cancellationToken).ConfigureAwait(false);
 			}
 			catch (OperationCanceledException)
 			{
 				return new ReplResult(ReplOutcome.Cancelled);
+			}
+			finally
+			{
+				s_isEvaluating.Value = false;
 			}
 
 			lock (_gate)
