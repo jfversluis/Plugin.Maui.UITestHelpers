@@ -15,10 +15,6 @@ namespace Plugin.Maui.UITestHelpers.Core
 		/// Starts an interactive REPL (read-eval-print loop) for the app, and pauses the test until it is closed with
 		/// <c>exit</c>. Everything you can do with the app in a test, you can try out here first: any C# works, with
 		/// <c>app</c> being the running app. Type <c>help</c> in the REPL to see the built-in commands, like <c>tree</c>.
-		/// <para>
-		/// While debugging, call it from code rather than from the Immediate Window: the debugger freezes the other
-		/// threads during an evaluation, and the REPL needs them. In Visual Studio, <c>App.Repl(), run_all_threads</c> lets them run.
-		/// </para>
 		/// </summary>
 		/// <param name="app">The app to explore.</param>
 		/// <param name="options">Optional settings, for example where the REPL window is shown.</param>
