@@ -174,4 +174,77 @@ public class MainPageTests : BaseTest
         Assert.That(element, Is.Not.Null, "WaitForElement must have found the element via Marked()");
         Assert.That(element.IsChecked(App.GetTestDevice()), Is.True, "the found element must be the checked check box");
     }
+
+    [Test]
+    public void CombinedQuery_FindsElementWithinElement()
+    {
+        // Arrange
+        App.WaitForElement("CB2");
+
+        // Act: CB2 within the page's ScrollView; IQuery's methods refine a query
+        IQuery scrollView = AppiumQuery.ByClass(GetScrollViewClass());
+        IQuery checkBoxInScrollView = CheckBoxQuery(scrollView, "CB2");
+
+        var elements = App.FindElements(checkBoxInScrollView);
+        var element = App.FindElement(checkBoxInScrollView);
+
+        // Assert
+        Assert.That(elements.Select(GetAutomationId), Is.EqualTo(new[] { "CB2" }), "FindElements must run all parts of the query");
+        Assert.That(element, Is.Not.Null, "FindElement must find the check box");
+        Assert.That(GetAutomationId(element), Is.EqualTo("CB2"));
+    }
+
+    [Test]
+    public void CombinedQuery_ElementNotWithinElement_FindsNothing()
+    {
+        // Arrange
+        App.WaitForElement("CB2");
+
+        // Act: CB2 isn't within CB1, so the second part of the query finds nothing
+        IQuery firstCheckBox = CheckBoxQuery(null, "CB1");
+        IQuery secondWithinFirst = CheckBoxQuery(firstCheckBox, "CB2");
+
+        // Assert
+        Assert.That(App.FindElements(firstCheckBox), Has.Count.EqualTo(1), "the first part alone must find CB1");
+        Assert.That(App.FindElements(secondWithinFirst), Is.Empty);
+        Assert.That(App.FindElement(secondWithinFirst), Is.Null);
+    }
+
+    /// <summary>
+    /// Returns a query for a check box by its AutomationId, optionally within another query: on Android by
+    /// the resource ID including the app's package, on the other platforms by the accessibility ID.
+    /// </summary>
+    IQuery CheckBoxQuery(IQuery? within, string automationId)
+    {
+        if (App is AppiumAndroidApp)
+        {
+            string id = $"{App.Config.GetProperty<string>("AppId")}:id/{automationId}";
+            return within?.ById(id) ?? AppiumQuery.ById(id);
+        }
+
+        return within?.ByAccessibilityId(automationId) ?? AppiumQuery.ByAccessibilityId(automationId);
+    }
+
+    string GetScrollViewClass()
+    {
+        // the class of the page's ScrollView, as reported by each platform
+        return App switch
+        {
+            AppiumAndroidApp => "android.widget.ScrollView",
+            AppiumWindowsApp => "ScrollViewer",
+            _ => "XCUIElementTypeScrollView",
+        };
+    }
+
+    string? GetAutomationId(IUIElement element)
+    {
+        // the attribute that contains the AutomationId differs per platform
+        return App switch
+        {
+            AppiumAndroidApp => element.GetAttribute<string>("resource-id")?.Split(":id/").Last(),
+            AppiumWindowsApp => element.GetAttribute<string>("AutomationId"),
+            AppiumCatalystApp => element.GetAttribute<string>("identifier"),
+            _ => element.GetAttribute<string>("name"),
+        };
+    }
 }
