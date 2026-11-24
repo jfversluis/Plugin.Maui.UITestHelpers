@@ -1,5 +1,4 @@
-﻿using System.Collections.Immutable;
-using OpenQA.Selenium;
+﻿using OpenQA.Selenium;
 using OpenQA.Selenium.Appium;
 using Plugin.Maui.UITestHelpers.Core;
 
@@ -25,9 +24,15 @@ namespace Plugin.Maui.UITestHelpers.Appium
 			_queryStr = queryStr;
 		}
 
+		/// <summary>
+		/// Creates a combined query: the elements matching <paramref name="queryStr"/> within the elements found by
+		/// <paramref name="query"/>.
+		/// </summary>
+		/// <param name="query">The query to refine.</param>
+		/// <param name="queryStr">The query part to search within the elements found by <paramref name="query"/>.</param>
 		public AppiumQuery(AppiumQuery query, string queryStr)
 		{
-			_queryStr = string.Join(query._queryStr, QuerySeparatorToken, queryStr);
+			_queryStr = string.Join(QuerySeparatorToken, query._queryStr, queryStr);
 		}
 
 		IQuery IQuery.ByClass(string classQuery)
@@ -80,112 +85,107 @@ namespace Plugin.Maui.UITestHelpers.Appium
 			return new AppiumQuery(string.Format(ClassQuery, classQuery));
 		}
 
+		/// <summary>
+		/// Returns the first element matching the query, or <c>null</c> when there's none.
+		/// </summary>
+		/// <param name="appiumApp">The app to search.</param>
+		/// <returns>The element, or <c>null</c>.</returns>
 #nullable disable
 		public IUIElement FindElement(AppiumApp appiumApp)
 		{
-			// e.g. class=button&id=MyButton
-			string[] querySplit = _queryStr.Split(QuerySeparatorToken);
-			string queryStr = querySplit[0];
-			string[] argSplit = queryStr.Split('=');
+			var foundElement = FindAll(appiumApp)
+				.FirstOrDefault();
 
-			if (argSplit.Length != 2)
-			{
-				throw new ArgumentException("Invalid Query");
-			}
+			return foundElement is null ? null : new AppiumDriverElement(foundElement, appiumApp);
+		}
+#nullable enable
 
-			var queryBy = GetQueryBy(argSplit[0], argSplit[1]);
-			var foundElement = appiumApp.Driver.FindElements(queryBy).FirstOrDefault();
+		/// <summary>
+		/// Returns the elements matching the query.
+		/// </summary>
+		/// <param name="appiumApp">The app to search.</param>
+		/// <returns>The elements, in the order they were found.</returns>
+		public IReadOnlyCollection<IUIElement> FindElements(AppiumApp appiumApp)
+		{
+			return FindAll(appiumApp)
+				.Select(e => new AppiumDriverElement(e, appiumApp))
+				.ToList();
+		}
 
-			if (foundElement == null)
-			{
-				return null;
-			}
+		/// <summary>
+		/// Returns the elements matching the query within the given element.
+		/// </summary>
+		/// <param name="element">The element to search within.</param>
+		/// <param name="appiumApp">The app.</param>
+		/// <returns>The elements, in the order they were found.</returns>
+		public IReadOnlyCollection<IUIElement> FindElements(AppiumElement element, AppiumApp appiumApp)
+		{
+			return FindAll(appiumApp, element)
+				.Select(e => new AppiumDriverElement(e, appiumApp))
+				.ToList();
+		}
 
-			for (int i = 1; i < querySplit.Length; i++)
-			{
-				foundElement = FindElement(foundElement, querySplit[i]);
-			}
+		/// <summary>
+		/// Returns the first element matching the query within the given element.
+		/// </summary>
+		/// <param name="element">The element to search within.</param>
+		/// <param name="appiumApp">The app.</param>
+		/// <returns>The element.</returns>
+		/// <exception cref="NoSuchElementException">Thrown when no element matches the query.</exception>
+		public IUIElement FindElement(AppiumElement element, AppiumApp appiumApp)
+		{
+			var foundElement = FindAll(appiumApp, element)
+				.FirstOrDefault()
+				?? throw new NoSuchElementException($"No element matches the query '{_queryStr}'");
 
 			return new AppiumDriverElement(foundElement, appiumApp);
 		}
 
-		public IReadOnlyCollection<IUIElement> FindElements(AppiumApp appiumApp)
+		/// <summary>
+		/// Runs the parts of the query one after another: the first part searches the app, or within the given
+		/// element; each further part of a combined query searches within all the elements found by the previous
+		/// part. Elements found several times are returned once.
+		/// </summary>
+		/// <param name="appiumApp">The app to search.</param>
+		/// <param name="element">The element to search within, or <c>null</c> to search the whole app.</param>
+		/// <returns>The elements found by the last part, in the order they were found.</returns>
+		IReadOnlyList<AppiumElement> FindAll(AppiumApp appiumApp, AppiumElement? element = null)
 		{
-			// e.g. class=button&id=MyButton
-			string[] querySplit = _queryStr.Split(QuerySeparatorToken);
-			string queryStr = querySplit[0];
-			string[] argSplit = queryStr.Split('=');
+			string[] parts = _queryStr.Split(QuerySeparatorToken);
+			ISearchContext context = element is null ? appiumApp.Driver : element;
 
-			if (argSplit.Length != 2)
+			IReadOnlyList<AppiumElement> foundElements = context
+				.FindElements(GetQueryBy(parts[0]))
+				.Cast<AppiumElement>()
+				.ToList();
+
+			for (int i = 1; i < parts.Length && foundElements.Count > 0; i++)
 			{
-				throw new ArgumentException("Invalid Query");
+				By queryBy = GetQueryBy(parts[i]);
+
+				// an element can be found within several elements, e.g. within nested layouts
+				foundElements = foundElements
+					.SelectMany(e => e.FindElements(queryBy))
+					.Cast<AppiumElement>()
+					.Distinct()
+					.ToList();
 			}
 
-			var queryBy = GetQueryBy(argSplit[0], argSplit[1]);
-			var foundElements = appiumApp.Driver.FindElements(queryBy);
-
-			// TODO: What is the expected way to handle multiple queries when multiple elements are returned?
-			//for(int i = 1; i < querySplit.Length; i++)
-			//{
-			//    foundElement = FindElement(foundElement, querySplit[i]);
-			//}
-
-			return foundElements.Select(e => new AppiumDriverElement(e, appiumApp)).ToList();
-		}
-#nullable enable
-
-		public IReadOnlyCollection<IUIElement> FindElements(AppiumElement element, AppiumApp appiumApp)
-		{
-			string[] querySplit = _queryStr.Split(QuerySeparatorToken);
-
-			AppiumElement appiumElement = element;
-			string queryStr = querySplit[0];
-			string[] argSplit = queryStr.Split('=');
-			var queryBy = GetQueryBy(argSplit[0], argSplit[1]);
-			var foundElements = element.FindElements(queryBy);
-			//for (int i = 0; i < querySplit.Length; i++)
-			//{
-			//    appiumElement = FindElement(appiumElement, querySplit[i]);
-			//}
-
-			return foundElements.Select(e => new AppiumDriverElement((AppiumElement)e, appiumApp)).ToList();
+			return foundElements;
 		}
 
-		public IUIElement FindElement(AppiumElement element, AppiumApp appiumApp)
+		/// <summary>
+		/// Returns the locator for a single query part, e.g. <c>id=MyButton</c>.
+		/// </summary>
+		static By GetQueryBy(string queryPart)
 		{
-			string[] querySplit = _queryStr.Split(QuerySeparatorToken);
-
-			AppiumElement appiumElement = element;
-			for (int i = 0; i < querySplit.Length; i++)
+			int separatorIndex = queryPart.IndexOf('=');
+			if (separatorIndex <= 0)
 			{
-				appiumElement = FindElement(appiumElement, querySplit[i]);
+				throw new ArgumentException($"Invalid query part '{queryPart}'");
 			}
 
-			return new AppiumDriverElement(appiumElement, appiumApp);
-		}
-
-		private static IReadOnlyCollection<AppiumElement> FindElements(AppiumElement element, string query)
-		{
-			var argSplit = query.Split('=');
-			if (argSplit.Length != 2)
-			{
-				throw new ArgumentException("Invalid Query");
-			}
-
-			var queryBy = GetQueryBy(argSplit[0], argSplit[1]);
-			return element.FindElements(queryBy).Select(e => (AppiumElement)e).ToList();
-		}
-
-		private static AppiumElement FindElement(AppiumElement element, string query)
-		{
-			var argSplit = query.Split('=');
-			if (argSplit.Length != 2)
-			{
-				throw new ArgumentException("Invalid Query");
-			}
-
-			var queryBy = GetQueryBy(argSplit[0], argSplit[1]);
-			return (AppiumElement)element.FindElement(queryBy);
+			return GetQueryBy(queryPart.Substring(0, separatorIndex), queryPart.Substring(separatorIndex + 1));
 		}
 
 		private static By GetQueryBy(string token, string value)
