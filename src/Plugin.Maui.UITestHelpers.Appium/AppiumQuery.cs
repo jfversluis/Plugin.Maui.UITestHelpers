@@ -75,6 +75,27 @@ namespace Plugin.Maui.UITestHelpers.Appium
 			return new AppiumQuery(string.Format(XPathQuery, Uri.EscapeDataString(xpath)));
 		}
 
+		/// <summary>
+		/// Returns the XPath expression when this is a single XPath query (e.g. from <see cref="ByXPath"/> or
+		/// <c>app.Marked()</c>), to build relational queries such as siblings from it.
+		/// </summary>
+		/// <param name="xpath">The XPath expression.</param>
+		/// <returns><c>true</c> when this is a single XPath query.</returns>
+		internal bool TryGetXPath([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out string? xpath)
+		{
+			string prefix = XPathToken + "=";
+
+			// the XPath is URL-encoded, so a separator token always separates combined queries
+			if (_queryStr.StartsWith(prefix, StringComparison.Ordinal) && !_queryStr.Contains(QuerySeparatorToken))
+			{
+				xpath = Uri.UnescapeDataString(_queryStr.Substring(prefix.Length));
+				return true;
+			}
+
+			xpath = null;
+			return false;
+		}
+
 		public static AppiumQuery ByAccessibilityId(string id)
 		{
 			return new AppiumQuery(string.Format(AccessibilityQuery, id));

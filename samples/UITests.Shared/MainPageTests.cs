@@ -35,6 +35,53 @@ public class MainPageTests : BaseTest
     }
 
     [Test]
+    public void Sibling_FindsOtherCheckBox()
+    {
+        // Arrange
+        App.WaitForElement("CB1");
+
+        // Act: the two check boxes are children of the same HorizontalStackLayout
+        var siblings = App.FindElements(App.Marked("CB1").Sibling());
+
+        // Assert
+        var automationIds = siblings.Select(GetAutomationId).ToList();
+        Assert.That(automationIds, Does.Contain("CB2"), "the other check box must be a sibling");
+        Assert.That(automationIds, Does.Not.Contain("CB1"), "the element itself must not be a sibling");
+    }
+
+    [Test]
+    public void Sibling_Index_ReturnsOtherCheckBox()
+    {
+        if (App is not AppiumAndroidApp && App is not AppiumIOSApp)
+        {
+            // on Windows and Mac the layouts aren't part of the element tree, so the check boxes have more siblings
+            Assert.Ignore("The sample's check boxes only have a single sibling on Android and iOS");
+        }
+
+        // Arrange
+        App.WaitForElement("CB1");
+
+        // Act: CB1's only sibling is CB2, which isn't checked
+        var sibling = App.WaitForElement(App.Marked("CB1").Sibling(0));
+
+        // Assert
+        Assert.That(GetAutomationId(sibling), Is.EqualTo("CB2"));
+        Assert.That(sibling.IsChecked(App.GetTestDevice()), Is.False);
+    }
+
+    string? GetAutomationId(IUIElement element)
+    {
+        // the attribute that contains the AutomationId differs per platform
+        return App switch
+        {
+            AppiumAndroidApp => element.GetAttribute<string>("resource-id")?.Split(":id/").Last(),
+            AppiumWindowsApp => element.GetAttribute<string>("AutomationId"),
+            AppiumCatalystApp => element.GetAttribute<string>("identifier"),
+            _ => element.GetAttribute<string>("name"),
+        };
+    }
+
+    [Test]
     public void ClickCounterTest()
     {
         const string elementId = "CounterBtn";

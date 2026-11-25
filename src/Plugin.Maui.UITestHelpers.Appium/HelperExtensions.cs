@@ -75,6 +75,113 @@ namespace Plugin.Maui.UITestHelpers.Appium
         }
 
         /// <summary>
+        /// Returns a query for the siblings of the elements matched by the query, i.e. the other children of
+        /// their parent element, optionally only those of the given element type. Equivalent of
+        /// Xamarin.UITest's <c>Sibling()</c>, e.g. to find the picker next to a label:
+        /// <c>app.Marked("Payment method").Sibling("android.widget.Spinner")</c>.
+        /// </summary>
+        /// <remarks>
+        /// The element type is the element's tag in the page source, which differs per platform, e.g.
+        /// <c>android.widget.EditText</c> (Android), <c>XCUIElementTypeTextField</c> (iOS) or <c>Edit</c>
+        /// (Windows). The element tree differs per platform as well: layouts that aren't part of the
+        /// accessibility tree (often on iOS and Windows) don't count as parents. The siblings are returned in
+        /// document order; the matched elements themselves aren't included.
+        /// </remarks>
+        /// <param name="query">An XPath query, e.g. from <see cref="Marked"/> or <see cref="AppiumQuery.ByXPath"/>.</param>
+        /// <param name="elementType">The element type of the siblings, or <c>null</c> for siblings of any type.</param>
+        /// <returns>The query for the siblings.</returns>
+        /// <exception cref="NotSupportedException">Thrown when the query is not a single XPath query.</exception>
+        public static IQuery Sibling(this IQuery query, string? elementType = null)
+        {
+            string xpath = GetXPath(query, nameof(Sibling));
+            string step = string.IsNullOrWhiteSpace(elementType) ? "*" : elementType;
+
+            return AppiumQuery.ByXPath($"({xpath})/preceding-sibling::{step} | ({xpath})/following-sibling::{step}");
+        }
+
+        /// <summary>
+        /// Returns a query for the sibling at the given index, counting the siblings of the matched elements in
+        /// document order (the matched elements themselves aren't counted). Equivalent of Xamarin.UITest's
+        /// <c>Sibling(int)</c>, e.g. the value element next to a label: <c>app.Marked("Total").Sibling(0)</c>.
+        /// </summary>
+        /// <remarks>
+        /// When the query matches several elements, the index applies to the siblings of all of them together.
+        /// See <see cref="Sibling(IQuery, string?)"/> about platform differences of the element tree.
+        /// </remarks>
+        /// <param name="query">An XPath query, e.g. from <see cref="Marked"/> or <see cref="AppiumQuery.ByXPath"/>.</param>
+        /// <param name="index">The 0-based index of the sibling.</param>
+        /// <returns>The query for the sibling.</returns>
+        /// <exception cref="NotSupportedException">Thrown when the query is not a single XPath query.</exception>
+        public static IQuery Sibling(this IQuery query, int index)
+        {
+            string xpath = GetXPath(query, nameof(Sibling));
+
+            return AppiumQuery.ByXPath($"(({xpath})/preceding-sibling::* | ({xpath})/following-sibling::*)[{index + 1}]");
+        }
+
+        /// <summary>
+        /// Returns a query for the children of the elements matched by the query, optionally only those of the
+        /// given element type. Equivalent of Xamarin.UITest's <c>Child(string)</c>.
+        /// </summary>
+        /// <remarks>
+        /// The element type is the element's tag in the page source, which differs per platform, see
+        /// <see cref="Sibling(IQuery, string?)"/>.
+        /// </remarks>
+        /// <param name="query">An XPath query, e.g. from <see cref="Marked"/> or <see cref="AppiumQuery.ByXPath"/>.</param>
+        /// <param name="elementType">The element type of the children, or <c>null</c> for children of any type.</param>
+        /// <returns>The query for the children.</returns>
+        /// <exception cref="NotSupportedException">Thrown when the query is not a single XPath query.</exception>
+        public static IQuery Child(this IQuery query, string? elementType = null)
+        {
+            string xpath = GetXPath(query, nameof(Child));
+            string step = string.IsNullOrWhiteSpace(elementType) ? "*" : elementType;
+
+            return AppiumQuery.ByXPath($"({xpath})/{step}");
+        }
+
+        /// <summary>
+        /// Returns a query for the child at the given index of each element matched by the query. Equivalent of
+        /// Xamarin.UITest's <c>Child(int)</c>, e.g. <c>app.Marked("Total").Sibling(0).Child(0)</c>.
+        /// </summary>
+        /// <param name="query">An XPath query, e.g. from <see cref="Marked"/> or <see cref="AppiumQuery.ByXPath"/>.</param>
+        /// <param name="index">The 0-based index of the child.</param>
+        /// <returns>The query for the children.</returns>
+        /// <exception cref="NotSupportedException">Thrown when the query is not a single XPath query.</exception>
+        public static IQuery Child(this IQuery query, int index)
+        {
+            string xpath = GetXPath(query, nameof(Child));
+
+            return AppiumQuery.ByXPath($"({xpath})/*[{index + 1}]");
+        }
+
+        /// <summary>
+        /// Returns the XPath of the query, made relative to the context node (<c>//x</c> becomes <c>.//x</c>), to
+        /// combine it into relational queries. The Mac2 driver evaluates queries against the root element instead of
+        /// a document, where absolute paths fail with "XQueryError:6 - invalid type"; it only makes a leading
+        /// <c>/</c> of the whole query relative, but a sibling query contains the path twice. On the other platforms,
+        /// the queries are evaluated against the document, where <c>.//x</c> finds the same elements as <c>//x</c>.
+        /// </summary>
+        static string GetXPath(IQuery query, string methodName)
+        {
+            if (query is not AppiumQuery appiumQuery || !appiumQuery.TryGetXPath(out string? xpath))
+            {
+                throw new NotSupportedException($"{methodName} is only supported for XPath queries, e.g. from Marked() or AppiumQuery.ByXPath()");
+            }
+
+            // the same rewrite the Mac2 driver applies to the start of a query: skip leading opening parentheses,
+            // then make a leading "/" relative
+            int start = 0;
+            while (start < xpath.Length && xpath[start] == '(')
+            {
+                start++;
+            }
+
+            return start < xpath.Length && xpath[start] == '/'
+                ? xpath.Insert(start, ".")
+                : xpath;
+        }
+
+        /// <summary>
         /// For desktop, this will perform a mouse click on the target element.
         /// For mobile, this will tap the element.
         /// This API works for all platforms whereas TapCoordinates currently doesn't work on Catalyst
