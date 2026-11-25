@@ -1,5 +1,6 @@
 name: Create a (Pre)release on NuGet
 
+# Maintainer release instructions: docs/RELEASING.md
 on:
   push:
     tags:
@@ -9,6 +10,10 @@ jobs:
   release-nuget:
 
     runs-on: windows-latest
+
+    permissions:
+      contents: read
+      id-token: write
 
     steps:
       - uses: actions/checkout@v7
@@ -29,11 +34,14 @@ jobs:
           "version-without-v=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
       - name: Pack
         run: dotnet pack src\Plugin.Maui.UITestHelpers.slnx -c Release -p:PackageVersion=${{ steps.get_version.outputs.version-without-v }}
+      - name: NuGet login (OIDC)
+        uses: NuGet/login@v1
+        id: nuget-login
+        with:
+          user: jfversluis
       - name: Push
         run: |
-          dotnet nuget push src\Plugin.Maui.UITestHelpers.Core\bin\Release\Plugin.Maui.UITestHelpers.Core.${{ steps.get_version.outputs.version-without-v }}.nupkg -s https://api.nuget.org/v3/index.json -k ${{ secrets.NUGET_API_KEY }}
-          dotnet nuget push src\Plugin.Maui.UITestHelpers.Appium\bin\Release\Plugin.Maui.UITestHelpers.Appium.${{ steps.get_version.outputs.version-without-v }}.nupkg -s https://api.nuget.org/v3/index.json -k ${{ secrets.NUGET_API_KEY }}
-          dotnet nuget push src\Plugin.Maui.UITestHelpers.Repl\bin\Release\Plugin.Maui.UITestHelpers.Repl.${{ steps.get_version.outputs.version-without-v }}.nupkg -s https://api.nuget.org/v3/index.json -k ${{ secrets.NUGET_API_KEY }}
-          dotnet nuget push src\Plugin.Maui.UITestHelpers.NUnit\bin\Release\Plugin.Maui.UITestHelpers.NUnit.${{ steps.get_version.outputs.version-without-v }}.nupkg -s https://api.nuget.org/v3/index.json -k ${{ secrets.NUGET_API_KEY }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.NUGET_API_KEY }}
+          dotnet nuget push src\Plugin.Maui.UITestHelpers.Core\bin\Release\Plugin.Maui.UITestHelpers.Core.${{ steps.get_version.outputs.version-without-v }}.nupkg -s https://api.nuget.org/v3/index.json -k "${{ steps.nuget-login.outputs.NUGET_API_KEY }}"
+          dotnet nuget push src\Plugin.Maui.UITestHelpers.Appium\bin\Release\Plugin.Maui.UITestHelpers.Appium.${{ steps.get_version.outputs.version-without-v }}.nupkg -s https://api.nuget.org/v3/index.json -k "${{ steps.nuget-login.outputs.NUGET_API_KEY }}"
+          dotnet nuget push src\Plugin.Maui.UITestHelpers.Repl\bin\Release\Plugin.Maui.UITestHelpers.Repl.${{ steps.get_version.outputs.version-without-v }}.nupkg -s https://api.nuget.org/v3/index.json -k "${{ steps.nuget-login.outputs.NUGET_API_KEY }}"
+          dotnet nuget push src\Plugin.Maui.UITestHelpers.NUnit\bin\Release\Plugin.Maui.UITestHelpers.NUnit.${{ steps.get_version.outputs.version-without-v }}.nupkg -s https://api.nuget.org/v3/index.json -k "${{ steps.nuget-login.outputs.NUGET_API_KEY }}"
